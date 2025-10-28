@@ -50,11 +50,11 @@ export default function Schedules() {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold mb-2">Scheduling</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Scheduling</h1>
+          <p className="text-muted-foreground text-base">
             Create and manage content schedules for your displays
           </p>
         </div>

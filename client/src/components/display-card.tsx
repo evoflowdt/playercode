@@ -29,13 +29,13 @@ export function DisplayCard({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "online":
-        return "bg-green-500";
+        return "bg-success";
       case "offline":
-        return "bg-red-500";
+        return "bg-destructive";
       case "warning":
-        return "bg-amber-500";
+        return "bg-warning";
       default:
-        return "bg-gray-500";
+        return "bg-muted";
     }
   };
 

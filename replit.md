@@ -165,12 +165,21 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - `display_deleted`: Display removed
 
 ## Design System
-- **Primary Color**: Blue (#3b82f6)
-- **Status Colors**: Green (online), Red (offline), Amber (warning)
-- **Typography**: Inter (primary), Roboto Mono (code/technical)
-- **Spacing**: Tailwind default scale
-- **Components**: Material Design 3 inspired
-- **Responsive**: Mobile-first design
+- **Design Approach**: Material Design 3 adapted with custom palette
+- **Primary Colors**: 
+  - Dark Teal (#1a5266) - Sidebar/header navigation
+  - Light Gray (#e8eef1) - Main background
+  - Orange (#ff8c42) - Accent/CTAs
+- **Status Colors**: 
+  - Green (#4caf50) - Online/success
+  - Red (#f44336) - Offline/error
+  - Amber (#ffa726) - Warning states
+- **Typography**: 
+  - Inter (primary font, Google Fonts)
+  - Roboto Mono (code/technical data)
+- **Spacing**: Generous spacing with p-8, gap-6 between major sections
+- **Components**: Shadcn UI with Material Design 3 principles
+- **Responsive**: Mobile-first design with breakpoints
 
 ## Next Phase Features
 - Player applications for various OS platforms (LG webOS, Samsung Tizen, Raspberry Pi, Android)
@@ -191,6 +200,17 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - Seed data: Run `npm run db:seed` to populate demo displays
 
 ## Recent Changes
+- **Rebranding & Design System Update (Oct 28, 2025)**:
+  - Rebranded from EVOsignage to **EvoFlow**
+  - Implemented new Material Design 3-inspired design system
+  - Updated color palette: Dark teal sidebar, light gray background, orange accents
+  - Enhanced typography with Inter font and improved spacing (p-8, gap-6)
+  - Updated all pages with consistent design: bold headings, colored stat badges
+  - Created comprehensive design guidelines document
+  - Updated sidebar with prominent logo and brand identity
+  - Applied semantic color system for status indicators (success/warning/destructive)
+
+
 - **PostgreSQL Database Migration (Oct 28, 2025)**:
   - Migrated from in-memory storage to PostgreSQL with Drizzle ORM
   - Implemented DatabaseStorage class with full CRUD operations

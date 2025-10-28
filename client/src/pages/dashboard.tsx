@@ -29,15 +29,15 @@ export default function Dashboard() {
   const displaysWithLocation = displays?.filter(d => d.latitude && d.longitude) || [];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
+        <p className="text-muted-foreground text-base">
           Monitor and manage your digital signage network
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statsLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
@@ -50,12 +50,14 @@ export default function Dashboard() {
               title="Total Displays"
               value={stats?.totalDisplays || 0}
               icon={Monitor}
+              variant="default"
               testId="stat-total-displays"
             />
             <StatsCard
               title="Active Now"
               value={stats?.activeDisplays || 0}
               icon={Activity}
+              variant="success"
               trend={{
                 value: "+12% from last week",
                 isPositive: true,
@@ -66,20 +68,22 @@ export default function Dashboard() {
               title="Offline"
               value={stats?.offlineDisplays || 0}
               icon={AlertCircle}
+              variant="destructive"
               testId="stat-offline-displays"
             />
             <StatsCard
               title="Content Items"
               value={stats?.totalContent || 0}
               icon={FolderOpen}
+              variant="default"
               testId="stat-total-content"
             />
           </>
         )}
       </div>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Display Locations</h2>
+      <Card className="p-6 shadow-sm">
+        <h2 className="text-xl font-bold tracking-tight mb-4">Display Locations</h2>
         <div className="h-96 rounded-lg overflow-hidden border">
           {displaysWithLocation.length > 0 ? (
             <MapContainer
@@ -131,22 +135,22 @@ export default function Dashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Recent Displays</h2>
+          <h2 className="text-xl font-bold tracking-tight">Recent Displays</h2>
         </div>
         {displaysLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="h-64 animate-pulse bg-muted" />
             ))}
           </div>
         ) : recentDisplays.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {recentDisplays.map((display) => (
               <DisplayCard key={display.id} display={display} />
             ))}
           </div>
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center shadow-sm">
             <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No displays registered yet</p>
           </Card>

@@ -82,11 +82,11 @@ export default function PlaylistsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Content Playlists</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Content Playlists</h1>
+          <p className="text-muted-foreground text-base">
             Create and manage content playlists for sequential playback
           </p>
         </div>

@@ -102,7 +102,7 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    log("EVOsignage server ready!");
+    log("EvoFlow server ready!");
   } catch (error) {
     log(`Fatal error starting server: ${error}`);
     process.exit(1);
