@@ -648,6 +648,20 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
   
+  // Delete player session
+  app.delete("/api/player/session/:displayId", async (req, res) => {
+    try {
+      const deleted = await storage.deletePlayerSession(req.params.displayId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Session deletion error:", error);
+      res.status(500).json({ error: "Failed to delete session" });
+    }
+  });
+  
   // Update player capabilities
   app.put("/api/player/capabilities/:displayId", async (req, res) => {
     try {

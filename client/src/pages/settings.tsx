@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Monitor, RefreshCw, Clock, Copy, Check, Plus } from "lucide-react";
+import { Monitor, RefreshCw, Clock, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface PairingToken {
@@ -38,11 +38,64 @@ export default function Settings() {
   const [currentToken, setCurrentToken] = useState<PairingToken | null>(null);
   const [copiedToken, setCopiedToken] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [deletingSessionIds, setDeletingSessionIds] = useState<Set<string>>(new Set());
 
   // Fetch player sessions
   const { data: sessions = [], isLoading: isLoadingSessions } = useQuery<PlayerSession[]>({
     queryKey: ["/api/player/sessions"],
     refetchInterval: 10000,
+  });
+
+  // Delete player session mutation
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (displayId: string) => {
+      const response = await fetch(`/api/player/session/${displayId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete session");
+      }
+      // 204 No Content has no body, don't try to parse it
+      return displayId;
+    },
+    onMutate: (displayId) => {
+      // Track which session is being deleted
+      setDeletingSessionIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(displayId);
+        return newSet;
+      });
+    },
+    onSuccess: (displayId) => {
+      // Remove from pending set
+      setDeletingSessionIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(displayId);
+        return newSet;
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/player/sessions"] });
+      toast({
+        title: "Session deleted",
+        description: "Player session has been removed",
+      });
+    },
+    onError: (error, displayId) => {
+      // Remove from pending set
+      setDeletingSessionIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(displayId);
+        return newSet;
+      });
+      
+      console.error("Delete session error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete session",
+        variant: "destructive",
+      });
+    },
   });
 
   // Generate pairing token mutation
@@ -340,6 +393,20 @@ export default function Settings() {
                     >
                       {session.displayStatus}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteSessionMutation.mutate(session.displayId)}
+                      disabled={deletingSessionIds.has(session.displayId)}
+                      data-testid={`button-delete-session-${session.displayId}`}
+                      title="Delete session"
+                    >
+                      {deletingSessionIds.has(session.displayId) ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               ))}
