@@ -15,6 +15,7 @@ import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
 import Content from "@/pages/content";
 import Schedules from "@/pages/schedules";
+import AdvancedScheduling from "@/pages/advanced-scheduling";
 import Groups from "@/pages/groups";
 import Playlists from "@/pages/playlists";
 import Analytics from "@/pages/analytics";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/displays" component={Displays} />
       <Route path="/content" component={Content} />
       <Route path="/schedules" component={Schedules} />
+      <Route path="/advanced-scheduling" component={AdvancedScheduling} />
       <Route path="/groups" component={Groups} />
       <Route path="/playlists" component={Playlists} />
       <Route path="/analytics" component={Analytics} />

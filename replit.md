@@ -151,6 +151,36 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - `POST /api/objects/upload` - Get upload URL
 - `GET /public-objects/:filePath` - Serve public files
 
+### Player API (Feature Set 1)
+- `POST /api/player/pair` - Create pairing token for display
+- `POST /api/player/register` - Register player with token
+- `POST /api/player/heartbeat` - Update player session
+- `GET /api/player/content/:displayId` - Get content for display
+- `GET /api/player/sessions` - List all player sessions
+- `GET /api/player/session/:displayId` - Get session info
+- `PUT /api/player/capabilities/:displayId` - Update player capabilities
+- `POST /api/player/cleanup-tokens` - Cleanup expired tokens
+
+### Advanced Scheduling API (Feature Set 2)
+- `POST /api/scheduling/rules` - Create scheduling rule
+- `GET /api/scheduling/rules` - List all rules
+- `GET /api/scheduling/rules/:id` - Get rule by ID
+- `GET /api/scheduling/rules/schedule/:scheduleId` - Get rules for schedule
+- `PUT /api/scheduling/rules/:id` - Update rule
+- `DELETE /api/scheduling/rules/:id` - Delete rule
+- `POST /api/scheduling/conflicts` - Detect scheduling conflicts
+- `POST /api/scheduling/timeline` - Generate timeline preview
+- `POST /api/content/priorities` - Create content priority
+- `GET /api/content/priorities` - List all priorities
+- `GET /api/content/priorities/:id` - Get priority by ID
+- `PUT /api/content/priorities/:id` - Update priority
+- `DELETE /api/content/priorities/:id` - Delete priority
+- `POST /api/transitions` - Create transition effect
+- `GET /api/transitions` - List all transitions
+- `GET /api/transitions/:id` - Get transition by ID
+- `PUT /api/transitions/:id` - Update transition
+- `DELETE /api/transitions/:id` - Delete transition
+
 ## WebSocket Events
 
 ### Client → Server
@@ -200,6 +230,27 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - Seed data: Run `npm run db:seed` to populate demo displays
 
 ## Recent Changes
+- **Feature Set 2: Advanced Scheduling (Oct 28, 2025)**:
+  - Extended database schema with scheduling_rules, content_priority, transitions tables
+  - Implemented scheduling rule engine with conditional logic evaluation
+  - Rule types supported: day_of_week, time_range, date_range
+  - Priority-based content resolution system
+  - Conflict detection for overlapping schedules
+  - Timeline preview generation with hourly/custom intervals
+  - Comprehensive REST API endpoints for all scheduling operations
+  - Zod validation for all scheduling API requests
+  - Integration with existing storage layer and scheduling engine
+
+- **Feature Set 1: Player Applications (Oct 28, 2025)**:
+  - Added player_sessions, player_capabilities, pairing_tokens tables
+  - Crypto-secure pairing token generation with expiration
+  - Player heartbeat system with 10-second refresh intervals
+  - Standalone Web Player at /player route (fullscreen content display)
+  - Pairing wizard UI in Settings page with real-time session monitoring
+  - WebSocket integration for live player updates
+  - Multi-platform capability tracking (video formats, resolutions, codecs)
+  - End-to-end tested with successful pairing and session management
+
 - **Rebranding & Design System Update (Oct 28, 2025)**:
   - Rebranded from EVOsignage to **EvoFlow**
   - Implemented new Material Design 3-inspired design system

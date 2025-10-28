@@ -3,6 +3,7 @@ import {
   Monitor,
   FolderOpen,
   Calendar,
+  CalendarClock,
   Users,
   Music,
   BarChart3,
@@ -46,6 +47,12 @@ const menuItemsConfig = [
     url: "/schedules",
     icon: Calendar,
     testId: "link-schedules",
+  },
+  {
+    titleKey: "advancedScheduling" as const,
+    url: "/advanced-scheduling",
+    icon: CalendarClock,
+    testId: "link-advanced-scheduling",
   },
   {
     titleKey: "groups" as const,
