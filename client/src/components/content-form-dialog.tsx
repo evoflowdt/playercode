@@ -215,12 +215,37 @@ export function ContentFormDialog({
                     onComplete={(result) => {
                       if (result.successful && result.successful.length > 0) {
                         const file = result.successful[0];
-                        const url = `/public-objects/${file.name}`;
-                        form.setValue("url", url);
-                        toast({
-                          title: "File uploaded",
-                          description: file.name,
-                        });
+                        // Extract the object path from the upload URL
+                        // The uploadURL contains the full GCS path, we need to extract it
+                        if (file.uploadURL) {
+                          try {
+                            const uploadUrl = new URL(file.uploadURL);
+                            const pathname = uploadUrl.pathname;
+                            // pathname format: /bucket-name/path/to/object
+                            // We need to extract everything after the bucket name
+                            const pathParts = pathname.split('/').filter(p => p);
+                            if (pathParts.length >= 2) {
+                              // Remove bucket name, keep the rest
+                              const objectPath = pathParts.slice(1).join('/');
+                              const url = `/objects/${objectPath}`;
+                              form.setValue("url", url);
+                              form.setValue("name", file.name || "Uploaded file");
+                              toast({
+                                title: "File uploaded",
+                                description: file.name,
+                              });
+                            } else {
+                              throw new Error("Invalid upload URL format");
+                            }
+                          } catch (error) {
+                            console.error("Failed to parse upload URL:", error);
+                            toast({
+                              title: "Warning",
+                              description: "File uploaded but URL parsing failed",
+                              variant: "destructive",
+                            });
+                          }
+                        }
                       }
                     }}
                     maxNumberOfFiles={1}
