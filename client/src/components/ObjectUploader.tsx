@@ -15,7 +15,7 @@ interface ObjectUploaderProps {
   }>;
   onComplete?: (
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  ) => void | Promise<void>;
   buttonClassName?: string;
   children: ReactNode;
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -48,9 +48,17 @@ export function ObjectUploader({
         shouldUseMultipart: false,
         getUploadParameters: onGetUploadParameters,
       })
-      .on("complete", (result) => {
-        onComplete?.(result);
-        setShowModal(false);
+      .on("complete", async (result) => {
+        if (onComplete && result.successful && result.successful.length > 0) {
+          await onComplete(result);
+        }
+        setTimeout(() => {
+          uppy.reset();
+          setShowModal(false);
+        }, 500);
+      })
+      .on("upload-error", (file, error) => {
+        console.error("Upload error:", file?.name, error);
       })
   );
 
@@ -71,6 +79,8 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        note="Immagini e video fino a 100MB"
+        height={450}
       />
     </div>
   );
