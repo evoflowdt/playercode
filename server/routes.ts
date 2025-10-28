@@ -184,7 +184,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   app.post("/api/content", async (req, res) => {
     try {
       const objectStorageService = new ObjectStorageService();
-      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(req.body.url);
+      let normalizedUrl = req.body.url;
+      
+      // Only normalize if URL is provided
+      if (normalizedUrl && typeof normalizedUrl === 'string') {
+        normalizedUrl = objectStorageService.normalizeObjectEntityPath(normalizedUrl);
+      }
       
       const validatedData = insertContentItemSchema.parse({
         ...req.body,
@@ -194,6 +199,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.status(201).json(item);
     } catch (error) {
       console.error('Content creation error:', error);
+      if (error instanceof z.ZodError) {
+        console.error('Validation errors:', error.errors);
+      }
       res.status(400).json({ error: "Invalid content data" });
     }
   });
