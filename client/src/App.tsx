@@ -14,6 +14,7 @@ import Displays from "@/pages/displays";
 import Content from "@/pages/content";
 import Schedules from "@/pages/schedules";
 import Groups from "@/pages/groups";
+import Playlists from "@/pages/playlists";
 import Analytics from "@/pages/analytics";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/content" component={Content} />
       <Route path="/schedules" component={Schedules} />
       <Route path="/groups" component={Groups} />
+      <Route path="/playlists" component={Playlists} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />

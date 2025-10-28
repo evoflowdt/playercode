@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Calendar,
   Users,
+  Music,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -49,6 +50,12 @@ const menuItems = [
     url: "/groups",
     icon: Users,
     testId: "link-groups",
+  },
+  {
+    title: "Playlists",
+    url: "/playlists",
+    icon: Music,
+    testId: "link-playlists",
   },
   {
     title: "Analytics",

@@ -8,6 +8,8 @@ import {
   insertContentItemSchema,
   insertDisplayGroupSchema,
   insertScheduleSchema,
+  insertPlaylistSchema,
+  insertPlaylistItemSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express, httpServer: Server): Promise<void> {
@@ -295,6 +297,77 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Error generating upload URL:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  app.get("/api/playlists", async (_req, res) => {
+    try {
+      const playlists = await storage.getAllPlaylistsWithItems();
+      res.json(playlists);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch playlists" });
+    }
+  });
+
+  app.get("/api/playlists/:id", async (req, res) => {
+    try {
+      const playlist = await storage.getPlaylistWithItems(req.params.id);
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+      res.json(playlist);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch playlist" });
+    }
+  });
+
+  app.post("/api/playlists", async (req, res) => {
+    try {
+      const validatedData = insertPlaylistSchema.parse(req.body);
+      const playlist = await storage.createPlaylist(validatedData);
+      res.status(201).json(playlist);
+    } catch (error) {
+      console.error("Playlist creation error:", error);
+      res.status(400).json({ error: "Invalid playlist data" });
+    }
+  });
+
+  app.delete("/api/playlists/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deletePlaylist(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete playlist" });
+    }
+  });
+
+  app.post("/api/playlists/:id/items", async (req, res) => {
+    try {
+      const playlistId = req.params.id;
+      const validatedData = insertPlaylistItemSchema.parse({
+        ...req.body,
+        playlistId,
+      });
+      const item = await storage.addItemToPlaylist(validatedData);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Add item error:", error);
+      res.status(400).json({ error: "Invalid item data" });
+    }
+  });
+
+  app.delete("/api/playlists/items/:itemId", async (req, res) => {
+    try {
+      const deleted = await storage.removeItemFromPlaylist(req.params.itemId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove item" });
     }
   });
 }

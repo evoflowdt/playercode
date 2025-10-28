@@ -8,13 +8,20 @@ import {
   type InsertDisplayGroup,
   type Schedule,
   type InsertSchedule,
+  type Playlist,
+  type InsertPlaylist,
+  type PlaylistItem,
+  type InsertPlaylistItem,
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
+  type PlaylistWithItems,
   displays,
   contentItems,
   displayGroups,
   schedules,
+  playlists,
+  playlistItems,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
@@ -44,6 +51,16 @@ export interface IStorage {
   createSchedule(schedule: InsertSchedule): Promise<Schedule>;
   updateSchedule(id: string, updates: Partial<Schedule>): Promise<Schedule | undefined>;
   deleteSchedule(id: string): Promise<boolean>;
+  
+  getPlaylist(id: string): Promise<Playlist | undefined>;
+  getAllPlaylists(): Promise<Playlist[]>;
+  getPlaylistWithItems(id: string): Promise<PlaylistWithItems | undefined>;
+  getAllPlaylistsWithItems(): Promise<PlaylistWithItems[]>;
+  createPlaylist(playlist: InsertPlaylist): Promise<Playlist>;
+  updatePlaylist(id: string, updates: Partial<Playlist>): Promise<Playlist | undefined>;
+  deletePlaylist(id: string): Promise<boolean>;
+  addItemToPlaylist(item: InsertPlaylistItem): Promise<PlaylistItem>;
+  removeItemFromPlaylist(itemId: string): Promise<boolean>;
   
   getDashboardStats(): Promise<DashboardStats>;
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
@@ -262,6 +279,112 @@ export class DatabaseStorage implements IStorage {
     }
     
     return result;
+  }
+
+  // Playlist methods
+  async getPlaylist(id: string): Promise<Playlist | undefined> {
+    const [playlist] = await db.select().from(playlists).where(eq(playlists.id, id));
+    return playlist || undefined;
+  }
+
+  async getAllPlaylists(): Promise<Playlist[]> {
+    return await db.select().from(playlists);
+  }
+
+  async getPlaylistWithItems(id: string): Promise<PlaylistWithItems | undefined> {
+    const [playlist] = await db.select().from(playlists).where(eq(playlists.id, id));
+    if (!playlist) return undefined;
+
+    const items = await db
+      .select()
+      .from(playlistItems)
+      .where(eq(playlistItems.playlistId, id));
+
+    const itemsWithNames = [];
+    for (const item of items) {
+      const [content] = await db
+        .select()
+        .from(contentItems)
+        .where(eq(contentItems.id, item.contentId));
+      
+      itemsWithNames.push({
+        ...item,
+        contentName: content?.name || "Unknown Content",
+      });
+    }
+
+    return {
+      ...playlist,
+      items: itemsWithNames,
+    };
+  }
+
+  async getAllPlaylistsWithItems(): Promise<PlaylistWithItems[]> {
+    const allPlaylists = await db.select().from(playlists);
+    
+    const result: PlaylistWithItems[] = [];
+    for (const playlist of allPlaylists) {
+      const items = await db
+        .select()
+        .from(playlistItems)
+        .where(eq(playlistItems.playlistId, playlist.id));
+
+      const itemsWithNames = [];
+      for (const item of items) {
+        const [content] = await db
+          .select()
+          .from(contentItems)
+          .where(eq(contentItems.id, item.contentId));
+        
+        itemsWithNames.push({
+          ...item,
+          contentName: content?.name || "Unknown Content",
+        });
+      }
+
+      result.push({
+        ...playlist,
+        items: itemsWithNames,
+      });
+    }
+
+    return result;
+  }
+
+  async createPlaylist(insertPlaylist: InsertPlaylist): Promise<Playlist> {
+    const [playlist] = await db
+      .insert(playlists)
+      .values(insertPlaylist)
+      .returning();
+    return playlist;
+  }
+
+  async updatePlaylist(id: string, updates: Partial<Playlist>): Promise<Playlist | undefined> {
+    const [updated] = await db
+      .update(playlists)
+      .set(updates)
+      .where(eq(playlists.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePlaylist(id: string): Promise<boolean> {
+    await db.delete(playlistItems).where(eq(playlistItems.playlistId, id));
+    const result = await db.delete(playlists).where(eq(playlists.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async addItemToPlaylist(insertItem: InsertPlaylistItem): Promise<PlaylistItem> {
+    const [item] = await db
+      .insert(playlistItems)
+      .values(insertItem)
+      .returning();
+    return item;
+  }
+
+  async removeItemFromPlaylist(itemId: string): Promise<boolean> {
+    const result = await db.delete(playlistItems).where(eq(playlistItems.id, itemId));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

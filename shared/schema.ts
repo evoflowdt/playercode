@@ -51,6 +51,21 @@ export const schedules = pgTable("schedules", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const playlists = pgTable("playlists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const playlistItems = pgTable("playlist_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  playlistId: varchar("playlist_id").notNull(),
+  contentId: varchar("content_id").notNull(),
+  order: integer("order").notNull(),
+  duration: integer("duration"),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -88,6 +103,18 @@ export const insertScheduleSchema = createInsertSchema(schedules).pick({
   active: true,
 });
 
+export const insertPlaylistSchema = createInsertSchema(playlists).pick({
+  name: true,
+  description: true,
+});
+
+export const insertPlaylistItemSchema = createInsertSchema(playlistItems).pick({
+  playlistId: true,
+  contentId: true,
+  order: true,
+  duration: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -99,6 +126,12 @@ export type DisplayGroup = typeof displayGroups.$inferSelect;
 
 export type InsertSchedule = z.infer<typeof insertScheduleSchema>;
 export type Schedule = typeof schedules.$inferSelect;
+
+export type InsertPlaylist = z.infer<typeof insertPlaylistSchema>;
+export type Playlist = typeof playlists.$inferSelect;
+
+export type InsertPlaylistItem = z.infer<typeof insertPlaylistItemSchema>;
+export type PlaylistItem = typeof playlistItems.$inferSelect;
 
 export interface DashboardStats {
   totalDisplays: number;
@@ -114,4 +147,8 @@ export interface DisplayWithGroup extends Display {
 export interface ScheduleWithDetails extends Schedule {
   contentName: string;
   targetName: string;
+}
+
+export interface PlaylistWithItems extends Playlist {
+  items: Array<PlaylistItem & { contentName: string }>;
 }
