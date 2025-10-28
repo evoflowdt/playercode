@@ -220,14 +220,17 @@ export function ContentFormDialog({
                         if (file.uploadURL) {
                           try {
                             const uploadUrl = new URL(file.uploadURL);
+                            // pathname format: /<bucket-name>/objects/uploads/<uuid>
+                            // We need to extract everything after the bucket name (which is /objects/uploads/<uuid>)
                             const pathname = uploadUrl.pathname;
-                            // pathname format: /bucket-name/path/to/object
-                            // We need to extract everything after the bucket name
                             const pathParts = pathname.split('/').filter(p => p);
                             if (pathParts.length >= 2) {
-                              // Remove bucket name, keep the rest
+                              // Remove bucket name (first part), keep the rest
+                              // pathParts[0] = bucket-name
+                              // pathParts[1..n] = objects/uploads/<uuid>
                               const objectPath = pathParts.slice(1).join('/');
-                              const url = `/objects/${objectPath}`;
+                              // objectPath is already "objects/uploads/<uuid>", just add leading slash
+                              const url = `/${objectPath}`;
                               form.setValue("url", url);
                               form.setValue("name", file.name || "Uploaded file");
                               toast({
