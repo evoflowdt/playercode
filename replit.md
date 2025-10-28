@@ -230,16 +230,24 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - Seed data: Run `npm run db:seed` to populate demo displays
 
 ## Recent Changes
-- **Feature Set 2: Advanced Scheduling (Oct 28, 2025)**:
-  - Extended database schema with scheduling_rules, content_priority, transitions tables
-  - Implemented scheduling rule engine with conditional logic evaluation
-  - Rule types supported: day_of_week, time_range, date_range
-  - Priority-based content resolution system
-  - Conflict detection for overlapping schedules
-  - Timeline preview generation with hourly/custom intervals
-  - Comprehensive REST API endpoints for all scheduling operations
-  - Zod validation for all scheduling API requests
-  - Integration with existing storage layer and scheduling engine
+- **Feature Set 2: Advanced Scheduling (COMPLETED Oct 28, 2025)**:
+  - **Database Schema**: Extended with scheduling_rules, content_priority, transitions tables
+  - **Scheduling Engine**: Implemented conditional logic evaluation with rule types (day_of_week, time_range, date_range)
+  - **Priority System**: Priority-based content resolution with configurable priority levels (0-100)
+  - **Conflict Detection**: Detects overlapping schedules and priority conflicts
+  - **Timeline Preview**: Generates timeline previews with hourly/custom intervals
+  - **REST API**: 19 comprehensive endpoints for rules CRUD, priorities, transitions, conflicts, timeline
+  - **Advanced Scheduling UI**: Complete tabbed interface at /advanced-scheduling
+    - Scheduling Rules tab: Create/manage conditional rules with JSON configuration
+    - Content Priorities tab: Assign priority levels to content items
+    - Transitions tab: Configure fade/slide/zoom transitions with duration settings
+    - Conflict Detection tab: Detect and visualize scheduling conflicts
+    - Timeline Preview tab: Preview content schedule over custom date ranges
+  - **Form Validation**: React Hook Form + Zod with z.coerce.number() for numeric fields
+  - **JSON Configuration**: Proper JSON parsing and submission for rule/transition configs
+  - **Navigation**: Added sidebar link with CalendarClock icon
+  - **i18n**: English/Italian translations (Advanced Scheduling / Pianificazione Avanzata)
+  - **Status**: All 4 tasks completed, architect-reviewed, end-to-end functional
 
 - **Feature Set 1: Player Applications (Oct 28, 2025)**:
   - Added player_sessions, player_capabilities, pairing_tokens tables
