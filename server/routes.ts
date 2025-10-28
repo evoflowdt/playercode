@@ -235,11 +235,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/schedules", async (req, res) => {
     try {
-      const validatedData = insertScheduleSchema.parse(req.body);
+      console.log('Schedule request body:', req.body);
+      
+      const scheduleData = {
+        ...req.body,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
+      };
+      
+      console.log('Processed schedule data:', scheduleData);
+      const validatedData = insertScheduleSchema.parse(scheduleData);
       const schedule = await storage.createSchedule(validatedData);
       res.status(201).json(schedule);
     } catch (error) {
-      res.status(400).json({ error: "Invalid schedule data" });
+      console.error('Schedule creation error:', error);
+      res.status(400).json({ error: "Invalid schedule data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
