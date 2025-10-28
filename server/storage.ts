@@ -1,3 +1,4 @@
+// Database storage implementation - migrated from MemStorage to PostgreSQL
 import {
   type Display,
   type InsertDisplay,
@@ -10,8 +11,13 @@ import {
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
+  displays,
+  contentItems,
+  displayGroups,
+  schedules,
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, sql } from "drizzle-orm";
 
 export interface IStorage {
   getDisplay(id: string): Promise<Display | undefined>;
@@ -43,250 +49,220 @@ export interface IStorage {
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
 }
 
-export class MemStorage implements IStorage {
-  private displays: Map<string, Display>;
-  private contentItems: Map<string, ContentItem>;
-  private displayGroups: Map<string, DisplayGroup>;
-  private schedules: Map<string, Schedule>;
-
-  constructor() {
-    this.displays = new Map();
-    this.contentItems = new Map();
-    this.displayGroups = new Map();
-    this.schedules = new Map();
-    
-    this.seedData();
-  }
-
-  private seedData() {
-    const demoDisplays: Display[] = [
-      {
-        id: randomUUID(),
-        name: "Store Entrance Display",
-        hashCode: "ABC123456",
-        status: "online",
-        os: "Samsung Tizen",
-        location: "New York, USA",
-        latitude: "40.7128",
-        longitude: "-74.0060",
-        resolution: "1920x1080",
-        lastSeen: new Date(),
-        screenshot: null,
-        groupId: null,
-      },
-      {
-        id: randomUUID(),
-        name: "Lobby Screen",
-        hashCode: "DEF789012",
-        status: "online",
-        os: "LG webOS",
-        location: "London, UK",
-        latitude: "51.5074",
-        longitude: "-0.1278",
-        resolution: "3840x2160",
-        lastSeen: new Date(),
-        screenshot: null,
-        groupId: null,
-      },
-      {
-        id: randomUUID(),
-        name: "Waiting Room TV",
-        hashCode: "GHI345678",
-        status: "offline",
-        os: "Android",
-        location: "Tokyo, Japan",
-        latitude: "35.6762",
-        longitude: "139.6503",
-        resolution: "1920x1080",
-        lastSeen: new Date(Date.now() - 3600000),
-        screenshot: null,
-        groupId: null,
-      },
-    ];
-
-    demoDisplays.forEach(display => {
-      this.displays.set(display.id, display);
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
+  // Display methods
   async getDisplay(id: string): Promise<Display | undefined> {
-    return this.displays.get(id);
+    const [display] = await db.select().from(displays).where(eq(displays.id, id));
+    return display || undefined;
   }
 
   async getAllDisplays(): Promise<Display[]> {
-    return Array.from(this.displays.values());
+    return await db.select().from(displays);
   }
 
   async createDisplay(insertDisplay: InsertDisplay): Promise<Display> {
-    const id = randomUUID();
-    const display: Display = {
-      ...insertDisplay,
-      id,
-      status: "offline",
-      lastSeen: null,
-      screenshot: null,
-      groupId: null,
-    };
-    this.displays.set(id, display);
+    const [display] = await db
+      .insert(displays)
+      .values(insertDisplay)
+      .returning();
     return display;
   }
 
   async updateDisplay(id: string, updates: Partial<Display>): Promise<Display | undefined> {
-    const display = this.displays.get(id);
-    if (!display) return undefined;
-    
-    const updated = { ...display, ...updates };
-    this.displays.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(displays)
+      .set(updates)
+      .where(eq(displays.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteDisplay(id: string): Promise<boolean> {
-    return this.displays.delete(id);
+    const result = await db.delete(displays).where(eq(displays.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Content methods
   async getContentItem(id: string): Promise<ContentItem | undefined> {
-    return this.contentItems.get(id);
+    const [item] = await db.select().from(contentItems).where(eq(contentItems.id, id));
+    return item || undefined;
   }
 
   async getAllContentItems(): Promise<ContentItem[]> {
-    return Array.from(this.contentItems.values());
+    return await db.select().from(contentItems);
   }
 
   async createContentItem(insertItem: InsertContentItem): Promise<ContentItem> {
-    const id = randomUUID();
-    const item: ContentItem = {
-      ...insertItem,
-      id,
-      uploadedAt: new Date(),
-    };
-    this.contentItems.set(id, item);
+    const [item] = await db
+      .insert(contentItems)
+      .values(insertItem)
+      .returning();
     return item;
   }
 
   async updateContentItem(id: string, updates: Partial<ContentItem>): Promise<ContentItem | undefined> {
-    const item = this.contentItems.get(id);
-    if (!item) return undefined;
-    
-    const updated = { ...item, ...updates };
-    this.contentItems.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(contentItems)
+      .set(updates)
+      .where(eq(contentItems.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteContentItem(id: string): Promise<boolean> {
-    return this.contentItems.delete(id);
+    const result = await db.delete(contentItems).where(eq(contentItems.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Display Group methods
   async getDisplayGroup(id: string): Promise<DisplayGroup | undefined> {
-    return this.displayGroups.get(id);
+    const [group] = await db.select().from(displayGroups).where(eq(displayGroups.id, id));
+    return group || undefined;
   }
 
   async getAllDisplayGroups(): Promise<DisplayGroup[]> {
-    return Array.from(this.displayGroups.values());
+    return await db.select().from(displayGroups);
   }
 
   async createDisplayGroup(insertGroup: InsertDisplayGroup): Promise<DisplayGroup> {
-    const id = randomUUID();
-    const group: DisplayGroup = {
-      ...insertGroup,
-      id,
-      createdAt: new Date(),
-    };
-    this.displayGroups.set(id, group);
+    const [group] = await db
+      .insert(displayGroups)
+      .values(insertGroup)
+      .returning();
     return group;
   }
 
   async updateDisplayGroup(id: string, updates: Partial<DisplayGroup>): Promise<DisplayGroup | undefined> {
-    const group = this.displayGroups.get(id);
-    if (!group) return undefined;
-    
-    const updated = { ...group, ...updates };
-    this.displayGroups.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(displayGroups)
+      .set(updates)
+      .where(eq(displayGroups.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteDisplayGroup(id: string): Promise<boolean> {
-    return this.displayGroups.delete(id);
+    const result = await db.delete(displayGroups).where(eq(displayGroups.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Schedule methods
   async getSchedule(id: string): Promise<Schedule | undefined> {
-    return this.schedules.get(id);
+    const [schedule] = await db.select().from(schedules).where(eq(schedules.id, id));
+    return schedule || undefined;
   }
 
   async getAllSchedules(): Promise<Schedule[]> {
-    return Array.from(this.schedules.values());
+    return await db.select().from(schedules);
   }
 
   async getSchedulesWithDetails(): Promise<ScheduleWithDetails[]> {
-    const schedules = Array.from(this.schedules.values());
-    return schedules.map(schedule => {
-      const content = this.contentItems.get(schedule.contentId);
-      let targetName = "Unknown";
+    const allSchedules = await db.select().from(schedules);
+    
+    const result: ScheduleWithDetails[] = [];
+    
+    for (const schedule of allSchedules) {
+      const [content] = await db
+        .select()
+        .from(contentItems)
+        .where(eq(contentItems.id, schedule.contentId));
       
+      let targetName = "Unknown";
       if (schedule.targetType === "display") {
-        const display = this.displays.get(schedule.targetId);
+        const [display] = await db
+          .select()
+          .from(displays)
+          .where(eq(displays.id, schedule.targetId));
         targetName = display?.name || "Unknown Display";
       } else if (schedule.targetType === "group") {
-        const group = this.displayGroups.get(schedule.targetId);
+        const [group] = await db
+          .select()
+          .from(displayGroups)
+          .where(eq(displayGroups.id, schedule.targetId));
         targetName = group?.name || "Unknown Group";
       }
       
-      return {
+      result.push({
         ...schedule,
         contentName: content?.name || "Unknown Content",
         targetName,
-      };
-    });
+      });
+    }
+    
+    return result;
   }
 
   async createSchedule(insertSchedule: InsertSchedule): Promise<Schedule> {
-    const id = randomUUID();
-    const schedule: Schedule = {
-      ...insertSchedule,
-      id,
-      createdAt: new Date(),
-    };
-    this.schedules.set(id, schedule);
+    const [schedule] = await db
+      .insert(schedules)
+      .values(insertSchedule)
+      .returning();
     return schedule;
   }
 
   async updateSchedule(id: string, updates: Partial<Schedule>): Promise<Schedule | undefined> {
-    const schedule = this.schedules.get(id);
-    if (!schedule) return undefined;
-    
-    const updated = { ...schedule, ...updates };
-    this.schedules.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(schedules)
+      .set(updates)
+      .where(eq(schedules.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteSchedule(id: string): Promise<boolean> {
-    return this.schedules.delete(id);
+    const result = await db.delete(schedules).where(eq(schedules.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
+  // Stats and aggregations
   async getDashboardStats(): Promise<DashboardStats> {
-    const displays = Array.from(this.displays.values());
-    const totalDisplays = displays.length;
-    const activeDisplays = displays.filter(d => d.status === "online").length;
-    const offlineDisplays = displays.filter(d => d.status === "offline").length;
-    const totalContent = this.contentItems.size;
+    const result = await db.execute<{
+      total_displays: number;
+      active_displays: number;
+      offline_displays: number;
+      total_content: number;
+    }>(sql`
+      SELECT
+        (SELECT COUNT(*)::int FROM ${displays}) as total_displays,
+        (SELECT COUNT(*)::int FROM ${displays} WHERE status = 'online') as active_displays,
+        (SELECT COUNT(*)::int FROM ${displays} WHERE status = 'offline') as offline_displays,
+        (SELECT COUNT(*)::int FROM ${contentItems}) as total_content
+    `);
+
+    const stats = result.rows[0];
 
     return {
-      totalDisplays,
-      activeDisplays,
-      offlineDisplays,
-      totalContent,
+      totalDisplays: stats?.total_displays || 0,
+      activeDisplays: stats?.active_displays || 0,
+      offlineDisplays: stats?.offline_displays || 0,
+      totalContent: stats?.total_content || 0,
     };
   }
 
   async getDisplaysWithGroups(): Promise<DisplayWithGroup[]> {
-    const displays = Array.from(this.displays.values());
-    return displays.map(display => {
-      const group = display.groupId ? this.displayGroups.get(display.groupId) : null;
-      return {
-        ...display,
-        groupName: group?.name,
-      };
-    });
+    const allDisplays = await db.select().from(displays);
+    
+    const result: DisplayWithGroup[] = [];
+    for (const display of allDisplays) {
+      if (display.groupId) {
+        const [group] = await db
+          .select()
+          .from(displayGroups)
+          .where(eq(displayGroups.id, display.groupId));
+        result.push({
+          ...display,
+          groupName: group?.name,
+        });
+      } else {
+        result.push({
+          ...display,
+          groupName: undefined,
+        });
+      }
+    }
+    
+    return result;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
