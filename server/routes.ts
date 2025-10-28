@@ -543,7 +543,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
   
-  // Get content to display
+  // Get content to display (using advanced scheduling engine)
   app.get("/api/player/content/:displayId", async (req, res) => {
     try {
       const { displayId } = req.params;
@@ -553,34 +553,38 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(404).json({ error: "Display not found" });
       }
       
-      // Get active schedules for this display
-      const allSchedules = await storage.getSchedulesWithDetails();
-      const now = new Date();
+      // Use scheduling engine to get the content to display
+      const { schedulingEngine } = await import("./scheduling-engine");
+      const scheduledContent = await schedulingEngine.getContentForDisplay(displayId);
       
-      const activeSchedules = allSchedules.filter(schedule => {
-        if (!schedule.active) return false;
-        
-        const isForThisDisplay = 
-          (schedule.targetType === "display" && schedule.targetId === displayId) ||
-          (schedule.targetType === "group" && display.groupId === schedule.targetId);
-        
-        if (!isForThisDisplay) return false;
-        
-        const startTime = new Date(schedule.startTime);
-        const endTime = new Date(schedule.endTime);
-        
-        return now >= startTime && now <= endTime;
-      });
+      if (!scheduledContent) {
+        // No scheduled content, return empty
+        return res.json({
+          display,
+          content: [],
+          schedules: [],
+        });
+      }
       
-      // Get content items from active schedules
-      const contentIds = activeSchedules.map(s => s.contentId);
-      const contentItems = await storage.getAllContentItems();
-      const activeContent = contentItems.filter(item => contentIds.includes(item.id));
+      // Get the actual content item
+      const contentItem = await storage.getContentItem(scheduledContent.contentId);
+      if (!contentItem) {
+        return res.json({
+          display,
+          content: [],
+          schedules: [],
+        });
+      }
+      
+      // Get the schedule details
+      const schedule = await storage.getSchedule(scheduledContent.scheduleId);
       
       res.json({
         display,
-        content: activeContent,
-        schedules: activeSchedules,
+        content: [contentItem],
+        schedules: schedule ? [schedule] : [],
+        priority: scheduledContent.priority,
+        source: scheduledContent.source,
       });
     } catch (error) {
       console.error("Content fetch error:", error);
