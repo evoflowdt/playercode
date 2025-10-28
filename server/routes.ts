@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import {
@@ -10,7 +11,11 @@ import {
   insertScheduleSchema,
   insertPlaylistSchema,
   insertPlaylistItemSchema,
+  insertPairingTokenSchema,
+  insertPlayerSessionSchema,
+  insertPlayerCapabilitiesSchema,
 } from "@shared/schema";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express, httpServer: Server): Promise<void> {
   // Setup WebSocket server (non-blocking)
@@ -368,6 +373,264 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to remove item" });
+    }
+  });
+
+  // Player API Routes
+  
+  // Validation schemas
+  const pairingTokenRequestSchema = z.object({
+    displayName: z.string().optional(),
+    os: z.string().optional(),
+  });
+
+  const pairRequestSchema = z.object({
+    token: z.string().min(1),
+    displayInfo: z.object({
+      name: z.string().optional(),
+      os: z.string().optional(),
+      location: z.string().optional(),
+      latitude: z.string().optional(),
+      longitude: z.string().optional(),
+      resolution: z.string().optional(),
+      playerVersion: z.string().optional(),
+      capabilities: z.object({
+        supportsVideo: z.boolean().optional(),
+        supportsAudio: z.boolean().optional(),
+        supportsHtml: z.boolean().optional(),
+        supportsTouch: z.boolean().optional(),
+        maxVideoResolution: z.string().optional(),
+        supportedVideoFormats: z.array(z.string()).optional(),
+        supportedImageFormats: z.array(z.string()).optional(),
+        cpuInfo: z.string().optional(),
+        memoryMb: z.number().optional(),
+        storageMb: z.number().optional(),
+      }).optional(),
+    }),
+  });
+
+  const heartbeatRequestSchema = z.object({
+    displayId: z.string().min(1),
+    status: z.string().optional(),
+    currentContentId: z.string().optional(),
+  });
+  
+  // Generate a pairing token
+  app.post("/api/player/pairing-token", async (req, res) => {
+    try {
+      const validated = pairingTokenRequestSchema.parse(req.body);
+      
+      // Generate cryptographically secure token
+      const token = randomBytes(6).toString('hex').toUpperCase();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      
+      const pairingToken = await storage.createPairingToken({
+        token,
+        displayName: validated.displayName,
+        os: validated.os,
+        expiresAt,
+      });
+      
+      res.status(201).json(pairingToken);
+    } catch (error) {
+      console.error("Pairing token creation error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create pairing token" });
+    }
+  });
+  
+  // Complete pairing with a token
+  app.post("/api/player/pair", async (req, res) => {
+    try {
+      const validated = pairRequestSchema.parse(req.body);
+      const { token, displayInfo } = validated;
+      
+      const pairingToken = await storage.getPairingToken(token);
+      if (!pairingToken) {
+        return res.status(404).json({ error: "Invalid pairing token" });
+      }
+      
+      if (pairingToken.used) {
+        return res.status(400).json({ error: "Pairing token already used" });
+      }
+      
+      if (pairingToken.expiresAt < new Date()) {
+        return res.status(400).json({ error: "Pairing token expired" });
+      }
+      
+      // Create the display
+      const display = await storage.createDisplay({
+        name: pairingToken.displayName || displayInfo.name || "Unknown Display",
+        hashCode: token,
+        os: pairingToken.os || displayInfo.os || "unknown",
+        location: displayInfo.location,
+        latitude: displayInfo.latitude,
+        longitude: displayInfo.longitude,
+        resolution: displayInfo.resolution,
+      });
+      
+      // Mark token as used
+      await storage.usePairingToken(token, display.id);
+      
+      // Create player session
+      await storage.createPlayerSession({
+        displayId: display.id,
+        playerVersion: displayInfo.playerVersion || "1.0.0",
+        ipAddress: req.ip || req.socket.remoteAddress || "unknown",
+        userAgent: req.headers['user-agent'] || "unknown",
+      });
+      
+      // Create player capabilities if provided
+      if (displayInfo.capabilities) {
+        await storage.createPlayerCapabilities({
+          displayId: display.id,
+          ...displayInfo.capabilities,
+        });
+      }
+      
+      res.status(201).json({ display, message: "Player paired successfully" });
+    } catch (error) {
+      console.error("Pairing error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to complete pairing" });
+    }
+  });
+  
+  // Player heartbeat
+  app.post("/api/player/heartbeat", async (req, res) => {
+    try {
+      const validated = heartbeatRequestSchema.parse(req.body);
+      const { displayId, status, currentContentId } = validated;
+      
+      // Verify display exists
+      const display = await storage.getDisplay(displayId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found" });
+      }
+      
+      // Update display status
+      await storage.updateDisplay(displayId, {
+        status: status || "online",
+        lastSeen: new Date(),
+      });
+      
+      // Update session heartbeat
+      const session = await storage.getPlayerSession(displayId);
+      if (session) {
+        await storage.updatePlayerSession(displayId, {
+          lastHeartbeat: new Date(),
+          currentContentId,
+        });
+      } else {
+        // Create session if it doesn't exist
+        await storage.createPlayerSession({
+          displayId,
+          currentContentId,
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Heartbeat error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update heartbeat" });
+    }
+  });
+  
+  // Get content to display
+  app.get("/api/player/content/:displayId", async (req, res) => {
+    try {
+      const { displayId } = req.params;
+      
+      const display = await storage.getDisplay(displayId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found" });
+      }
+      
+      // Get active schedules for this display
+      const allSchedules = await storage.getSchedulesWithDetails();
+      const now = new Date();
+      
+      const activeSchedules = allSchedules.filter(schedule => {
+        if (!schedule.active) return false;
+        
+        const isForThisDisplay = 
+          (schedule.targetType === "display" && schedule.targetId === displayId) ||
+          (schedule.targetType === "group" && display.groupId === schedule.targetId);
+        
+        if (!isForThisDisplay) return false;
+        
+        const startTime = new Date(schedule.startTime);
+        const endTime = new Date(schedule.endTime);
+        
+        return now >= startTime && now <= endTime;
+      });
+      
+      // Get content items from active schedules
+      const contentIds = activeSchedules.map(s => s.contentId);
+      const contentItems = await storage.getAllContentItems();
+      const activeContent = contentItems.filter(item => contentIds.includes(item.id));
+      
+      res.json({
+        display,
+        content: activeContent,
+        schedules: activeSchedules,
+      });
+    } catch (error) {
+      console.error("Content fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch content" });
+    }
+  });
+  
+  // Get player session info
+  app.get("/api/player/session/:displayId", async (req, res) => {
+    try {
+      const session = await storage.getPlayerSession(req.params.displayId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json(session);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch session" });
+    }
+  });
+  
+  // Update player capabilities
+  app.put("/api/player/capabilities/:displayId", async (req, res) => {
+    try {
+      const { displayId } = req.params;
+      const validatedData = insertPlayerCapabilitiesSchema.partial().parse(req.body);
+      
+      const existing = await storage.getPlayerCapabilities(displayId);
+      if (existing) {
+        const updated = await storage.updatePlayerCapabilities(displayId, validatedData);
+        res.json(updated);
+      } else {
+        const created = await storage.createPlayerCapabilities({
+          displayId,
+          ...validatedData,
+        });
+        res.status(201).json(created);
+      }
+    } catch (error) {
+      console.error("Capabilities update error:", error);
+      res.status(400).json({ error: "Invalid capabilities data" });
+    }
+  });
+  
+  // Cleanup expired pairing tokens (can be called periodically or via cron)
+  app.post("/api/player/cleanup-tokens", async (_req, res) => {
+    try {
+      const count = await storage.cleanupExpiredTokens();
+      res.json({ deletedCount: count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to cleanup tokens" });
     }
   });
 }

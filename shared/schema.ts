@@ -66,6 +66,45 @@ export const playlistItems = pgTable("playlist_items", {
   duration: integer("duration"),
 });
 
+export const pairingTokens = pgTable("pairing_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: text("token").notNull().unique(),
+  displayName: text("display_name"),
+  os: text("os"),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").notNull().default(false),
+  displayId: varchar("display_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const playerSessions = pgTable("player_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayId: varchar("display_id").notNull(),
+  connectedAt: timestamp("connected_at").notNull().defaultNow(),
+  lastHeartbeat: timestamp("last_heartbeat").notNull().defaultNow(),
+  playerVersion: text("player_version"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  currentContentId: varchar("current_content_id"),
+  playbackStatus: text("playback_status").notNull().default("idle"),
+});
+
+export const playerCapabilities = pgTable("player_capabilities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayId: varchar("display_id").notNull().unique(),
+  supportsVideo: boolean("supports_video").notNull().default(true),
+  supportsAudio: boolean("supports_audio").notNull().default(true),
+  supportsHtml: boolean("supports_html").notNull().default(true),
+  supportsTouch: boolean("supports_touch").notNull().default(false),
+  maxVideoResolution: text("max_video_resolution"),
+  supportedVideoFormats: text("supported_video_formats").array(),
+  supportedImageFormats: text("supported_image_formats").array(),
+  cpuInfo: text("cpu_info"),
+  memoryMb: integer("memory_mb"),
+  storageMb: integer("storage_mb"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -115,6 +154,36 @@ export const insertPlaylistItemSchema = createInsertSchema(playlistItems).pick({
   duration: true,
 });
 
+export const insertPairingTokenSchema = createInsertSchema(pairingTokens).pick({
+  token: true,
+  displayName: true,
+  os: true,
+  expiresAt: true,
+});
+
+export const insertPlayerSessionSchema = createInsertSchema(playerSessions).pick({
+  displayId: true,
+  playerVersion: true,
+  ipAddress: true,
+  userAgent: true,
+  currentContentId: true,
+  playbackStatus: true,
+});
+
+export const insertPlayerCapabilitiesSchema = createInsertSchema(playerCapabilities).pick({
+  displayId: true,
+  supportsVideo: true,
+  supportsAudio: true,
+  supportsHtml: true,
+  supportsTouch: true,
+  maxVideoResolution: true,
+  supportedVideoFormats: true,
+  supportedImageFormats: true,
+  cpuInfo: true,
+  memoryMb: true,
+  storageMb: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -132,6 +201,15 @@ export type Playlist = typeof playlists.$inferSelect;
 
 export type InsertPlaylistItem = z.infer<typeof insertPlaylistItemSchema>;
 export type PlaylistItem = typeof playlistItems.$inferSelect;
+
+export type InsertPairingToken = z.infer<typeof insertPairingTokenSchema>;
+export type PairingToken = typeof pairingTokens.$inferSelect;
+
+export type InsertPlayerSession = z.infer<typeof insertPlayerSessionSchema>;
+export type PlayerSession = typeof playerSessions.$inferSelect;
+
+export type InsertPlayerCapabilities = z.infer<typeof insertPlayerCapabilitiesSchema>;
+export type PlayerCapabilities = typeof playerCapabilities.$inferSelect;
 
 export interface DashboardStats {
   totalDisplays: number;

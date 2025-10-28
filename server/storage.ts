@@ -12,6 +12,12 @@ import {
   type InsertPlaylist,
   type PlaylistItem,
   type InsertPlaylistItem,
+  type PairingToken,
+  type InsertPairingToken,
+  type PlayerSession,
+  type InsertPlayerSession,
+  type PlayerCapabilities,
+  type InsertPlayerCapabilities,
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
@@ -22,9 +28,12 @@ import {
   schedules,
   playlists,
   playlistItems,
+  pairingTokens,
+  playerSessions,
+  playerCapabilities,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, gt } from "drizzle-orm";
 
 export interface IStorage {
   getDisplay(id: string): Promise<Display | undefined>;
@@ -61,6 +70,23 @@ export interface IStorage {
   deletePlaylist(id: string): Promise<boolean>;
   addItemToPlaylist(item: InsertPlaylistItem): Promise<PlaylistItem>;
   removeItemFromPlaylist(itemId: string): Promise<boolean>;
+  
+  getPairingToken(token: string): Promise<PairingToken | undefined>;
+  getPairingTokenById(id: string): Promise<PairingToken | undefined>;
+  createPairingToken(token: InsertPairingToken): Promise<PairingToken>;
+  usePairingToken(token: string, displayId: string): Promise<boolean>;
+  cleanupExpiredTokens(): Promise<number>;
+  
+  getPlayerSession(displayId: string): Promise<PlayerSession | undefined>;
+  getAllPlayerSessions(): Promise<PlayerSession[]>;
+  createPlayerSession(session: InsertPlayerSession): Promise<PlayerSession>;
+  updatePlayerSession(displayId: string, updates: Partial<PlayerSession>): Promise<PlayerSession | undefined>;
+  deletePlayerSession(displayId: string): Promise<boolean>;
+  updateHeartbeat(displayId: string): Promise<boolean>;
+  
+  getPlayerCapabilities(displayId: string): Promise<PlayerCapabilities | undefined>;
+  createPlayerCapabilities(capabilities: InsertPlayerCapabilities): Promise<PlayerCapabilities>;
+  updatePlayerCapabilities(displayId: string, updates: Partial<PlayerCapabilities>): Promise<PlayerCapabilities | undefined>;
   
   getDashboardStats(): Promise<DashboardStats>;
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
@@ -385,6 +411,138 @@ export class DatabaseStorage implements IStorage {
   async removeItemFromPlaylist(itemId: string): Promise<boolean> {
     const result = await db.delete(playlistItems).where(eq(playlistItems.id, itemId));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Pairing Token methods
+  async getPairingToken(token: string): Promise<PairingToken | undefined> {
+    const [pairingToken] = await db
+      .select()
+      .from(pairingTokens)
+      .where(eq(pairingTokens.token, token));
+    return pairingToken || undefined;
+  }
+
+  async getPairingTokenById(id: string): Promise<PairingToken | undefined> {
+    const [pairingToken] = await db
+      .select()
+      .from(pairingTokens)
+      .where(eq(pairingTokens.id, id));
+    return pairingToken || undefined;
+  }
+
+  async createPairingToken(insertToken: InsertPairingToken): Promise<PairingToken> {
+    const [token] = await db
+      .insert(pairingTokens)
+      .values(insertToken)
+      .returning();
+    return token;
+  }
+
+  async usePairingToken(token: string, displayId: string): Promise<boolean> {
+    const result = await db
+      .update(pairingTokens)
+      .set({ used: true, displayId })
+      .where(
+        and(
+          eq(pairingTokens.token, token),
+          eq(pairingTokens.used, false),
+          gt(pairingTokens.expiresAt, new Date())
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async cleanupExpiredTokens(): Promise<number> {
+    const result = await db
+      .delete(pairingTokens)
+      .where(
+        and(
+          eq(pairingTokens.used, false),
+          sql`${pairingTokens.expiresAt} < NOW()`
+        )
+      );
+    return result.rowCount || 0;
+  }
+
+  // Player Session methods
+  async getPlayerSession(displayId: string): Promise<PlayerSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(playerSessions)
+      .where(eq(playerSessions.displayId, displayId));
+    return session || undefined;
+  }
+
+  async getAllPlayerSessions(): Promise<PlayerSession[]> {
+    return await db.select().from(playerSessions);
+  }
+
+  async createPlayerSession(insertSession: InsertPlayerSession): Promise<PlayerSession> {
+    const [session] = await db
+      .insert(playerSessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async updatePlayerSession(
+    displayId: string,
+    updates: Partial<PlayerSession>
+  ): Promise<PlayerSession | undefined> {
+    const [updated] = await db
+      .update(playerSessions)
+      .set(updates)
+      .where(eq(playerSessions.displayId, displayId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePlayerSession(displayId: string): Promise<boolean> {
+    const result = await db
+      .delete(playerSessions)
+      .where(eq(playerSessions.displayId, displayId));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async updateHeartbeat(displayId: string): Promise<boolean> {
+    const result = await db
+      .update(playerSessions)
+      .set({ lastHeartbeat: new Date() })
+      .where(eq(playerSessions.displayId, displayId))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Player Capabilities methods
+  async getPlayerCapabilities(displayId: string): Promise<PlayerCapabilities | undefined> {
+    const [capabilities] = await db
+      .select()
+      .from(playerCapabilities)
+      .where(eq(playerCapabilities.displayId, displayId));
+    return capabilities || undefined;
+  }
+
+  async createPlayerCapabilities(
+    insertCapabilities: InsertPlayerCapabilities
+  ): Promise<PlayerCapabilities> {
+    const [capabilities] = await db
+      .insert(playerCapabilities)
+      .values(insertCapabilities)
+      .returning();
+    return capabilities;
+  }
+
+  async updatePlayerCapabilities(
+    displayId: string,
+    updates: Partial<PlayerCapabilities>
+  ): Promise<PlayerCapabilities | undefined> {
+    const [updated] = await db
+      .update(playerCapabilities)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(playerCapabilities.displayId, displayId))
+      .returning();
+    return updated || undefined;
   }
 }
 
