@@ -158,6 +158,7 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - `GET /api/player/content/:displayId` - Get content for display
 - `GET /api/player/sessions` - List all player sessions
 - `GET /api/player/session/:displayId` - Get session info
+- `DELETE /api/player/session/:displayId` - Delete player session (returns 204)
 - `PUT /api/player/capabilities/:displayId` - Update player capabilities
 - `POST /api/player/cleanup-tokens` - Cleanup expired tokens
 
@@ -248,6 +249,16 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
   - **Navigation**: Added sidebar link with CalendarClock icon
   - **i18n**: English/Italian translations (Advanced Scheduling / Pianificazione Avanzata)
   - **Status**: All 4 tasks completed, architect-reviewed, end-to-end functional
+
+- **Player Session Management Enhancement (Oct 28, 2025)**:
+  - Added DELETE /api/player/session/:displayId endpoint (returns 204 No Content)
+  - Per-session delete button in Settings page with visual feedback
+  - Spinner animation during deletion with per-session pending state tracking
+  - Proper 204 response handling (no body parsing)
+  - TanStack Query cache invalidation on successful deletion
+  - Toast notifications for success/error feedback
+  - Set-based concurrent deletion tracking to prevent double-submits
+  - Architect-reviewed and ready for testing
 
 - **Feature Set 1: Player Applications (Oct 28, 2025)**:
   - Added player_sessions, player_capabilities, pairing_tokens tables
