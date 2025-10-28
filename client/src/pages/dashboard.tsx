@@ -6,6 +6,7 @@ import { DashboardStats, Display } from "@shared/schema";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/language-provider";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -17,6 +18,8 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function Dashboard() {
+  const { t } = useLanguage();
+  
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
   });
@@ -27,13 +30,26 @@ export default function Dashboard() {
 
   const recentDisplays = displays?.slice(0, 8) || [];
   const displaysWithLocation = displays?.filter(d => d.latitude && d.longitude) || [];
+  
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "online":
+        return t('online');
+      case "offline":
+        return t('offline');
+      case "warning":
+        return t('warning');
+      default:
+        return status;
+    }
+  };
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('dashboardTitle')}</h1>
         <p className="text-muted-foreground text-base">
-          Monitor and manage your digital signage network
+          {t('dashboardSubtitle')}
         </p>
       </div>
 
@@ -47,32 +63,32 @@ export default function Dashboard() {
         ) : (
           <>
             <StatsCard
-              title="Total Displays"
+              title={t('totalDisplays')}
               value={stats?.totalDisplays || 0}
               icon={Monitor}
               variant="default"
               testId="stat-total-displays"
             />
             <StatsCard
-              title="Active Now"
+              title={t('activeNow')}
               value={stats?.activeDisplays || 0}
               icon={Activity}
               variant="success"
               trend={{
-                value: "+12% from last week",
+                value: `+12% ${t('fromLastWeek')}`,
                 isPositive: true,
               }}
               testId="stat-active-displays"
             />
             <StatsCard
-              title="Offline"
+              title={t('offlineDisplays')}
               value={stats?.offlineDisplays || 0}
               icon={AlertCircle}
               variant="destructive"
               testId="stat-offline-displays"
             />
             <StatsCard
-              title="Content Items"
+              title={t('contentItems')}
               value={stats?.totalContent || 0}
               icon={FolderOpen}
               variant="default"
@@ -83,7 +99,7 @@ export default function Dashboard() {
       </div>
 
       <Card className="p-6 shadow-sm">
-        <h2 className="text-xl font-bold tracking-tight mb-4">Display Locations</h2>
+        <h2 className="text-xl font-bold tracking-tight mb-4">{t('displayLocations')}</h2>
         <div className="h-96 rounded-lg overflow-hidden border">
           {displaysWithLocation.length > 0 ? (
             <MapContainer
@@ -112,11 +128,11 @@ export default function Dashboard() {
                       <Badge
                         className={`mt-1 ${
                           display.status === "online"
-                            ? "bg-green-500"
-                            : "bg-red-500"
-                        }`}
+                            ? "bg-success"
+                            : "bg-destructive"
+                        } text-white border-0`}
                       >
-                        {display.status}
+                        {getStatusText(display.status)}
                       </Badge>
                     </div>
                   </Popup>
@@ -126,7 +142,7 @@ export default function Dashboard() {
           ) : (
             <div className="h-full flex items-center justify-center bg-muted">
               <p className="text-muted-foreground">
-                No displays with location data available
+                {t('noDisplaysWithLocation')}
               </p>
             </div>
           )}
@@ -135,7 +151,7 @@ export default function Dashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold tracking-tight">Recent Displays</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t('recentDisplays')}</h2>
         </div>
         {displaysLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -152,7 +168,7 @@ export default function Dashboard() {
         ) : (
           <Card className="p-12 text-center shadow-sm">
             <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No displays registered yet</p>
+            <p className="text-muted-foreground">{t('noDisplaysRegistered')}</p>
           </Card>
         )}
       </div>

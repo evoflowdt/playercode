@@ -33,8 +33,10 @@ import { Monitor, Plus, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function Displays() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
@@ -42,6 +44,19 @@ export default function Displays() {
   const [editDisplay, setEditDisplay] = useState<Display | null>(null);
   const [deleteDisplay, setDeleteDisplay] = useState<Display | null>(null);
   const { toast } = useToast();
+  
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "online":
+        return t('online');
+      case "offline":
+        return t('offline');
+      case "warning":
+        return t('warning');
+      default:
+        return status;
+    }
+  };
 
   const { data: displays, isLoading } = useQuery<Display[]>({
     queryKey: ["/api/displays"],
@@ -53,15 +68,15 @@ export default function Displays() {
       queryClient.invalidateQueries({ queryKey: ["/api/displays"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
-        title: "Success",
-        description: "Display removed successfully",
+        title: t('success'),
+        description: t('displayDeleted'),
       });
       setDeleteDisplay(null);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to remove display",
+        title: t('error'),
+        description: t('failedDeleteDisplay'),
         variant: "destructive",
       });
     },
@@ -80,9 +95,9 @@ export default function Displays() {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Displays</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('displaysTitle')}</h1>
           <p className="text-muted-foreground text-base">
-            Manage and monitor all your digital signage displays
+            {t('displaysSubtitle')}
           </p>
         </div>
         <Button
@@ -90,7 +105,7 @@ export default function Displays() {
           data-testid="button-add-display"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Display
+          {t('addDisplay')}
         </Button>
       </div>
 
@@ -99,7 +114,7 @@ export default function Displays() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search displays..."
+              placeholder={t('searchDisplays')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -108,13 +123,13 @@ export default function Displays() {
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-48" data-testid="select-status-filter">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t('filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="online">Online</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="all">{t('allStatus')}</SelectItem>
+              <SelectItem value="online">{t('online')}</SelectItem>
+              <SelectItem value="offline">{t('offline')}</SelectItem>
+              <SelectItem value="warning">{t('warning')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -141,16 +156,16 @@ export default function Displays() {
       ) : (
         <EmptyState
           icon={Monitor}
-          title="No displays found"
+          title={t('noDisplaysFound')}
           description={
             searchQuery || statusFilter !== "all"
-              ? "Try adjusting your filters"
-              : "Add your first display to get started with digital signage management"
+              ? t('tryAdjustingFilters')
+              : t('addFirstDisplay')
           }
           action={
             !searchQuery && statusFilter === "all"
               ? {
-                  label: "Add Display",
+                  label: t('addDisplay'),
                   onClick: () => setShowAddDialog(true),
                   testId: "button-add-first-display",
                 }
@@ -165,7 +180,7 @@ export default function Displays() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Display Details</DialogTitle>
+            <DialogTitle>{t('displayDetails')}</DialogTitle>
           </DialogHeader>
           {selectedDisplay && (
             <div className="space-y-4">
@@ -180,27 +195,27 @@ export default function Displays() {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="text-sm text-muted-foreground">{t('name')}</p>
                   <p className="font-medium">{selectedDisplay.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p className="font-medium capitalize">{selectedDisplay.status}</p>
+                  <p className="text-sm text-muted-foreground">{t('status')}</p>
+                  <p className="font-medium">{getStatusText(selectedDisplay.status)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">OS</p>
+                  <p className="text-sm text-muted-foreground">{t('os')}</p>
                   <p className="font-medium">{selectedDisplay.os}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Resolution</p>
+                  <p className="text-sm text-muted-foreground">{t('resolution')}</p>
                   <p className="font-medium">{selectedDisplay.resolution || "N/A"}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="text-sm text-muted-foreground">{t('location')}</p>
                   <p className="font-medium">{selectedDisplay.location || "N/A"}</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-sm text-muted-foreground">Hash Code</p>
+                  <p className="text-sm text-muted-foreground">{t('hashCode')}</p>
                   <p className="font-mono text-sm">{selectedDisplay.hashCode}</p>
                 </div>
               </div>
@@ -226,19 +241,18 @@ export default function Displays() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Display</AlertDialogTitle>
+            <AlertDialogTitle>{t('removeDisplay')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove "{deleteDisplay?.name}"? This action
-              cannot be undone.
+              {t('confirmDeleteMessage').replace('{name}', deleteDisplay?.name || '')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteDisplay && deleteMutation.mutate(deleteDisplay.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              {t('remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

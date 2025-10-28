@@ -11,9 +11,11 @@ import { Card } from "@/components/ui/card";
 import { FolderOpen, Upload, Search, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/lib/language-provider";
 import type { UploadResult } from "@uppy/core";
 
 export default function Content() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
@@ -28,14 +30,14 @@ export default function Content() {
       queryClient.invalidateQueries({ queryKey: ["/api/content"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
-        title: "Success",
-        description: "Content deleted successfully",
+        title: t('success'),
+        description: t('contentDeleted'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete content",
+        title: t('error'),
+        description: t('failedDeleteContent'),
         variant: "destructive",
       });
     },
@@ -48,14 +50,14 @@ export default function Content() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/content"] });
       toast({
-        title: "Success",
-        description: "Content uploaded successfully",
+        title: t('success'),
+        description: t('contentUploaded'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to upload content",
+        title: t('error'),
+        description: t('failedUploadContent'),
         variant: "destructive",
       });
     },
@@ -94,9 +96,9 @@ export default function Content() {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Content Library</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('contentTitle')}</h1>
           <p className="text-muted-foreground text-base">
-            Manage your media files and digital signage content
+            {t('contentSubtitle')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -105,7 +107,7 @@ export default function Content() {
             data-testid="button-add-content"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Content
+            {t('addContent')}
           </Button>
           <ObjectUploader
             maxNumberOfFiles={10}
@@ -116,7 +118,7 @@ export default function Content() {
             testId="button-upload-content"
           >
             <Upload className="h-4 w-4 mr-2" />
-            Quick Upload
+            {t('quickUpload')}
           </ObjectUploader>
         </div>
       </div>
@@ -125,7 +127,7 @@ export default function Content() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search content..."
+            placeholder={t('searchContent')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -153,11 +155,11 @@ export default function Content() {
       ) : (
         <EmptyState
           icon={FolderOpen}
-          title="No content found"
+          title={t('noContentFound')}
           description={
             searchQuery
-              ? "Try adjusting your search"
-              : "Upload your first media file to start creating digital signage content"
+              ? t('tryAdjusting')
+              : t('uploadFirstMedia')
           }
         />
       )}
