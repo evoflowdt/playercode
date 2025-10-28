@@ -14,6 +14,9 @@ import {
   insertPairingTokenSchema,
   insertPlayerSessionSchema,
   insertPlayerCapabilitiesSchema,
+  insertSchedulingRuleSchema,
+  insertContentPrioritySchema,
+  insertTransitionSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -660,6 +663,244 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json({ deletedCount: count });
     } catch (error) {
       res.status(500).json({ error: "Failed to cleanup tokens" });
+    }
+  });
+
+  // Feature Set 2: Advanced Scheduling API Endpoints
+  
+  // Scheduling Rules endpoints
+  app.post("/api/scheduling/rules", async (req, res) => {
+    try {
+      const validatedData = insertSchedulingRuleSchema.parse(req.body);
+      const rule = await storage.createSchedulingRule(validatedData);
+      res.status(201).json(rule);
+    } catch (error) {
+      console.error("Rule creation error:", error);
+      res.status(400).json({ error: "Invalid rule data" });
+    }
+  });
+
+  app.get("/api/scheduling/rules", async (_req, res) => {
+    try {
+      const rules = await storage.getAllSchedulingRules();
+      res.json(rules);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch rules" });
+    }
+  });
+
+  app.get("/api/scheduling/rules/:id", async (req, res) => {
+    try {
+      const rule = await storage.getSchedulingRule(req.params.id);
+      if (!rule) {
+        return res.status(404).json({ error: "Rule not found" });
+      }
+      res.json(rule);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch rule" });
+    }
+  });
+
+  app.get("/api/scheduling/rules/schedule/:scheduleId", async (req, res) => {
+    try {
+      const rules = await storage.getSchedulingRulesBySchedule(req.params.scheduleId);
+      res.json(rules);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch rules" });
+    }
+  });
+
+  app.put("/api/scheduling/rules/:id", async (req, res) => {
+    try {
+      const validatedData = insertSchedulingRuleSchema.partial().parse(req.body);
+      const updated = await storage.updateSchedulingRule(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Rule not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Rule update error:", error);
+      res.status(400).json({ error: "Invalid rule data" });
+    }
+  });
+
+  app.delete("/api/scheduling/rules/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteSchedulingRule(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Rule not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete rule" });
+    }
+  });
+
+  // Conflict detection endpoint
+  app.post("/api/scheduling/conflicts", async (req, res) => {
+    try {
+      const { targetType, targetId, currentDate } = req.body;
+      
+      if (!targetType || !targetId) {
+        return res.status(400).json({ error: "targetType and targetId are required" });
+      }
+      
+      const { schedulingEngine } = await import("./scheduling-engine");
+      const conflicts = await schedulingEngine.detectConflicts(
+        targetType,
+        targetId,
+        currentDate ? new Date(currentDate) : new Date()
+      );
+      
+      res.json({ conflicts });
+    } catch (error) {
+      console.error("Conflict detection error:", error);
+      res.status(500).json({ error: "Failed to detect conflicts" });
+    }
+  });
+
+  // Timeline preview endpoint
+  app.post("/api/scheduling/timeline", async (req, res) => {
+    try {
+      const { targetType, targetId, startDate, endDate, intervalMinutes } = req.body;
+      
+      if (!targetType || !targetId || !startDate || !endDate) {
+        return res.status(400).json({ 
+          error: "targetType, targetId, startDate, and endDate are required" 
+        });
+      }
+      
+      const { schedulingEngine } = await import("./scheduling-engine");
+      const timeline = await schedulingEngine.getTimelinePreview(
+        targetType,
+        targetId,
+        new Date(startDate),
+        new Date(endDate),
+        intervalMinutes || 60
+      );
+      
+      res.json({ timeline });
+    } catch (error) {
+      console.error("Timeline preview error:", error);
+      res.status(500).json({ error: "Failed to generate timeline" });
+    }
+  });
+
+  // Content Priority endpoints
+  app.post("/api/content/priorities", async (req, res) => {
+    try {
+      const validatedData = insertContentPrioritySchema.parse(req.body);
+      const priority = await storage.createContentPriority(validatedData);
+      res.status(201).json(priority);
+    } catch (error) {
+      console.error("Priority creation error:", error);
+      res.status(400).json({ error: "Invalid priority data" });
+    }
+  });
+
+  app.get("/api/content/priorities", async (_req, res) => {
+    try {
+      const priorities = await storage.getAllContentPriorities();
+      res.json(priorities);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch priorities" });
+    }
+  });
+
+  app.get("/api/content/priorities/:id", async (req, res) => {
+    try {
+      const priority = await storage.getContentPriority(req.params.id);
+      if (!priority) {
+        return res.status(404).json({ error: "Priority not found" });
+      }
+      res.json(priority);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch priority" });
+    }
+  });
+
+  app.put("/api/content/priorities/:id", async (req, res) => {
+    try {
+      const validatedData = insertContentPrioritySchema.partial().parse(req.body);
+      const updated = await storage.updateContentPriority(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Priority not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Priority update error:", error);
+      res.status(400).json({ error: "Invalid priority data" });
+    }
+  });
+
+  app.delete("/api/content/priorities/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteContentPriority(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Priority not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete priority" });
+    }
+  });
+
+  // Transition endpoints
+  app.post("/api/transitions", async (req, res) => {
+    try {
+      const validatedData = insertTransitionSchema.parse(req.body);
+      const transition = await storage.createTransition(validatedData);
+      res.status(201).json(transition);
+    } catch (error) {
+      console.error("Transition creation error:", error);
+      res.status(400).json({ error: "Invalid transition data" });
+    }
+  });
+
+  app.get("/api/transitions", async (_req, res) => {
+    try {
+      const transitions = await storage.getAllTransitions();
+      res.json(transitions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transitions" });
+    }
+  });
+
+  app.get("/api/transitions/:id", async (req, res) => {
+    try {
+      const transition = await storage.getTransition(req.params.id);
+      if (!transition) {
+        return res.status(404).json({ error: "Transition not found" });
+      }
+      res.json(transition);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transition" });
+    }
+  });
+
+  app.put("/api/transitions/:id", async (req, res) => {
+    try {
+      const validatedData = insertTransitionSchema.partial().parse(req.body);
+      const updated = await storage.updateTransition(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Transition not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Transition update error:", error);
+      res.status(400).json({ error: "Invalid transition data" });
+    }
+  });
+
+  app.delete("/api/transitions/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteTransition(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Transition not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete transition" });
     }
   });
 }
