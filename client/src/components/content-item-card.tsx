@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ export function ContentItemCard({
   onEdit,
   onDelete,
 }: ContentItemCardProps) {
+  const [mediaError, setMediaError] = useState(false);
+  
   const getIcon = () => {
     if (item.type.startsWith("image")) return Image;
     if (item.type.startsWith("video")) return Video;
@@ -42,6 +45,16 @@ export function ContentItemCard({
     return `${mb.toFixed(1)} MB`;
   };
 
+  // Convert object storage path to public URL
+  const getPublicUrl = (url: string) => {
+    if (url.startsWith('/objects/')) {
+      return url.replace('/objects/', '/public-objects/');
+    }
+    return url;
+  };
+
+  const publicUrl = getPublicUrl(item.url);
+
   return (
     <Card
       className={`overflow-hidden hover-elevate cursor-pointer ${
@@ -51,14 +64,20 @@ export function ContentItemCard({
       data-testid={`card-content-${item.id}`}
     >
       <div className="aspect-video bg-muted flex items-center justify-center relative">
-        {item.type.startsWith("image") ? (
+        {!mediaError && item.type.startsWith("image") ? (
           <img
-            src={item.url}
+            src={publicUrl}
             alt={item.name}
             className="w-full h-full object-cover"
+            onError={() => setMediaError(true)}
           />
-        ) : item.type.startsWith("video") ? (
-          <video src={item.url} className="w-full h-full object-cover" />
+        ) : !mediaError && item.type.startsWith("video") ? (
+          <video 
+            src={publicUrl} 
+            className="w-full h-full object-cover"
+            preload="metadata"
+            onError={() => setMediaError(true)}
+          />
         ) : (
           <Icon className="h-16 w-16 text-muted-foreground" />
         )}

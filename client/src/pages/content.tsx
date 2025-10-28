@@ -77,9 +77,15 @@ export default function Content() {
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     if (result.successful && result.successful.length > 0) {
       for (const file of result.successful) {
-        const uploadURL = file.uploadURL as string;
+        // Extract the file path from the upload URL
+        // The upload URL is like: https://.../objects/uploads/<uuid>?signature=...
+        // We need to extract: /objects/uploads/<uuid>
+        const uploadURL = (file.response?.uploadURL || file.uploadURL) as string;
+        const url = new URL(uploadURL);
+        const filePath = url.pathname; // This gives us /objects/uploads/<uuid>
+        
         await uploadMutation.mutateAsync({
-          url: uploadURL,
+          url: filePath,
           name: file.name || "Untitled",
           type: file.type || "application/octet-stream",
           fileSize: file.size || 0,
