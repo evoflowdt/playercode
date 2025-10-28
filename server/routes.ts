@@ -531,18 +531,15 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       
       // Update session heartbeat
       const session = await storage.getPlayerSession(displayId);
-      if (session) {
-        await storage.updatePlayerSession(displayId, {
-          lastHeartbeat: new Date(),
-          currentContentId,
-        });
-      } else {
-        // Create session if it doesn't exist
-        await storage.createPlayerSession({
-          displayId,
-          currentContentId,
-        });
+      if (!session) {
+        // Session was deleted - player should re-pair
+        return res.status(404).json({ error: "Session not found" });
       }
+      
+      await storage.updatePlayerSession(displayId, {
+        lastHeartbeat: new Date(),
+        currentContentId,
+      });
       
       res.json({ success: true });
     } catch (error) {

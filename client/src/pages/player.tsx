@@ -34,14 +34,61 @@ export default function Player() {
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
   const { toast } = useToast();
   const wsRef = useRef<WebSocket | null>(null);
+  const wsReconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const contentRotationRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset player state (when display is deleted)
+  const resetPlayer = useCallback(() => {
+    console.log("[Player] Resetting player - display was deleted");
+    localStorage.removeItem("evoflow_display_id");
+    setIsPaired(false);
+    setDisplayId("");
+    setContent([]);
+    setCurrentContentIndex(0);
+    setIsConnected(false);
+    
+    // Close WebSocket if open
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
+    // Clear WebSocket reconnect timeout
+    if (wsReconnectTimeoutRef.current) {
+      clearTimeout(wsReconnectTimeoutRef.current);
+      wsReconnectTimeoutRef.current = null;
+    }
+    
+    // Clear intervals
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+    if (contentRotationRef.current) {
+      clearTimeout(contentRotationRef.current);
+      contentRotationRef.current = null;
+    }
+    
+    toast({
+      title: "Player disconnected",
+      description: "This display was removed. Please pair with a new token.",
+      variant: "destructive",
+    });
+  }, [toast]);
 
   // Fetch content from server
   const fetchContent = useCallback(async (displayId: string) => {
     try {
       console.log("[Player] Fetching content for displayId:", displayId);
       const response = await fetch(`/api/player/content/${displayId}`);
+      
+      // If display not found (404), reset the player
+      if (response.status === 404) {
+        resetPlayer();
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error("Failed to fetch content");
       }
@@ -62,12 +109,12 @@ export default function Player() {
     } catch (error) {
       console.error("[Player] Content fetch error:", error);
     }
-  }, [toast]);
+  }, [toast, resetPlayer]);
 
   // Send heartbeat to server
   const sendHeartbeat = useCallback(async (displayId: string) => {
     try {
-      await fetch("/api/player/heartbeat", {
+      const response = await fetch("/api/player/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,10 +123,16 @@ export default function Player() {
           currentContentId: content[currentContentIndex]?.id,
         }),
       });
+      
+      // If display not found (404), reset the player
+      if (response.status === 404) {
+        resetPlayer();
+        return;
+      }
     } catch (error) {
       console.error("Heartbeat error:", error);
     }
-  }, [content, currentContentIndex]);
+  }, [content, currentContentIndex, resetPlayer]);
 
   // Pair with server using token
   const handlePair = async () => {
@@ -147,9 +200,22 @@ export default function Player() {
 
   // Connect to WebSocket for real-time updates
   useEffect(() => {
-    if (!isPaired || !displayId) return;
+    if (!isPaired || !displayId) {
+      // Cancel any pending reconnection if we're no longer paired
+      if (wsReconnectTimeoutRef.current) {
+        clearTimeout(wsReconnectTimeoutRef.current);
+        wsReconnectTimeoutRef.current = null;
+      }
+      return;
+    }
 
     const connectWebSocket = () => {
+      // Double-check we're still paired before connecting
+      if (!isPaired || !displayId) {
+        console.log("WebSocket reconnect cancelled - not paired");
+        return;
+      }
+      
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
@@ -173,8 +239,13 @@ export default function Player() {
       ws.onclose = () => {
         console.log("WebSocket disconnected");
         setIsConnected(false);
-        // Reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000);
+        // Only reconnect if still paired
+        if (isPaired && displayId) {
+          console.log("Scheduling WebSocket reconnect in 3 seconds");
+          wsReconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        } else {
+          console.log("WebSocket reconnect cancelled - not paired");
+        }
       };
 
       ws.onerror = (error) => {
@@ -189,6 +260,10 @@ export default function Player() {
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
+      }
+      if (wsReconnectTimeoutRef.current) {
+        clearTimeout(wsReconnectTimeoutRef.current);
+        wsReconnectTimeoutRef.current = null;
       }
     };
   }, [isPaired, displayId, fetchContent]);
