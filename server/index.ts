@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -9,6 +10,12 @@ declare module 'http' {
     rawBody: unknown
   }
 }
+
+// Health check endpoint - must be first for deployment health checks
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 app.use(express.json({
   verify: (req, _res, buf) => {
     req.rawBody = buf;
@@ -47,35 +54,57 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    log("Starting videoMOOD server...");
+    
+    // Create HTTP server first
+    const server = createServer(app);
+    
+    // ALWAYS serve the app on the port specified in the environment variable PORT
+    // Other ports are firewalled. Default to 5000 if not specified.
+    const port = parseInt(process.env.PORT || '5000', 10);
+    
+    // Start listening FIRST for health checks
+    await new Promise<void>((resolve, reject) => {
+      server.listen({
+        port,
+        host: "0.0.0.0",
+        reusePort: true,
+      }, (err?: Error) => {
+        if (err) {
+          reject(err);
+        } else {
+          log(`Server listening on port ${port}`);
+          resolve();
+        }
+      });
+    });
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // Now register routes and setup WebSocket (async, non-blocking)
+    log("Registering routes...");
+    await registerRoutes(app, server);
+    log("Routes registered successfully");
 
-    res.status(status).json({ message });
-    throw err;
-  });
+    // Error handler
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      log(`Error: ${status} - ${message}`);
+      res.status(status).json({ message });
+    });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // Setup Vite or static serving after server is listening
+    if (app.get("env") === "development") {
+      log("Setting up Vite dev server...");
+      await setupVite(app, server);
+    } else {
+      log("Setting up static file serving...");
+      serveStatic(app);
+    }
+
+    log("videoMOOD server ready!");
+  } catch (error) {
+    log(`Fatal error starting server: ${error}`);
+    process.exit(1);
   }
-
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();

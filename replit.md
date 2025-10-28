@@ -94,6 +94,9 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 
 ## API Endpoints
 
+### Health Check
+- `GET /health` - Server health status (for deployment monitoring)
+
 ### Displays
 - `GET /api/displays` - List all displays
 - `GET /api/displays/:id` - Get display details
@@ -163,6 +166,12 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - All data is in-memory (resets on restart for MVP)
 
 ## Recent Changes
+- **Deployment Optimizations (Oct 28, 2025)**:
+  - Added `/health` endpoint for deployment health checks
+  - Reordered server initialization: listen → routes → WebSocket → Vite
+  - Made WebSocket setup non-blocking
+  - Enhanced error handling and logging for deployment diagnostics
+  - Fixed schedule creation date handling (ISO string → Date conversion)
 - Implemented complete frontend with all pages
 - Added WebSocket real-time communication
 - Integrated object storage for content uploads

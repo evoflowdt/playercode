@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -10,10 +10,9 @@ import {
   insertScheduleSchema,
 } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  const httpServer = createServer(app);
-  
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+export async function registerRoutes(app: Express, httpServer: Server): Promise<void> {
+  // Setup WebSocket server (non-blocking)
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws', noServer: false });
   
   const clients = new Set<WebSocket>();
   
@@ -68,6 +67,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       clients.delete(ws);
       console.log('WebSocket client disconnected. Total clients:', clients.size);
     });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+  });
+  
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
   });
   
   function broadcast(message: any) {
@@ -290,6 +297,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
-
-  return httpServer;
 }
