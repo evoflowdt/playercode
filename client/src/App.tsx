@@ -68,7 +68,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="evosignage-theme">
+      <ThemeProvider defaultTheme="light" storageKey="evoflow-theme">
         <LanguageProvider>
           <TooltipProvider>
           <SidebarProvider style={style as React.CSSProperties}>

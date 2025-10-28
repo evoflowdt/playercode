@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     
     ws.send(JSON.stringify({
       type: 'connected',
-      message: 'Connected to EVOsignage server'
+      message: 'Connected to EvoFlow server'
     }));
     
     ws.on('message', async (data: Buffer) => {

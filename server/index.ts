@@ -55,7 +55,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    log("Starting EVOsignage server...");
+    log("Starting EvoFlow server...");
     
     // Create HTTP server first
     const server = createServer(app);

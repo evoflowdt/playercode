@@ -3,7 +3,7 @@ export type Language = 'en' | 'it';
 export const translations = {
   en: {
     // App
-    appName: 'EVOsignage',
+    appName: 'EvoFlow',
     
     // Navigation
     dashboard: 'Dashboard',
@@ -139,7 +139,7 @@ export const translations = {
   
   it: {
     // App
-    appName: 'EVOsignage',
+    appName: 'EvoFlow',
     
     // Navigation
     dashboard: 'Cruscotto',
