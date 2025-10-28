@@ -215,14 +215,12 @@ export function ContentFormDialog({
                     onComplete={(result) => {
                       if (result.successful && result.successful.length > 0) {
                         const file = result.successful[0];
-                        console.log("Upload complete, file object:", file);
-                        console.log("Upload URL:", file.uploadURL);
                         
                         // Extract the object path from the upload URL
-                        // The uploadURL contains the full GCS path, we need to extract it
-                        if (file.uploadURL) {
+                        // Uppy stores the uploadURL in file.response.uploadURL
+                        if (file.response?.uploadURL) {
                           try {
-                            const uploadUrl = new URL(file.uploadURL);
+                            const uploadUrl = new URL(file.response.uploadURL);
                             // pathname format: /<bucket-name>/objects/uploads/<uuid>
                             // We need to extract everything after the bucket name (which is /objects/uploads/<uuid>)
                             const pathname = uploadUrl.pathname;
@@ -234,7 +232,6 @@ export function ContentFormDialog({
                               const objectPath = pathParts.slice(1).join('/');
                               // objectPath is already "objects/uploads/<uuid>", just add leading slash
                               const url = `/${objectPath}`;
-                              console.log("Extracted URL:", url);
                               form.setValue("url", url);
                               form.setValue("name", file.name || "Uploaded file");
                               toast({
@@ -242,7 +239,6 @@ export function ContentFormDialog({
                                 description: file.name,
                               });
                             } else {
-                              console.error("Not enough path parts:", pathParts);
                               throw new Error("Invalid upload URL format");
                             }
                           } catch (error) {
@@ -254,7 +250,7 @@ export function ContentFormDialog({
                             });
                           }
                         } else {
-                          console.error("No uploadURL in file object");
+                          console.error("No uploadURL in file.response");
                           toast({
                             title: "Error",
                             description: "Upload completed but URL not found",
