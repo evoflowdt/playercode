@@ -1,18 +1,52 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { ScheduleWithDetails } from "@shared/schema";
 import { EmptyState } from "@/components/empty-state";
+import { ScheduleFormDialog } from "@/components/schedule-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Calendar, Plus, Clock, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Schedules() {
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [deleteSchedule, setDeleteSchedule] = useState<ScheduleWithDetails | null>(null);
+  const { toast } = useToast();
 
   const { data: schedules, isLoading } = useQuery<ScheduleWithDetails[]>({
     queryKey: ["/api/schedules"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/schedules/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
+      toast({
+        title: "Success",
+        description: "Schedule deleted successfully",
+      });
+      setDeleteSchedule(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete schedule",
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -44,14 +78,29 @@ export default function Schedules() {
           {schedules.map((schedule) => (
             <Card
               key={schedule.id}
-              className="p-6 hover-elevate cursor-pointer"
+              className="p-6 hover-elevate"
               data-testid={`card-schedule-${schedule.id}`}
             >
               <div className="flex items-start justify-between mb-4">
-                <h3 className="font-medium">{schedule.name}</h3>
-                <Badge variant={schedule.active ? "default" : "secondary"}>
-                  {schedule.active ? "Active" : "Inactive"}
-                </Badge>
+                <div className="flex-1">
+                  <h3 className="font-medium">{schedule.name}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={schedule.active ? "default" : "secondary"}>
+                    {schedule.active ? "Active" : "Inactive"}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteSchedule(schedule);
+                    }}
+                    data-testid={`button-delete-schedule-${schedule.id}`}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -84,6 +133,35 @@ export default function Schedules() {
           }}
         />
       )}
+
+      <ScheduleFormDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
+
+      <AlertDialog
+        open={!!deleteSchedule}
+        onOpenChange={(open) => !open && setDeleteSchedule(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Schedule</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteSchedule?.name}"? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteSchedule && deleteMutation.mutate(deleteSchedule.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
