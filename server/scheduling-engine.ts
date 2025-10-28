@@ -182,23 +182,31 @@ export class SchedulingEngine {
     displayId: string,
     currentDate: Date = new Date()
   ): Promise<ScheduledContent | null> {
+    console.log(`[SchedulingEngine] getContentForDisplay called for display ${displayId} at ${currentDate.toISOString()}`);
+    
     // Get display to find group
     const display = await storage.getDisplay(displayId);
     if (!display) {
+      console.log(`[SchedulingEngine] Display ${displayId} not found`);
       return null;
     }
     
+    console.log(`[SchedulingEngine] Found display: ${display.name}, groupId: ${display.groupId}`);
+    
     // Get schedules for this specific display
     const displaySchedules = await this.getActiveSchedules("display", displayId, currentDate);
+    console.log(`[SchedulingEngine] Found ${displaySchedules.length} active display schedules`);
     
     // Get schedules for display's group (if any)
     let groupSchedules: Schedule[] = [];
     if (display.groupId) {
       groupSchedules = await this.getActiveSchedules("group", display.groupId, currentDate);
+      console.log(`[SchedulingEngine] Found ${groupSchedules.length} active group schedules`);
     }
     
     // Combine and get priorities
     const allSchedules = [...displaySchedules, ...groupSchedules];
+    console.log(`[SchedulingEngine] Total active schedules: ${allSchedules.length}`);
     
     // Get content priorities
     const priorities = await storage.getAllContentPriorities();

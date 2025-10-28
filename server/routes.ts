@@ -579,12 +579,19 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         });
       }
       
+      // Convert internal object path to public URL
+      let contentWithUrl = { ...contentItem };
+      if (contentItem.url && contentItem.url.startsWith('/objects/')) {
+        const publicPath = contentItem.url.replace('/objects/', '/public-objects/');
+        contentWithUrl.url = publicPath;
+      }
+      
       // Get the schedule details
       const schedule = await storage.getSchedule(scheduledContent.scheduleId);
       
       res.json({
         display,
-        content: [contentItem],
+        content: [contentWithUrl],
         schedules: schedule ? [schedule] : [],
         priority: scheduledContent.priority,
         source: scheduledContent.source,

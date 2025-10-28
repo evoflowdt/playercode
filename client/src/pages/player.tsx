@@ -40,21 +40,27 @@ export default function Player() {
   // Fetch content from server
   const fetchContent = useCallback(async (displayId: string) => {
     try {
+      console.log("[Player] Fetching content for displayId:", displayId);
       const response = await fetch(`/api/player/content/${displayId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch content");
       }
       const data: PlayerData = await response.json();
+      console.log("[Player] Received content data:", data);
+      console.log("[Player] Content array:", data.content);
       setContent(data.content || []);
       
       if (data.content && data.content.length > 0) {
+        console.log("[Player] Content loaded successfully, count:", data.content.length);
         toast({
           title: "Content updated",
           description: `${data.content.length} content item(s) loaded`,
         });
+      } else {
+        console.log("[Player] No content items in response");
       }
     } catch (error) {
-      console.error("Content fetch error:", error);
+      console.error("[Player] Content fetch error:", error);
     }
   }, [toast]);
 
@@ -261,7 +267,27 @@ export default function Player() {
 
     const currentContent = content[currentContentIndex];
 
+    // Check if URL is external (for iframe support)
+    const isExternalUrl = currentContent.url && (
+      currentContent.url.startsWith('http://') || 
+      currentContent.url.startsWith('https://')
+    );
+
     if (currentContent.type === "image") {
+      // If URL is external and looks like a webpage, render as iframe
+      if (isExternalUrl && !currentContent.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+        return (
+          <div className="h-screen w-screen bg-black">
+            <iframe
+              src={currentContent.url}
+              className="w-full h-full border-0"
+              title={currentContent.name}
+              data-testid="player-iframe-content"
+            />
+          </div>
+        );
+      }
+      
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <img
@@ -269,6 +295,10 @@ export default function Player() {
             alt={currentContent.name}
             className="max-w-full max-h-full object-contain"
             data-testid="player-image-content"
+            onError={(e) => {
+              console.error('Failed to load image:', currentContent.url);
+              e.currentTarget.style.display = 'none';
+            }}
           />
         </div>
       );
@@ -284,6 +314,7 @@ export default function Player() {
             muted
             className="max-w-full max-h-full"
             data-testid="player-video-content"
+            onError={() => console.error('Failed to load video:', currentContent.url)}
           />
         </div>
       );
@@ -296,6 +327,20 @@ export default function Player() {
           dangerouslySetInnerHTML={{ __html: currentContent.htmlContent }}
           data-testid="player-html-content"
         />
+      );
+    }
+    
+    // Support for webpage type - render as iframe
+    if (currentContent.type === "webpage" || isExternalUrl) {
+      return (
+        <div className="h-screen w-screen bg-black">
+          <iframe
+            src={currentContent.url}
+            className="w-full h-full border-0"
+            title={currentContent.name}
+            data-testid="player-iframe-content"
+          />
+        </div>
       );
     }
 
