@@ -19,13 +19,14 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - **Express.js** HTTP server
 - **WebSocket server** for real-time display communication
 - **Object Storage** integration for media files
-- **In-memory storage** for MVP (displays, content, groups, schedules)
+- **PostgreSQL database** with Drizzle ORM for persistent storage
 - RESTful API endpoints
 
 ### Shared (shared/)
 - **TypeScript schemas** and types
 - **Zod validation** schemas
-- Data models for displays, content, groups, schedules
+- **Drizzle ORM** schema definitions
+- Data models for displays, content, groups, schedules, playlists
 
 ## Features Implemented
 
@@ -60,6 +61,20 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - Organize displays for easier management
 - Bulk content deployment to groups
 
+### Content Playlists
+- Create and manage content playlists
+- Sequential playback ordering
+- Add/remove content items from playlists
+- Playlist metadata and descriptions
+
+### Analytics Dashboard
+- Comprehensive metrics visualization with Recharts
+- Display status distribution (pie charts)
+- Platform distribution analysis (bar charts)
+- Content type breakdown
+- System overview with derived metrics (uptime rate, averages)
+- Real-time data updates
+
 ### Real-time Communication
 - WebSocket connection for live updates
 - Display status broadcasting
@@ -71,15 +86,16 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 ### Data Flow
 1. Frontend components use TanStack Query for data fetching
 2. API requests go through Express backend
-3. Backend interacts with in-memory storage
+3. Backend interacts with PostgreSQL database via Drizzle ORM
 4. WebSocket broadcasts changes to all connected clients
 5. Frontend auto-updates via query invalidation
 
 ### Storage Layer
-- **MemStorage**: In-memory data storage for MVP
-- Implements full CRUD operations for all entities
-- Includes demo/seed data for displays
-- Ready for migration to PostgreSQL database
+- **PostgreSQL database** with Neon backing
+- **Drizzle ORM** for type-safe queries
+- Full CRUD operations for all entities
+- Seed script with demo data (displays, groups)
+- Production-ready persistent storage
 
 ### Object Storage
 - Replit Object Storage integration
@@ -88,9 +104,11 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - Automatic path normalization
 
 ## Environment Variables
+- `DATABASE_URL`: PostgreSQL connection string (required for production)
 - `PUBLIC_OBJECT_SEARCH_PATHS`: Object storage public paths
 - `PRIVATE_OBJECT_DIR`: Private object directory
 - `DEFAULT_OBJECT_STORAGE_BUCKET_ID`: Bucket ID
+- `SESSION_SECRET`: Session encryption key
 
 ## API Endpoints
 
@@ -122,6 +140,13 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 ### Stats
 - `GET /api/stats` - Dashboard statistics
 
+### Playlists
+- `GET /api/playlists` - List all playlists with items
+- `POST /api/playlists` - Create new playlist
+- `DELETE /api/playlists/:id` - Delete playlist
+- `POST /api/playlists/:id/items` - Add item to playlist
+- `DELETE /api/playlists/items/:itemId` - Remove item from playlist
+
 ### Object Storage
 - `POST /api/objects/upload` - Get upload URL
 - `GET /public-objects/:filePath` - Serve public files
@@ -148,33 +173,54 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
 - **Responsive**: Mobile-first design
 
 ## Next Phase Features
-- PostgreSQL database persistence
-- Player applications for various OS platforms
-- Advanced analytics and reporting
+- Player applications for various OS platforms (LG webOS, Samsung Tizen, Raspberry Pi, Android)
 - DAM (Digital Asset Management) integration
-- Conditional scheduling rules
-- Content playlists
+- Conditional scheduling rules (day-of-week, time-based filters)
 - Multi-user authentication
 - Role-based access control
 - Integration APIs for third-party systems
+- Advanced playlist features (duration overrides, transitions)
+- Historical analytics and trend analysis
 
 ## Development Notes
 - Use `npm run dev` to start the application
 - Frontend: Vite dev server with HMR
 - Backend: Express with auto-reload
 - WebSocket: Path `/ws` (separate from Vite HMR)
-- All data is in-memory (resets on restart for MVP)
+- Database: PostgreSQL with persistent storage
+- Seed data: Run `npm run db:seed` to populate demo displays
 
 ## Recent Changes
+- **PostgreSQL Database Migration (Oct 28, 2025)**:
+  - Migrated from in-memory storage to PostgreSQL with Drizzle ORM
+  - Implemented DatabaseStorage class with full CRUD operations
+  - Created seed script with demo displays and groups
+  - All features now use persistent database storage
+  - Production-ready with proper error handling
+
+- **Content Playlists Feature (Oct 28, 2025)**:
+  - Added playlists and playlist_items tables to schema
+  - Implemented playlist creation, deletion, and item management
+  - Created playlists UI page with React Query integration
+  - End-to-end tested with successful CRUD operations
+
+- **Analytics Dashboard (Oct 28, 2025)**:
+  - Comprehensive metrics visualization using Recharts
+  - Display status, platform, and content type distribution charts
+  - System overview with derived metrics (uptime rate, avg content per display)
+  - Real-time data updates from all API endpoints
+
 - **Deployment Optimizations (Oct 28, 2025)**:
   - Added `/health` endpoint for deployment health checks
   - Reordered server initialization: listen → routes → WebSocket → Vite
   - Made WebSocket setup non-blocking
   - Enhanced error handling and logging for deployment diagnostics
   - Fixed schedule creation date handling (ISO string → Date conversion)
-- Implemented complete frontend with all pages
-- Added WebSocket real-time communication
-- Integrated object storage for content uploads
-- Created comprehensive API layer
-- Added theme support (light/dark mode)
-- Implemented responsive design across all breakpoints
+
+- **Foundation (Initial Implementation)**:
+  - Implemented complete frontend with all pages
+  - Added WebSocket real-time communication
+  - Integrated object storage for content uploads
+  - Created comprehensive API layer
+  - Added theme support (light/dark mode)
+  - Implemented responsive design across all breakpoints
