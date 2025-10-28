@@ -10,6 +10,7 @@ import {
 import { MoreVertical, Monitor, MapPin, Calendar } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import { useLanguage } from "@/lib/language-provider";
 
 interface DisplayCardProps {
   display: Display;
@@ -26,6 +27,8 @@ export function DisplayCard({
   onEdit,
   onDelete,
 }: DisplayCardProps) {
+  const { t } = useLanguage();
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "online":
@@ -36,6 +39,19 @@ export function DisplayCard({
         return "bg-warning";
       default:
         return "bg-muted";
+    }
+  };
+  
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "online":
+        return t('online');
+      case "offline":
+        return t('offline');
+      case "warning":
+        return t('warning');
+      default:
+        return status;
     }
   };
 
@@ -60,7 +76,7 @@ export function DisplayCard({
             className={`${getStatusColor(display.status)} text-white border-0`}
             data-testid={`badge-status-${display.id}`}
           >
-            {display.status}
+            {getStatusText(display.status)}
           </Badge>
         </div>
       </div>
@@ -91,19 +107,19 @@ export function DisplayCard({
                 e.stopPropagation();
                 onViewDetails?.(display);
               }}>
-                View Details
+                {t('viewDetails')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onViewScreenshot?.(display);
               }}>
-                View Screenshot
+                {t('viewScreenshot')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onEdit?.(display);
               }}>
-                Edit
+                {t('edit')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -112,7 +128,7 @@ export function DisplayCard({
                 }}
                 className="text-destructive"
               >
-                Remove
+                {t('remove')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
