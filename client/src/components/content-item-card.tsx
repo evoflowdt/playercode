@@ -37,7 +37,7 @@ export function ContentItemCard({
 
   const Icon = getIcon();
 
-  const formatFileSize = (bytes?: number) => {
+  const formatFileSize = (bytes?: number | null) => {
     if (!bytes) return "Unknown size";
     const kb = bytes / 1024;
     if (kb < 1024) return `${kb.toFixed(1)} KB`;
@@ -46,7 +46,8 @@ export function ContentItemCard({
   };
 
   // Convert object storage path to public URL
-  const getPublicUrl = (url: string) => {
+  const getPublicUrl = (url: string | null) => {
+    if (!url) return '';
     if (url.startsWith('/objects/')) {
       return url.replace('/objects/', '/public-objects/');
     }
