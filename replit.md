@@ -210,6 +210,12 @@ Cloud-based digital signage management dashboard for controlling and monitoring 
   - System overview with derived metrics (uptime rate, avg content per display)
   - Real-time data updates from all API endpoints
 
+- **Geocoding Feature (Oct 28, 2025)**:
+  - Automatic coordinate retrieval from location names
+  - Integration with OpenStreetMap Nominatim API (free, no API key)
+  - One-click button to auto-populate latitude/longitude fields
+  - Proper error handling and user feedback with toast messages
+
 - **Deployment Optimizations (Oct 28, 2025)**:
   - Added `/health` endpoint for deployment health checks
   - Reordered server initialization: listen → routes → WebSocket → Vite

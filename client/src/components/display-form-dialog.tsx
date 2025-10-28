@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MapPin, Loader2 } from "lucide-react";
 
 interface DisplayFormDialogProps {
   open: boolean;
@@ -33,6 +35,7 @@ export function DisplayFormDialog({
   display,
 }: DisplayFormDialogProps) {
   const { toast } = useToast();
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   const form = useForm<InsertDisplay>({
     resolver: zodResolver(insertDisplaySchema),
@@ -46,6 +49,55 @@ export function DisplayFormDialog({
       resolution: "",
     },
   });
+
+  const getCoordinates = async () => {
+    const location = form.getValues("location");
+    if (!location || !location.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a location first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Geocoding service error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        form.setValue("latitude", lat);
+        form.setValue("longitude", lon);
+        toast({
+          title: "Success",
+          description: "Coordinates retrieved successfully",
+        });
+      } else {
+        toast({
+          title: "Location not found",
+          description: "Could not find coordinates for this location. Try being more specific.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to retrieve coordinates",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: InsertDisplay) => apiRequest("POST", "/api/displays", data),
@@ -158,44 +210,59 @@ export function DisplayFormDialog({
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <div className="flex gap-2">
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value || ""}
-                        placeholder="New York, USA"
+                        placeholder="Milan, Italy"
                         data-testid="input-location"
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="resolution"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Resolution</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value || ""}
-                        placeholder="1920x1080"
-                        data-testid="input-resolution"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={getCoordinates}
+                      disabled={isGeocoding}
+                      title="Get coordinates from location"
+                      data-testid="button-get-coordinates"
+                    >
+                      {isGeocoding ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MapPin className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="resolution"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Resolution</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ""}
+                      placeholder="1920x1080"
+                      data-testid="input-resolution"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
