@@ -1,7 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { insertScheduleSchema, type InsertSchedule, type Display, type DisplayGroup, type ContentItem } from "@shared/schema";
+import { z } from "zod";
+import { type Display, type DisplayGroup, type ContentItem } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,18 @@ import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const scheduleFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  contentId: z.string().min(1, "Content is required"),
+  targetType: z.enum(["display", "group"]),
+  targetId: z.string().min(1, "Target is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  repeat: z.string().optional(),
+});
+
+type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
+
 interface ScheduleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -51,25 +64,32 @@ export function ScheduleFormDialog({
     queryKey: ["/api/content"],
   });
 
-  const form = useForm<InsertSchedule>({
-    resolver: zodResolver(insertScheduleSchema),
+  const form = useForm<ScheduleFormValues>({
+    resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
       name: "",
       contentId: "",
-      displayId: "",
-      groupId: "",
+      targetType: "display",
+      targetId: "",
       startTime: "",
       endTime: "",
-      recurrence: "",
+      repeat: "",
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertSchedule) => {
-      const payload: any = { ...data };
-      if (!payload.displayId) delete payload.displayId;
-      if (!payload.groupId) delete payload.groupId;
-      if (!payload.recurrence) delete payload.recurrence;
+    mutationFn: (data: ScheduleFormValues) => {
+      const payload: any = {
+        name: data.name,
+        contentId: data.contentId,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        startTime: new Date(data.startTime).toISOString(),
+        endTime: new Date(data.endTime).toISOString(),
+      };
+      if (data.repeat) {
+        payload.repeat = data.repeat;
+      }
       return apiRequest("POST", "/api/schedules", payload);
     },
     onSuccess: () => {
@@ -90,11 +110,11 @@ export function ScheduleFormDialog({
     },
   });
 
-  const onSubmit = (data: InsertSchedule) => {
+  const onSubmit = (data: ScheduleFormValues) => {
     createMutation.mutate(data);
   };
 
-  const targetType = form.watch("displayId") ? "display" : form.watch("groupId") ? "group" : "";
+  const targetType = form.watch("targetType");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,11 +155,17 @@ export function ScheduleFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {content?.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
+                      {content && content.length > 0 ? (
+                        content.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          No content available
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -150,28 +176,19 @@ export function ScheduleFormDialog({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="displayId"
+                name="targetType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Display (Optional)</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue("groupId", "");
-                      }}
-                      value={field.value || ""}
-                    >
+                    <FormLabel>Target Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-display">
-                          <SelectValue placeholder="Select display" />
+                        <SelectTrigger data-testid="select-target-type">
+                          <SelectValue placeholder="Select target type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {displays?.map((display) => (
-                          <SelectItem key={display.id} value={display.id}>
-                            {display.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="display">Display</SelectItem>
+                        <SelectItem value="group">Group</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -181,29 +198,42 @@ export function ScheduleFormDialog({
 
               <FormField
                 control={form.control}
-                name="groupId"
+                name="targetId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Group (Optional)</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        form.setValue("displayId", "");
-                      }}
-                      value={field.value || ""}
-                      disabled={!!form.watch("displayId")}
-                    >
+                    <FormLabel>Target</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-group">
-                          <SelectValue placeholder="Select group" />
+                        <SelectTrigger data-testid="select-target">
+                          <SelectValue placeholder={`Select ${targetType}`} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {groups?.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
+                        {targetType === "display" && displays ? (
+                          displays.length > 0 ? (
+                            displays.map((display) => (
+                              <SelectItem key={display.id} value={display.id}>
+                                {display.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No displays available
+                            </SelectItem>
+                          )
+                        ) : targetType === "group" && groups ? (
+                          groups.length > 0 ? (
+                            groups.map((group) => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No groups available
+                            </SelectItem>
+                          )
+                        ) : null}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -252,7 +282,7 @@ export function ScheduleFormDialog({
 
             <FormField
               control={form.control}
-              name="recurrence"
+              name="repeat"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Recurrence (Optional)</FormLabel>
@@ -263,6 +293,7 @@ export function ScheduleFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="">None</SelectItem>
                       <SelectItem value="daily">Daily</SelectItem>
                       <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>

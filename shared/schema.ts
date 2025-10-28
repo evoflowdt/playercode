@@ -22,9 +22,12 @@ export const contentItems = pgTable("content_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   type: text("type").notNull(),
-  url: text("url").notNull(),
+  url: text("url"),
   fileSize: integer("file_size"),
   duration: integer("duration"),
+  htmlContent: text("html_content"),
+  dataFeedUrl: text("data_feed_url"),
+  dataFeedConfig: text("data_feed_config"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
 });
 
@@ -64,6 +67,9 @@ export const insertContentItemSchema = createInsertSchema(contentItems).pick({
   url: true,
   fileSize: true,
   duration: true,
+  htmlContent: true,
+  dataFeedUrl: true,
+  dataFeedConfig: true,
 });
 
 export const insertDisplayGroupSchema = createInsertSchema(displayGroups).pick({

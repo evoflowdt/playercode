@@ -3,17 +3,19 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { ContentItem } from "@shared/schema";
 import { ContentItemCard } from "@/components/content-item-card";
 import { EmptyState } from "@/components/empty-state";
+import { ContentFormDialog } from "@/components/content-form-dialog";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { FolderOpen, Upload, Search } from "lucide-react";
+import { FolderOpen, Upload, Search, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { UploadResult } from "@uppy/core";
 
 export default function Content() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
   const { data: contentItems, isLoading } = useQuery<ContentItem[]>({
@@ -97,16 +99,26 @@ export default function Content() {
             Manage your media files and digital signage content
           </p>
         </div>
-        <ObjectUploader
-          maxNumberOfFiles={10}
-          maxFileSize={104857600}
-          onGetUploadParameters={handleGetUploadParameters}
-          onComplete={handleUploadComplete}
-          testId="button-upload-content"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Content
-        </ObjectUploader>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            data-testid="button-add-content"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Content
+          </Button>
+          <ObjectUploader
+            maxNumberOfFiles={10}
+            maxFileSize={104857600}
+            onGetUploadParameters={handleGetUploadParameters}
+            onComplete={handleUploadComplete}
+            variant="outline"
+            testId="button-upload-content"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Quick Upload
+          </ObjectUploader>
+        </div>
       </div>
 
       <Card className="p-4">
@@ -149,6 +161,11 @@ export default function Content() {
           }
         />
       )}
+
+      <ContentFormDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
     </div>
   );
 }
