@@ -18,6 +18,12 @@ import {
   type InsertPlayerSession,
   type PlayerCapabilities,
   type InsertPlayerCapabilities,
+  type SchedulingRule,
+  type InsertSchedulingRule,
+  type ContentPriority,
+  type InsertContentPriority,
+  type Transition,
+  type InsertTransition,
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
@@ -31,6 +37,9 @@ import {
   pairingTokens,
   playerSessions,
   playerCapabilities,
+  schedulingRules,
+  contentPriority,
+  transitions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt } from "drizzle-orm";
@@ -87,6 +96,26 @@ export interface IStorage {
   getPlayerCapabilities(displayId: string): Promise<PlayerCapabilities | undefined>;
   createPlayerCapabilities(capabilities: InsertPlayerCapabilities): Promise<PlayerCapabilities>;
   updatePlayerCapabilities(displayId: string, updates: Partial<PlayerCapabilities>): Promise<PlayerCapabilities | undefined>;
+  
+  getSchedulingRule(id: string): Promise<SchedulingRule | undefined>;
+  getAllSchedulingRules(): Promise<SchedulingRule[]>;
+  getSchedulingRulesBySchedule(scheduleId: string): Promise<SchedulingRule[]>;
+  createSchedulingRule(rule: InsertSchedulingRule): Promise<SchedulingRule>;
+  updateSchedulingRule(id: string, updates: Partial<SchedulingRule>): Promise<SchedulingRule | undefined>;
+  deleteSchedulingRule(id: string): Promise<boolean>;
+  
+  getContentPriority(id: string): Promise<ContentPriority | undefined>;
+  getAllContentPriorities(): Promise<ContentPriority[]>;
+  getContentPrioritiesByContent(contentId: string): Promise<ContentPriority[]>;
+  createContentPriority(priority: InsertContentPriority): Promise<ContentPriority>;
+  updateContentPriority(id: string, updates: Partial<ContentPriority>): Promise<ContentPriority | undefined>;
+  deleteContentPriority(id: string): Promise<boolean>;
+  
+  getTransition(id: string): Promise<Transition | undefined>;
+  getAllTransitions(): Promise<Transition[]>;
+  createTransition(transition: InsertTransition): Promise<Transition>;
+  updateTransition(id: string, updates: Partial<Transition>): Promise<Transition | undefined>;
+  deleteTransition(id: string): Promise<boolean>;
   
   getDashboardStats(): Promise<DashboardStats>;
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
@@ -543,6 +572,140 @@ export class DatabaseStorage implements IStorage {
       .where(eq(playerCapabilities.displayId, displayId))
       .returning();
     return updated || undefined;
+  }
+
+  // Scheduling Rule methods
+  async getSchedulingRule(id: string): Promise<SchedulingRule | undefined> {
+    const [rule] = await db
+      .select()
+      .from(schedulingRules)
+      .where(eq(schedulingRules.id, id));
+    return rule || undefined;
+  }
+
+  async getAllSchedulingRules(): Promise<SchedulingRule[]> {
+    return await db.select().from(schedulingRules);
+  }
+
+  async getSchedulingRulesBySchedule(scheduleId: string): Promise<SchedulingRule[]> {
+    return await db
+      .select()
+      .from(schedulingRules)
+      .where(eq(schedulingRules.scheduleId, scheduleId));
+  }
+
+  async createSchedulingRule(insertRule: InsertSchedulingRule): Promise<SchedulingRule> {
+    const [rule] = await db
+      .insert(schedulingRules)
+      .values(insertRule)
+      .returning();
+    return rule;
+  }
+
+  async updateSchedulingRule(
+    id: string,
+    updates: Partial<SchedulingRule>
+  ): Promise<SchedulingRule | undefined> {
+    const [updated] = await db
+      .update(schedulingRules)
+      .set(updates)
+      .where(eq(schedulingRules.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteSchedulingRule(id: string): Promise<boolean> {
+    const result = await db
+      .delete(schedulingRules)
+      .where(eq(schedulingRules.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Content Priority methods
+  async getContentPriority(id: string): Promise<ContentPriority | undefined> {
+    const [priority] = await db
+      .select()
+      .from(contentPriority)
+      .where(eq(contentPriority.id, id));
+    return priority || undefined;
+  }
+
+  async getAllContentPriorities(): Promise<ContentPriority[]> {
+    return await db.select().from(contentPriority);
+  }
+
+  async getContentPrioritiesByContent(contentId: string): Promise<ContentPriority[]> {
+    return await db
+      .select()
+      .from(contentPriority)
+      .where(eq(contentPriority.contentId, contentId));
+  }
+
+  async createContentPriority(insertPriority: InsertContentPriority): Promise<ContentPriority> {
+    const [priority] = await db
+      .insert(contentPriority)
+      .values(insertPriority)
+      .returning();
+    return priority;
+  }
+
+  async updateContentPriority(
+    id: string,
+    updates: Partial<ContentPriority>
+  ): Promise<ContentPriority | undefined> {
+    const [updated] = await db
+      .update(contentPriority)
+      .set(updates)
+      .where(eq(contentPriority.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteContentPriority(id: string): Promise<boolean> {
+    const result = await db
+      .delete(contentPriority)
+      .where(eq(contentPriority.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Transition methods
+  async getTransition(id: string): Promise<Transition | undefined> {
+    const [transition] = await db
+      .select()
+      .from(transitions)
+      .where(eq(transitions.id, id));
+    return transition || undefined;
+  }
+
+  async getAllTransitions(): Promise<Transition[]> {
+    return await db.select().from(transitions);
+  }
+
+  async createTransition(insertTransition: InsertTransition): Promise<Transition> {
+    const [transition] = await db
+      .insert(transitions)
+      .values(insertTransition)
+      .returning();
+    return transition;
+  }
+
+  async updateTransition(
+    id: string,
+    updates: Partial<Transition>
+  ): Promise<Transition | undefined> {
+    const [updated] = await db
+      .update(transitions)
+      .set(updates)
+      .where(eq(transitions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTransition(id: string): Promise<boolean> {
+    const result = await db
+      .delete(transitions)
+      .where(eq(transitions.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

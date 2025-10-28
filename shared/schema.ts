@@ -105,6 +105,42 @@ export const playerCapabilities = pgTable("player_capabilities", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Feature Set 2: Advanced Scheduling
+export const schedulingRules = pgTable("scheduling_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scheduleId: varchar("schedule_id").notNull(),
+  name: text("name").notNull(),
+  ruleType: text("rule_type").notNull(), // 'day_of_week', 'time_range', 'date_range', 'condition'
+  ruleConfig: text("rule_config").notNull(), // JSON string with rule configuration
+  priority: integer("priority").notNull().default(0),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const contentPriority = pgTable("content_priority", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentId: varchar("content_id").notNull(),
+  priority: integer("priority").notNull().default(0), // Higher number = higher priority
+  displayId: varchar("display_id"), // null = applies to all displays
+  groupId: varchar("group_id"), // null = applies to all groups
+  validFrom: timestamp("valid_from"),
+  validUntil: timestamp("valid_until"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const transitions = pgTable("transitions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  fromContentId: varchar("from_content_id"), // null = applies to all
+  toContentId: varchar("to_content_id"), // null = applies to all
+  displayId: varchar("display_id"), // null = applies to all displays
+  groupId: varchar("group_id"), // null = applies to all groups
+  transitionType: text("transition_type").notNull().default("fade"), // 'fade', 'slide', 'wipe', 'zoom', 'none'
+  duration: integer("duration").notNull().default(1000), // milliseconds
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -184,6 +220,35 @@ export const insertPlayerCapabilitiesSchema = createInsertSchema(playerCapabilit
   storageMb: true,
 });
 
+export const insertSchedulingRuleSchema = createInsertSchema(schedulingRules).pick({
+  scheduleId: true,
+  name: true,
+  ruleType: true,
+  ruleConfig: true,
+  priority: true,
+  enabled: true,
+});
+
+export const insertContentPrioritySchema = createInsertSchema(contentPriority).pick({
+  contentId: true,
+  priority: true,
+  displayId: true,
+  groupId: true,
+  validFrom: true,
+  validUntil: true,
+});
+
+export const insertTransitionSchema = createInsertSchema(transitions).pick({
+  name: true,
+  fromContentId: true,
+  toContentId: true,
+  displayId: true,
+  groupId: true,
+  transitionType: true,
+  duration: true,
+  enabled: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -210,6 +275,15 @@ export type PlayerSession = typeof playerSessions.$inferSelect;
 
 export type InsertPlayerCapabilities = z.infer<typeof insertPlayerCapabilitiesSchema>;
 export type PlayerCapabilities = typeof playerCapabilities.$inferSelect;
+
+export type InsertSchedulingRule = z.infer<typeof insertSchedulingRuleSchema>;
+export type SchedulingRule = typeof schedulingRules.$inferSelect;
+
+export type InsertContentPriority = z.infer<typeof insertContentPrioritySchema>;
+export type ContentPriority = typeof contentPriority.$inferSelect;
+
+export type InsertTransition = z.infer<typeof insertTransitionSchema>;
+export type Transition = typeof transitions.$inferSelect;
 
 export interface DashboardStats {
   totalDisplays: number;
