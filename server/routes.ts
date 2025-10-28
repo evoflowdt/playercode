@@ -271,6 +271,27 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       console.log('Processed schedule data:', scheduleData);
       const validatedData = insertScheduleSchema.parse(scheduleData);
       const schedule = await storage.createSchedule(validatedData);
+      
+      // Notify affected displays via WebSocket
+      if (schedule.targetType === 'display') {
+        const display = await storage.getDisplay(schedule.targetId);
+        if (display) {
+          broadcast({
+            type: 'display_updated',
+            data: display
+          });
+        }
+      } else if (schedule.targetType === 'group') {
+        const allDisplays = await storage.getDisplaysWithGroups();
+        const groupDisplays = allDisplays.filter(d => d.groupId === schedule.targetId);
+        groupDisplays.forEach((display: typeof allDisplays[0]) => {
+          broadcast({
+            type: 'display_updated',
+            data: display
+          });
+        });
+      }
+      
       res.status(201).json(schedule);
     } catch (error) {
       console.error('Schedule creation error:', error);
@@ -280,10 +301,34 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   app.delete("/api/schedules/:id", async (req, res) => {
     try {
+      const schedule = await storage.getSchedule(req.params.id);
       const deleted = await storage.deleteSchedule(req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Schedule not found" });
       }
+      
+      // Notify affected displays via WebSocket
+      if (schedule) {
+        if (schedule.targetType === 'display') {
+          const display = await storage.getDisplay(schedule.targetId);
+          if (display) {
+            broadcast({
+              type: 'display_updated',
+              data: display
+            });
+          }
+        } else if (schedule.targetType === 'group') {
+          const allDisplays = await storage.getDisplaysWithGroups();
+          const groupDisplays = allDisplays.filter(d => d.groupId === schedule.targetId);
+          groupDisplays.forEach((display: typeof allDisplays[0]) => {
+            broadcast({
+              type: 'display_updated',
+              data: display
+            });
+          });
+        }
+      }
+      
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete schedule" });
