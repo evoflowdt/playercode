@@ -1,0 +1,409 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Monitor, Loader2, WifiOff, Wifi } from "lucide-react";
+
+interface PlayerContent {
+  id: string;
+  name: string;
+  type: string;
+  url?: string;
+  htmlContent?: string;
+  duration?: number;
+}
+
+interface PlayerData {
+  display: {
+    id: string;
+    name: string;
+    os: string;
+  };
+  content: PlayerContent[];
+  schedules: any[];
+}
+
+export default function Player() {
+  const [isPaired, setIsPaired] = useState(false);
+  const [pairingToken, setPairingToken] = useState("");
+  const [displayId, setDisplayId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [content, setContent] = useState<PlayerContent[]>([]);
+  const [currentContentIndex, setCurrentContentIndex] = useState(0);
+  const { toast } = useToast();
+  const wsRef = useRef<WebSocket | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const contentRotationRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch content from server
+  const fetchContent = useCallback(async (displayId: string) => {
+    try {
+      const response = await fetch(`/api/player/content/${displayId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch content");
+      }
+      const data: PlayerData = await response.json();
+      setContent(data.content || []);
+      
+      if (data.content && data.content.length > 0) {
+        toast({
+          title: "Content updated",
+          description: `${data.content.length} content item(s) loaded`,
+        });
+      }
+    } catch (error) {
+      console.error("Content fetch error:", error);
+    }
+  }, [toast]);
+
+  // Send heartbeat to server
+  const sendHeartbeat = useCallback(async (displayId: string) => {
+    try {
+      await fetch("/api/player/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayId,
+          status: "online",
+          currentContentId: content[currentContentIndex]?.id,
+        }),
+      });
+    } catch (error) {
+      console.error("Heartbeat error:", error);
+    }
+  }, [content, currentContentIndex]);
+
+  // Pair with server using token
+  const handlePair = async () => {
+    if (!pairingToken.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a pairing token",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/player/pair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: pairingToken.trim().toUpperCase(),
+          displayInfo: {
+            name: `Web Player`,
+            os: "web",
+            playerVersion: "1.0.0",
+            resolution: `${window.screen.width}x${window.screen.height}`,
+            capabilities: {
+              supportsVideo: true,
+              supportsAudio: true,
+              supportsHtml: true,
+              supportsTouch: 'ontouchstart' in window,
+              maxVideoResolution: `${window.screen.width}x${window.screen.height}`,
+              supportedVideoFormats: ['video/mp4', 'video/webm'],
+              supportedImageFormats: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Pairing failed");
+      }
+
+      const data = await response.json();
+      setDisplayId(data.display.id);
+      localStorage.setItem("evoflow_display_id", data.display.id);
+      setIsPaired(true);
+      
+      toast({
+        title: "Paired successfully",
+        description: `Display: ${data.display.name}`,
+      });
+
+      // Fetch content after pairing
+      await fetchContent(data.display.id);
+    } catch (error: any) {
+      toast({
+        title: "Pairing failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Connect to WebSocket for real-time updates
+  useEffect(() => {
+    if (!isPaired || !displayId) return;
+
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        setIsConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'display_updated' && message.data?.id === displayId) {
+            console.log("Display updated, refetching content");
+            fetchContent(displayId);
+          }
+        } catch (error) {
+          console.error("WebSocket message error:", error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        setIsConnected(false);
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+
+      wsRef.current = ws;
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [isPaired, displayId, fetchContent]);
+
+  // Setup heartbeat interval
+  useEffect(() => {
+    if (!isPaired || !displayId) return;
+
+    // Send initial heartbeat
+    sendHeartbeat(displayId);
+
+    // Send heartbeat every 30 seconds
+    heartbeatIntervalRef.current = setInterval(() => {
+      sendHeartbeat(displayId);
+    }, 30000);
+
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+    };
+  }, [isPaired, displayId, sendHeartbeat]);
+
+  // Setup content rotation
+  useEffect(() => {
+    if (!isPaired || content.length === 0) return;
+
+    const rotateContent = () => {
+      setCurrentContentIndex((prev) => (prev + 1) % content.length);
+    };
+
+    // Get duration for current content (default 10 seconds)
+    const duration = content[currentContentIndex]?.duration || 10000;
+
+    contentRotationRef.current = setTimeout(rotateContent, duration);
+
+    return () => {
+      if (contentRotationRef.current) {
+        clearTimeout(contentRotationRef.current);
+      }
+    };
+  }, [isPaired, content, currentContentIndex]);
+
+  // Check for existing display ID on mount
+  useEffect(() => {
+    const savedDisplayId = localStorage.getItem("evoflow_display_id");
+    if (savedDisplayId) {
+      setDisplayId(savedDisplayId);
+      setIsPaired(true);
+      fetchContent(savedDisplayId);
+    }
+  }, [fetchContent]);
+
+  // Enter fullscreen on paired
+  useEffect(() => {
+    if (isPaired) {
+      document.documentElement.requestFullscreen?.().catch(console.error);
+    }
+  }, [isPaired]);
+
+  // Render content
+  const renderContent = () => {
+    if (content.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="text-center space-y-4">
+            <Monitor className="w-24 h-24 mx-auto text-muted-foreground" />
+            <h2 className="text-2xl font-bold">No content scheduled</h2>
+            <p className="text-muted-foreground">
+              Waiting for content from EvoFlow dashboard
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const currentContent = content[currentContentIndex];
+
+    if (currentContent.type === "image") {
+      return (
+        <div className="flex items-center justify-center h-screen bg-black">
+          <img
+            src={currentContent.url}
+            alt={currentContent.name}
+            className="max-w-full max-h-full object-contain"
+            data-testid="player-image-content"
+          />
+        </div>
+      );
+    }
+
+    if (currentContent.type === "video") {
+      return (
+        <div className="flex items-center justify-center h-screen bg-black">
+          <video
+            src={currentContent.url}
+            autoPlay
+            loop
+            muted
+            className="max-w-full max-h-full"
+            data-testid="player-video-content"
+          />
+        </div>
+      );
+    }
+
+    if (currentContent.type === "html" && currentContent.htmlContent) {
+      return (
+        <div
+          className="h-screen overflow-hidden"
+          dangerouslySetInnerHTML={{ __html: currentContent.htmlContent }}
+          data-testid="player-html-content"
+        />
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <p className="text-muted-foreground">Unsupported content type: {currentContent.type}</p>
+      </div>
+    );
+  };
+
+  // Pairing screen
+  if (!isPaired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <Monitor className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">EvoFlow Web Player</CardTitle>
+            <CardDescription>
+              Enter the pairing token from your EvoFlow dashboard to connect this display
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="token" className="text-sm font-medium">
+                Pairing Token
+              </label>
+              <Input
+                id="token"
+                placeholder="Enter token (e.g., ABC123XYZ)"
+                value={pairingToken}
+                onChange={(e) => setPairingToken(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handlePair()}
+                className="text-center text-lg tracking-widest font-mono"
+                maxLength={12}
+                data-testid="input-pairing-token"
+              />
+            </div>
+            <Button
+              onClick={handlePair}
+              disabled={isLoading || !pairingToken.trim()}
+              className="w-full"
+              data-testid="button-pair"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Pairing...
+                </>
+              ) : (
+                "Pair Display"
+              )}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Generate a pairing token from the EvoFlow dashboard Settings page
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Player screen with connection status overlay
+  return (
+    <div className="relative h-screen overflow-hidden bg-black">
+      {renderContent()}
+      
+      {/* Connection status indicator */}
+      <div className="absolute top-4 right-4 z-50">
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-white text-sm backdrop-blur-sm ${
+          isConnected ? "bg-green-500/80" : "bg-red-500/80"
+        }`}>
+          {isConnected ? (
+            <>
+              <Wifi className="w-4 h-4" />
+              Connected
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-4 h-4" />
+              Disconnected
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Content counter */}
+      {content.length > 1 && (
+        <div className="absolute bottom-4 left-4 z-50">
+          <div className="bg-black/60 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm">
+            {currentContentIndex + 1} / {content.length}
+          </div>
+        </div>
+      )}
+
+      {/* Reset button (hidden, accessible via double-tap) */}
+      <button
+        onClick={() => {
+          localStorage.removeItem("evoflow_display_id");
+          setIsPaired(false);
+          setDisplayId("");
+          setContent([]);
+        }}
+        className="absolute top-0 left-0 w-20 h-20 opacity-0"
+        data-testid="button-reset-player"
+      />
+    </div>
+  );
+}

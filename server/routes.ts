@@ -588,6 +588,31 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
   
+  // Get all player sessions
+  app.get("/api/player/sessions", async (_req, res) => {
+    try {
+      const sessions = await storage.getAllPlayerSessions();
+      
+      // Enrich sessions with display information
+      const enrichedSessions = await Promise.all(
+        sessions.map(async (session) => {
+          const display = await storage.getDisplay(session.displayId);
+          return {
+            ...session,
+            displayName: display?.name || "Unknown Display",
+            displayOs: display?.os || "unknown",
+            displayStatus: display?.status || "offline",
+          };
+        })
+      );
+      
+      res.json(enrichedSessions);
+    } catch (error) {
+      console.error("Sessions fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch sessions" });
+    }
+  });
+  
   // Get player session info
   app.get("/api/player/session/:displayId", async (req, res) => {
     try {

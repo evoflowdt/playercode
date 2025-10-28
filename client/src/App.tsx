@@ -19,6 +19,7 @@ import Groups from "@/pages/groups";
 import Playlists from "@/pages/playlists";
 import Analytics from "@/pages/analytics";
 import Settings from "@/pages/settings";
+import Player from "@/pages/player";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -71,25 +72,31 @@ export default function App() {
       <ThemeProvider defaultTheme="light" storageKey="evoflow-theme">
         <LanguageProvider>
           <TooltipProvider>
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <header className="flex items-center justify-between p-4 border-b bg-background">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <div className="flex items-center gap-2">
-                    <LanguageToggle />
-                    <ThemeToggle />
+            {/* Standalone player route (no sidebar/header) */}
+            <Switch>
+              <Route path="/player" component={Player} />
+              <Route>
+                <SidebarProvider style={style as React.CSSProperties}>
+                  <div className="flex h-screen w-full">
+                    <AppSidebar />
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <header className="flex items-center justify-between p-4 border-b bg-background">
+                        <SidebarTrigger data-testid="button-sidebar-toggle" />
+                        <div className="flex items-center gap-2">
+                          <LanguageToggle />
+                          <ThemeToggle />
+                        </div>
+                      </header>
+                      <main className="flex-1 overflow-y-auto">
+                        <Router />
+                      </main>
+                    </div>
                   </div>
-                </header>
-                <main className="flex-1 overflow-y-auto">
-                  <Router />
-                </main>
-              </div>
-            </div>
-          </SidebarProvider>
-          <Toaster />
-        </TooltipProvider>
+                </SidebarProvider>
+              </Route>
+            </Switch>
+            <Toaster />
+          </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
