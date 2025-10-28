@@ -65,6 +65,7 @@ export function ObjectUploader({
   return (
     <div>
       <Button
+        type="button"
         onClick={() => setShowModal(true)}
         className={buttonClassName}
         variant={variant}
@@ -81,6 +82,8 @@ export function ObjectUploader({
         proudlyDisplayPoweredByUppy={false}
         note="Immagini e video fino a 100MB"
         height={450}
+        closeModalOnClickOutside
+        closeAfterFinish={false}
       />
     </div>
   );
