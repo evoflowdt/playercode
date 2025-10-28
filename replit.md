@@ -1,4 +1,4 @@
-# videoMOOD - Digital Signage Management Platform
+# EVOsignage - Digital Signage Management Platform
 
 ## Overview
 Cloud-based digital signage management dashboard for controlling and monitoring displays remotely. The platform enables content management, scheduling, device grouping, and real-time monitoring across multiple display platforms including LG webOS, Samsung Tizen, Android, Raspberry Pi, and more.

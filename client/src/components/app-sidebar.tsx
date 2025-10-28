@@ -19,52 +19,53 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/lib/language-provider";
 
-const menuItems = [
+const menuItemsConfig = [
   {
-    title: "Dashboard",
+    titleKey: "dashboard" as const,
     url: "/",
     icon: LayoutDashboard,
     testId: "link-dashboard",
   },
   {
-    title: "Displays",
+    titleKey: "displays" as const,
     url: "/displays",
     icon: Monitor,
     testId: "link-displays",
   },
   {
-    title: "Content Library",
+    titleKey: "contentLibrary" as const,
     url: "/content",
     icon: FolderOpen,
     testId: "link-content",
   },
   {
-    title: "Scheduling",
+    titleKey: "scheduling" as const,
     url: "/schedules",
     icon: Calendar,
     testId: "link-schedules",
   },
   {
-    title: "Groups",
+    titleKey: "groups" as const,
     url: "/groups",
     icon: Users,
     testId: "link-groups",
   },
   {
-    title: "Playlists",
+    titleKey: "playlists" as const,
     url: "/playlists",
     icon: Music,
     testId: "link-playlists",
   },
   {
-    title: "Analytics",
+    titleKey: "analytics" as const,
     url: "/analytics",
     icon: BarChart3,
     testId: "link-analytics",
   },
   {
-    title: "Settings",
+    titleKey: "settings" as const,
     url: "/settings",
     icon: Settings,
     testId: "link-settings",
@@ -73,22 +74,23 @@ const menuItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { t } = useLanguage();
 
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-semibold px-4 py-6">
-            videoMOOD
+            {t('appName')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {menuItemsConfig.map((item) => (
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild data-active={location === item.url}>
                     <Link href={item.url} data-testid={item.testId}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span>{t(item.titleKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

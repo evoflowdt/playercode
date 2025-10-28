@@ -8,6 +8,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageProvider } from "@/lib/language-provider";
+import { LanguageToggle } from "@/components/language-toggle";
 import { wsClient } from "@/lib/websocket";
 import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
@@ -66,15 +68,19 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="videomood-theme">
-        <TooltipProvider>
+      <ThemeProvider defaultTheme="light" storageKey="evosignage-theme">
+        <LanguageProvider>
+          <TooltipProvider>
           <SidebarProvider style={style as React.CSSProperties}>
             <div className="flex h-screen w-full">
               <AppSidebar />
               <div className="flex flex-col flex-1 overflow-hidden">
                 <header className="flex items-center justify-between p-4 border-b bg-background">
                   <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <ThemeToggle />
+                  <div className="flex items-center gap-2">
+                    <LanguageToggle />
+                    <ThemeToggle />
+                  </div>
                 </header>
                 <main className="flex-1 overflow-y-auto">
                   <Router />
@@ -84,6 +90,7 @@ export default function App() {
           </SidebarProvider>
           <Toaster />
         </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

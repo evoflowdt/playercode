@@ -55,7 +55,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    log("Starting videoMOOD server...");
+    log("Starting EVOsignage server...");
     
     // Create HTTP server first
     const server = createServer(app);
@@ -102,7 +102,7 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    log("videoMOOD server ready!");
+    log("EVOsignage server ready!");
   } catch (error) {
     log(`Fatal error starting server: ${error}`);
     process.exit(1);
