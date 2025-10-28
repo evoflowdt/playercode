@@ -24,13 +24,14 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 ### Feature Specifications
 -   **Dashboard**: Real-time statistics, geographic display map, recent displays grid, and auto-refreshing data.
 -   **Display Management**: View, search, filter, and monitor displays with real-time status updates and hash code verification for registration.
--   **Content Library**: Upload images and videos to object storage with drag-and-drop, search, filtering, and metadata display.
+-   **Content Library**: Upload images and videos to object storage with drag-and-drop, search, filtering, visual thumbnails with graceful fallback, and metadata display. Content paths automatically convert from `/objects/` to `/public-objects/` for display.
 -   **Scheduling**: Create and manage time-based, recurring content schedules for individual displays or groups, including advanced conditional rules, content priorities, and transition effects.
 -   **Display Groups**: Organize displays for bulk content deployment and simplified management.
 -   **Content Playlists**: Create sequential content playlists with management capabilities.
 -   **Analytics Dashboard**: Visualizes display status, platform distribution, content type breakdown, and system metrics using Recharts.
 -   **Real-time Communication**: WebSocket connection for live updates, display status broadcasting, and event-driven architecture.
 -   **Player API**: Endpoints for display pairing, registration, heartbeats, content delivery, session management, and capability updates.
+-   **Player Auto-Reset**: Automatic player disconnection and reset when sessions are deleted from Settings page. Players detect 404 from heartbeat/content endpoints, clear localStorage, stop WebSocket reconnection, and return to pairing form with user notification.
 -   **Advanced Scheduling API**: Comprehensive API for managing scheduling rules, content priorities, transition effects, detecting conflicts, and generating timeline previews.
 
 ### System Design Choices
