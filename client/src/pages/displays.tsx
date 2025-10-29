@@ -4,6 +4,7 @@ import { Display } from "@shared/schema";
 import { DisplayCard } from "@/components/display-card";
 import { EmptyState } from "@/components/empty-state";
 import { DisplayFormDialog } from "@/components/display-form-dialog";
+import { DisplayEditDialog } from "@/components/display-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -229,11 +230,13 @@ export default function Displays() {
         onOpenChange={setShowAddDialog}
       />
 
-      <DisplayFormDialog
-        open={!!editDisplay}
-        onOpenChange={(open) => !open && setEditDisplay(null)}
-        display={editDisplay || undefined}
-      />
+      {editDisplay && (
+        <DisplayEditDialog
+          open={!!editDisplay}
+          onOpenChange={(open) => !open && setEditDisplay(null)}
+          display={editDisplay}
+        />
+      )}
 
       <AlertDialog
         open={!!deleteDisplay}
