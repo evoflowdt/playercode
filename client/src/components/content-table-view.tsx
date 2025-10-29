@@ -67,11 +67,11 @@ export function ContentTableView({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16">{t('contentType')}</TableHead>
-            <TableHead>{t('contentName')}</TableHead>
-            <TableHead>ID</TableHead>
+            <TableHead className="w-16">{t('type')}</TableHead>
+            <TableHead>{t('name')}</TableHead>
+            <TableHead>{t('id')}</TableHead>
             <TableHead className="w-32">{t('fileSize')}</TableHead>
-            <TableHead className="w-40">{t('uploadedAt')}</TableHead>
+            <TableHead className="w-40">{t('uploaded')}</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
         </TableHeader>

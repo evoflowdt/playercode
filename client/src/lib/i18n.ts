@@ -95,6 +95,13 @@ export const translations = {
     tryAdjusting: 'Try adjusting your search',
     uploadFirstMedia: 'Upload your first media file to start creating digital signage content',
     loadingContent: 'Loading content...',
+    unknownSize: 'Unknown size',
+    uploadNote: 'Images and videos up to 100MB',
+    browseFiles: 'Browse files',
+    dropPasteFiles: 'Drag files here or %{browseFiles}',
+    id: 'ID',
+    type: 'Type',
+    uploaded: 'Uploaded',
     
     // Schedules
     schedulesTitle: 'Scheduling',
@@ -566,6 +573,13 @@ export const translations = {
     tryAdjusting: 'Prova a modificare la tua ricerca',
     uploadFirstMedia: 'Carica il tuo primo file multimediale per iniziare a creare contenuti di digital signage',
     loadingContent: 'Caricamento contenuti...',
+    unknownSize: 'Dimensione sconosciuta',
+    uploadNote: 'Immagini e video fino a 100MB',
+    browseFiles: 'Sfoglia file',
+    dropPasteFiles: 'Trascina i file qui o %{browseFiles}',
+    id: 'ID',
+    type: 'Tipo',
+    uploaded: 'Caricato',
     
     // Schedules
     schedulesTitle: 'Pianificazione',

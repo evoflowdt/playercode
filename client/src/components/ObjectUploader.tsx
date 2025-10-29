@@ -5,6 +5,7 @@ import { DashboardModal } from "@uppy/react";
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/language-provider";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -34,6 +35,7 @@ export function ObjectUploader({
   size = "default",
   testId,
 }: ObjectUploaderProps) {
+  const { t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
   const [uppy] = useState(() =>
     new Uppy({
@@ -80,15 +82,15 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
-        note="Immagini e video fino a 100MB"
+        note={t('uploadNote')}
         closeModalOnClickOutside
         closeAfterFinish={false}
         locale={{
           strings: {
-            browseFiles: 'Sfoglia file',
-            dropPasteFiles: 'Trascina i file qui o %{browseFiles}',
-            dropPasteFolders: 'Trascina i file qui o %{browseFolders}',
-            dropPasteBoth: 'Trascina i file qui o %{browseFiles}',
+            browseFiles: t('browseFiles'),
+            dropPasteFiles: t('dropPasteFiles'),
+            dropPasteFolders: t('dropPasteFiles'),
+            dropPasteBoth: t('dropPasteFiles'),
           }
         }}
       />

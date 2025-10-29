@@ -169,6 +169,8 @@ export default function Content() {
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="icon"
               onClick={() => setViewMode("grid")}
+              aria-pressed={viewMode === "grid"}
+              aria-label={`${t('contentLibrary')} - Grid view`}
               data-testid="button-view-grid"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -177,6 +179,8 @@ export default function Content() {
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="icon"
               onClick={() => setViewMode("list")}
+              aria-pressed={viewMode === "list"}
+              aria-label={`${t('contentLibrary')} - List view`}
               data-testid="button-view-list"
             >
               <List className="h-4 w-4" />

@@ -42,7 +42,7 @@ export function ContentItemCard({
   const Icon = getIcon();
 
   const formatFileSize = (bytes?: number | null) => {
-    if (!bytes) return "Unknown size";
+    if (!bytes) return t('unknownSize');
     const kb = bytes / 1024;
     if (kb < 1024) return `${kb.toFixed(1)} KB`;
     const mb = kb / 1024;
