@@ -16,6 +16,7 @@ export const displays = pgTable("displays", {
   lastSeen: timestamp("last_seen"),
   screenshot: text("screenshot"),
   groupId: varchar("group_id"),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const contentItems = pgTable("content_items", {
@@ -29,6 +30,7 @@ export const contentItems = pgTable("content_items", {
   dataFeedUrl: text("data_feed_url"),
   dataFeedConfig: text("data_feed_config"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const displayGroups = pgTable("display_groups", {
@@ -36,6 +38,7 @@ export const displayGroups = pgTable("display_groups", {
   name: text("name").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const schedules = pgTable("schedules", {
@@ -50,6 +53,7 @@ export const schedules = pgTable("schedules", {
   repeat: text("repeat"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const playlists = pgTable("playlists", {
@@ -57,6 +61,7 @@ export const playlists = pgTable("playlists", {
   name: text("name").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const playlistItems = pgTable("playlist_items", {
@@ -159,6 +164,7 @@ export const syncGroups = pgTable("sync_groups", {
   description: text("description"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  organizationId: varchar("organization_id").notNull(),
 });
 
 export const syncGroupMembers = pgTable("sync_group_members", {
