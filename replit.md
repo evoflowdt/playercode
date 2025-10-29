@@ -27,7 +27,7 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Content Library**: Upload images and videos to object storage with drag-and-drop, search, filtering, visual thumbnails with graceful fallback, and metadata display. Uploaded files are stored in `/.private/uploads/` and served publicly via a dedicated route for player access. Legacy content paths convert from `/objects/` to `/public-objects/` for display.
 -   **Scheduling**: Create and manage time-based, recurring content schedules for individual displays or groups, including advanced conditional rules, content priorities, and transition effects.
 -   **Display Groups**: Organize displays for bulk content deployment and simplified management.
--   **Content Playlists**: Create sequential content playlists with management capabilities.
+-   **Content Playlists**: Create sequential content playlists with full management capabilities. Features include: adding videos from Content Library to playlists, removing videos, reordering with up/down buttons, setting custom duration per video, and detailed playlist view with sequential playback order.
 -   **Analytics Dashboard**: Visualizes display status, platform distribution, content type breakdown, and system metrics using Recharts.
 -   **Real-time Communication**: WebSocket connection for live updates, display status broadcasting, and event-driven architecture.
 -   **Player API**: Endpoints for display pairing, registration, heartbeats, content delivery, session management, and capability updates.
