@@ -40,6 +40,10 @@ import {
   type InsertOrganizationMember,
   type Session,
   type InsertSession,
+  type Invitation,
+  type InsertInvitation,
+  type AuditLog,
+  type InsertAuditLog,
   type UserWithOrganizations,
   type DashboardStats,
   type DisplayWithGroup,
@@ -47,6 +51,9 @@ import {
   type PlaylistWithItems,
   type SyncGroupWithMembers,
   type SyncSessionWithDetails,
+  type TeamMember,
+  type InvitationWithDetails,
+  type AuditLogWithDetails,
   displays,
   contentItems,
   displayGroups,
@@ -67,9 +74,11 @@ import {
   users,
   organizationMembers,
   sessions,
+  invitations,
+  auditLogs,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, and, gt } from "drizzle-orm";
+import { eq, sql, and, gt, lt, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   getDisplay(id: string, organizationId: string): Promise<Display | undefined>;
@@ -194,7 +203,7 @@ export interface IStorage {
   deleteUser(id: string): Promise<boolean>;
   
   // Organization Member methods
-  getOrganizationMember(id: string): Promise<OrganizationMember | undefined>;
+  getOrganizationMemberById(id: string): Promise<OrganizationMember | undefined>;
   getOrganizationMembersByUser(userId: string): Promise<OrganizationMember[]>;
   getOrganizationMembersByOrganization(organizationId: string): Promise<OrganizationMember[]>;
   getUserRole(userId: string, organizationId: string): Promise<string | undefined>;
@@ -210,6 +219,24 @@ export interface IStorage {
   deleteSession(id: string): Promise<boolean>;
   deleteSessionsByUser(userId: string): Promise<number>;
   cleanupExpiredSessions(): Promise<number>;
+  
+  // Team Management methods
+  getTeamMembers(organizationId: string): Promise<TeamMember[]>;
+  getOrganizationMember(userId: string, organizationId: string): Promise<OrganizationMember | undefined>;
+  updateMemberRole(userId: string, organizationId: string, role: string): Promise<OrganizationMember | undefined>;
+  removeMember(userId: string, organizationId: string): Promise<boolean>;
+  
+  // Invitation methods
+  createInvitation(invitation: InsertInvitation): Promise<Invitation>;
+  getInvitation(token: string): Promise<Invitation | undefined>;
+  getPendingInvitations(organizationId: string): Promise<InvitationWithDetails[]>;
+  acceptInvitation(token: string, userId: string): Promise<boolean>;
+  revokeInvitation(id: string, organizationId: string): Promise<boolean>;
+  cleanupExpiredInvitations(): Promise<number>;
+  
+  // Audit Log methods
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(organizationId: string, filters?: { userId?: string; action?: string; resourceType?: string; startDate?: Date; endDate?: Date }): Promise<AuditLogWithDetails[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1197,7 +1224,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Organization Member methods
-  async getOrganizationMember(id: string): Promise<OrganizationMember | undefined> {
+  async getOrganizationMemberById(id: string): Promise<OrganizationMember | undefined> {
     const [member] = await db
       .select()
       .from(organizationMembers)
@@ -1315,6 +1342,264 @@ export class DatabaseStorage implements IStorage {
       .delete(sessions)
       .where(sql`${sessions.expiresAt} < NOW()`);
     return result.rowCount || 0;
+  }
+
+  // Team Management methods
+  async getTeamMembers(organizationId: string): Promise<TeamMember[]> {
+    const members = await db
+      .select({
+        id: organizationMembers.id,
+        userId: organizationMembers.userId,
+        organizationId: organizationMembers.organizationId,
+        role: organizationMembers.role,
+        joinedAt: organizationMembers.joinedAt,
+        invitedBy: organizationMembers.invitedBy,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        inviterFirstName: sql<string | null>`inviter.first_name`.as('inviterFirstName'),
+        inviterLastName: sql<string | null>`inviter.last_name`.as('inviterLastName'),
+      })
+      .from(organizationMembers)
+      .innerJoin(users, eq(organizationMembers.userId, users.id))
+      .leftJoin(
+        sql`${users} AS inviter`,
+        sql`${organizationMembers.invitedBy} = inviter.id`
+      )
+      .where(eq(organizationMembers.organizationId, organizationId));
+
+    return members.map(m => ({
+      id: m.id,
+      userId: m.userId,
+      organizationId: m.organizationId,
+      role: m.role,
+      joinedAt: m.joinedAt,
+      invitedBy: m.invitedBy,
+      userEmail: m.userEmail,
+      userFirstName: m.userFirstName,
+      userLastName: m.userLastName,
+      inviterName: m.inviterFirstName && m.inviterLastName 
+        ? `${m.inviterFirstName} ${m.inviterLastName}` 
+        : undefined,
+    }));
+  }
+
+  async getOrganizationMember(userId: string, organizationId: string): Promise<OrganizationMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      );
+    return member || undefined;
+  }
+
+  async updateMemberRole(userId: string, organizationId: string, role: string): Promise<OrganizationMember | undefined> {
+    const [updated] = await db
+      .update(organizationMembers)
+      .set({ role })
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      )
+      .returning();
+    return updated || undefined;
+  }
+
+  async removeMember(userId: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .delete(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      );
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Invitation methods
+  async createInvitation(insertInvitation: InsertInvitation): Promise<Invitation> {
+    const [invitation] = await db
+      .insert(invitations)
+      .values(insertInvitation)
+      .returning();
+    return invitation;
+  }
+
+  async getInvitation(token: string): Promise<Invitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.token, token));
+    return invitation || undefined;
+  }
+
+  async getPendingInvitations(organizationId: string): Promise<InvitationWithDetails[]> {
+    const invites = await db
+      .select({
+        id: invitations.id,
+        email: invitations.email,
+        organizationId: invitations.organizationId,
+        role: invitations.role,
+        token: invitations.token,
+        invitedBy: invitations.invitedBy,
+        expiresAt: invitations.expiresAt,
+        accepted: invitations.accepted,
+        acceptedAt: invitations.acceptedAt,
+        createdAt: invitations.createdAt,
+        inviterFirstName: users.firstName,
+        inviterLastName: users.lastName,
+        organizationName: organizations.name,
+      })
+      .from(invitations)
+      .innerJoin(users, eq(invitations.invitedBy, users.id))
+      .innerJoin(organizations, eq(invitations.organizationId, organizations.id))
+      .where(
+        and(
+          eq(invitations.organizationId, organizationId),
+          eq(invitations.accepted, false)
+        )
+      );
+
+    return invites.map(i => ({
+      id: i.id,
+      email: i.email,
+      organizationId: i.organizationId,
+      role: i.role,
+      token: i.token,
+      invitedBy: i.invitedBy,
+      expiresAt: i.expiresAt,
+      accepted: i.accepted,
+      acceptedAt: i.acceptedAt,
+      createdAt: i.createdAt,
+      inviterFirstName: i.inviterFirstName,
+      inviterLastName: i.inviterLastName,
+      organizationName: i.organizationName,
+    }));
+  }
+
+  async acceptInvitation(token: string, userId: string): Promise<boolean> {
+    const invitation = await this.getInvitation(token);
+    if (!invitation || invitation.accepted || invitation.expiresAt < new Date()) {
+      return false;
+    }
+
+    await db
+      .update(invitations)
+      .set({ 
+        accepted: true, 
+        acceptedAt: new Date() 
+      })
+      .where(eq(invitations.token, token));
+
+    await this.createOrganizationMember({
+      userId,
+      organizationId: invitation.organizationId,
+      role: invitation.role,
+      invitedBy: invitation.invitedBy,
+    });
+
+    return true;
+  }
+
+  async revokeInvitation(id: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .delete(invitations)
+      .where(
+        and(
+          eq(invitations.id, id),
+          eq(invitations.organizationId, organizationId)
+        )
+      );
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async cleanupExpiredInvitations(): Promise<number> {
+    const result = await db
+      .delete(invitations)
+      .where(lt(invitations.expiresAt, new Date()));
+    return result.rowCount || 0;
+  }
+
+  // Audit Log methods
+  async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
+    const [log] = await db
+      .insert(auditLogs)
+      .values(insertLog)
+      .returning();
+    return log;
+  }
+
+  async getAuditLogs(
+    organizationId: string,
+    filters?: {
+      userId?: string;
+      action?: string;
+      resourceType?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<AuditLogWithDetails[]> {
+    const conditions = [eq(auditLogs.organizationId, organizationId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(auditLogs.userId, filters.userId));
+    }
+    if (filters?.action) {
+      conditions.push(eq(auditLogs.action, filters.action));
+    }
+    if (filters?.resourceType) {
+      conditions.push(eq(auditLogs.resourceType, filters.resourceType));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(auditLogs.createdAt, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(auditLogs.createdAt, filters.endDate));
+    }
+
+    const logs = await db
+      .select({
+        id: auditLogs.id,
+        organizationId: auditLogs.organizationId,
+        userId: auditLogs.userId,
+        action: auditLogs.action,
+        resourceType: auditLogs.resourceType,
+        resourceId: auditLogs.resourceId,
+        details: auditLogs.details,
+        ipAddress: auditLogs.ipAddress,
+        userAgent: auditLogs.userAgent,
+        createdAt: auditLogs.createdAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userEmail: users.email,
+      })
+      .from(auditLogs)
+      .innerJoin(users, eq(auditLogs.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(sql`${auditLogs.createdAt} DESC`);
+
+    return logs.map(log => ({
+      id: log.id,
+      organizationId: log.organizationId,
+      userId: log.userId,
+      action: log.action,
+      resourceType: log.resourceType,
+      resourceId: log.resourceId,
+      details: log.details,
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent,
+      createdAt: log.createdAt,
+      userFirstName: log.userFirstName,
+      userLastName: log.userLastName,
+      userEmail: log.userEmail,
+    }));
   }
 }
 

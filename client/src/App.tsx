@@ -35,6 +35,10 @@ import Analytics from "@/pages/analytics";
 import Documentation from "@/pages/documentation";
 import Downloads from "@/pages/downloads";
 import Settings from "@/pages/settings";
+import Team from "@/pages/team";
+import Organization from "@/pages/organization";
+import AuditLogs from "@/pages/audit-logs";
+import AcceptInvitation from "@/pages/accept-invitation";
 import Player from "@/pages/player";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -107,6 +111,9 @@ function ProtectedRouter() {
       <Route path="/documentation" component={() => <ProtectedRoute component={Documentation} />} />
       <Route path="/downloads" component={() => <ProtectedRoute component={Downloads} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
+      <Route path="/team" component={() => <ProtectedRoute component={Team} />} />
+      <Route path="/organization" component={() => <ProtectedRoute component={Organization} />} />
+      <Route path="/audit-logs" component={() => <ProtectedRoute component={AuditLogs} />} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -152,6 +159,7 @@ export default function App() {
                 <Route path="/player" component={Player} />
                 <Route path="/login" component={Login} />
                 <Route path="/register" component={Register} />
+                <Route path="/accept-invitation/:token" component={AcceptInvitation} />
                 <Route>
                   <SidebarProvider style={style as React.CSSProperties}>
                     <div className="flex h-screen w-full">

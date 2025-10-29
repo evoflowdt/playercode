@@ -17,6 +17,10 @@ export const translations = {
     analytics: 'Analytics',
     downloads: 'Download Player',
     settings: 'Settings',
+    team: 'Team',
+    organization: 'Organization',
+    auditLogs: 'Audit Logs',
+    documentation: 'Documentation',
     
     // Dashboard
     dashboardTitle: 'Dashboard',
@@ -660,6 +664,10 @@ export const translations = {
     analytics: 'Analisi',
     downloads: 'Scarica Player',
     settings: 'Impostazioni',
+    team: 'Team',
+    organization: 'Organizzazione',
+    auditLogs: 'Log di Audit',
+    documentation: 'Documentazione',
     
     // Dashboard
     dashboardTitle: 'Cruscotto',

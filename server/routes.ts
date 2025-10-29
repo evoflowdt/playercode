@@ -112,6 +112,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   interface AuthRequest extends Request {
     user?: User;
     userId?: string;
+    userRole?: string; // Role in current organization
   }
 
   async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -133,6 +134,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(401).json({ error: "Unauthorized - User not found" });
       }
 
+      // Get user's role in their default organization
+      if (user.defaultOrganizationId) {
+        const member = await storage.getOrganizationMember(user.id, user.defaultOrganizationId);
+        (req as AuthRequest).userRole = member?.role || 'viewer';
+      }
+
       (req as AuthRequest).user = user;
       (req as AuthRequest).userId = user.id;
       next();
@@ -140,6 +147,53 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       console.error("Auth middleware error:", error);
       res.status(500).json({ error: "Authentication failed" });
     }
+  }
+
+  // RBAC Middleware
+  type Permission = 'read' | 'create' | 'update' | 'delete' | 'manage_users' | 'manage_organization';
+  
+  const rolePermissions: Record<string, Permission[]> = {
+    owner: ['read', 'create', 'update', 'delete', 'manage_users', 'manage_organization'],
+    admin: ['read', 'create', 'update', 'delete', 'manage_users'],
+    editor: ['read', 'create', 'update', 'delete'],
+    viewer: ['read'],
+  };
+
+  function requirePermission(...requiredPermissions: Permission[]) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const authReq = req as AuthRequest;
+      const userRole = authReq.userRole || 'viewer';
+      const userPermissions = rolePermissions[userRole] || [];
+
+      const hasPermission = requiredPermissions.every(perm => userPermissions.includes(perm));
+      
+      if (!hasPermission) {
+        return res.status(403).json({ 
+          error: "Forbidden - Insufficient permissions",
+          required: requiredPermissions,
+          role: userRole
+        });
+      }
+
+      next();
+    };
+  }
+
+  function requireRole(...allowedRoles: string[]) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const authReq = req as AuthRequest;
+      const userRole = authReq.userRole || 'viewer';
+
+      if (!allowedRoles.includes(userRole)) {
+        return res.status(403).json({ 
+          error: "Forbidden - Insufficient role",
+          required: allowedRoles,
+          current: userRole
+        });
+      }
+
+      next();
+    };
   }
 
   // Authentication Routes
@@ -329,6 +383,374 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.status(500).json({ error: "Failed to fetch user data" });
     }
   });
+
+  // Helper function for creating audit logs
+  async function createAuditLog(
+    req: Request,
+    organizationId: string,
+    userId: string,
+    action: string,
+    resourceType: string,
+    resourceId?: string,
+    details?: string
+  ): Promise<void> {
+    try {
+      await storage.createAuditLog({
+        organizationId,
+        userId,
+        action,
+        resourceType,
+        resourceId,
+        details,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    } catch (error) {
+      console.error('Failed to create audit log:', error);
+    }
+  }
+
+  // ============================================
+  // SPRINT 3 ROUTES - Team Management & Organization
+  // ============================================
+
+  // Team Management Routes
+  app.get("/api/team", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const teamMembers = await storage.getTeamMembers(organizationId);
+      res.json(teamMembers);
+    } catch (error) {
+      console.error("Get team members error:", error);
+      res.status(500).json({ error: "Failed to fetch team members" });
+    }
+  });
+
+  app.patch("/api/team/:userId/role", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+      const targetUserId = req.params.userId;
+      
+      const roleSchema = z.object({
+        role: z.enum(['owner', 'admin', 'editor', 'viewer']),
+      });
+
+      const validated = roleSchema.parse(req.body);
+      
+      const updated = await storage.updateMemberRole(targetUserId, organizationId, validated.role);
+      if (!updated) {
+        return res.status(404).json({ error: "Team member not found" });
+      }
+
+      await createAuditLog(
+        req,
+        organizationId,
+        currentUserId,
+        'update_member_role',
+        'user',
+        targetUserId,
+        JSON.stringify({ newRole: validated.role })
+      );
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update member role error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid role. Must be one of: owner, admin, editor, viewer" });
+      }
+      res.status(500).json({ error: "Failed to update member role" });
+    }
+  });
+
+  app.delete("/api/team/:userId", requireAuth, requireRole('owner', 'admin'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+      const targetUserId = req.params.userId;
+
+      if (currentUserId === targetUserId) {
+        return res.status(400).json({ error: "Cannot remove yourself from the organization" });
+      }
+
+      const teamMembers = await storage.getTeamMembers(organizationId);
+      const owners = teamMembers.filter(m => m.role === 'owner');
+      const targetMember = teamMembers.find(m => m.userId === targetUserId);
+
+      if (targetMember?.role === 'owner' && owners.length === 1) {
+        return res.status(400).json({ error: "Cannot remove the last owner of the organization" });
+      }
+
+      const deleted = await storage.removeMember(targetUserId, organizationId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Team member not found" });
+      }
+
+      await createAuditLog(
+        req,
+        organizationId,
+        currentUserId,
+        'remove_member',
+        'user',
+        targetUserId
+      );
+
+      res.json({ message: "Team member removed successfully" });
+    } catch (error) {
+      console.error("Remove member error:", error);
+      res.status(500).json({ error: "Failed to remove team member" });
+    }
+  });
+
+  // Invitation Routes
+  app.post("/api/invitations", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+
+      const invitationSchema = z.object({
+        email: z.string().email(),
+        role: z.enum(['owner', 'admin', 'editor', 'viewer']),
+      });
+
+      const validated = invitationSchema.parse(req.body);
+
+      const teamMembers = await storage.getTeamMembers(organizationId);
+      const existingMember = teamMembers.find(m => m.userEmail === validated.email);
+      if (existingMember) {
+        return res.status(400).json({ error: "User is already a member of this organization" });
+      }
+
+      const token = randomBytes(12).toString('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      const invitation = await storage.createInvitation({
+        email: validated.email,
+        organizationId,
+        role: validated.role,
+        token,
+        invitedBy: currentUserId,
+        expiresAt,
+      });
+
+      await createAuditLog(
+        req,
+        organizationId,
+        currentUserId,
+        'invite_member',
+        'invitation',
+        invitation.id,
+        JSON.stringify({ email: validated.email, role: validated.role })
+      );
+
+      res.status(201).json({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: invitation.expiresAt,
+      });
+    } catch (error) {
+      console.error("Create invitation error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid invitation data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create invitation" });
+    }
+  });
+
+  app.get("/api/invitations", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const invitations = await storage.getPendingInvitations(organizationId);
+      res.json(invitations);
+    } catch (error) {
+      console.error("Get invitations error:", error);
+      res.status(500).json({ error: "Failed to fetch invitations" });
+    }
+  });
+
+  app.delete("/api/invitations/:id", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+      const invitationId = req.params.id;
+
+      const deleted = await storage.revokeInvitation(invitationId, organizationId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+
+      await createAuditLog(
+        req,
+        organizationId,
+        currentUserId,
+        'revoke_invitation',
+        'invitation',
+        invitationId
+      );
+
+      res.json({ message: "Invitation revoked successfully" });
+    } catch (error) {
+      console.error("Revoke invitation error:", error);
+      res.status(500).json({ error: "Failed to revoke invitation" });
+    }
+  });
+
+  app.post("/api/invitations/accept/:token", requireAuth, async (req, res) => {
+    try {
+      const token = req.params.token;
+      const currentUserId = (req as AuthRequest).userId;
+
+      if (!currentUserId) {
+        return res.status(401).json({ error: "Must be logged in to accept invitation" });
+      }
+
+      const invitation = await storage.getInvitation(token);
+      if (!invitation) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+
+      if (invitation.accepted) {
+        return res.status(400).json({ error: "Invitation has already been accepted" });
+      }
+
+      if (invitation.expiresAt < new Date()) {
+        return res.status(400).json({ error: "Invitation has expired" });
+      }
+
+      const accepted = await storage.acceptInvitation(token, currentUserId);
+      if (!accepted) {
+        return res.status(400).json({ error: "Failed to accept invitation" });
+      }
+
+      const organization = await storage.getOrganization(invitation.organizationId);
+
+      res.json({
+        message: "Invitation accepted successfully",
+        organization: {
+          id: organization?.id,
+          name: organization?.name,
+          slug: organization?.slug,
+        },
+      });
+    } catch (error) {
+      console.error("Accept invitation error:", error);
+      res.status(500).json({ error: "Failed to accept invitation" });
+    }
+  });
+
+  // Organization Settings Routes
+  app.get("/api/organization", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const organization = await storage.getOrganization(organizationId);
+      
+      if (!organization) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      res.json(organization);
+    } catch (error) {
+      console.error("Get organization error:", error);
+      res.status(500).json({ error: "Failed to fetch organization" });
+    }
+  });
+
+  app.patch("/api/organization", requireAuth, requirePermission('manage_organization'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+
+      const updateSchema = z.object({
+        name: z.string().min(1).optional(),
+        settings: z.string().optional(),
+        plan: z.enum(['free', 'pro', 'enterprise']).optional(),
+        maxDisplays: z.number().int().positive().optional(),
+      });
+
+      const validated = updateSchema.parse(req.body);
+
+      const updated = await storage.updateOrganization(organizationId, validated);
+      if (!updated) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      await createAuditLog(
+        req,
+        organizationId,
+        currentUserId,
+        'update_organization',
+        'organization',
+        organizationId,
+        JSON.stringify(validated)
+      );
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update organization error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid organization data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update organization" });
+    }
+  });
+
+  // Audit Logs Routes
+  app.get("/api/audit-logs", requireAuth, async (req, res) => {
+    try {
+      const authReq = req as AuthRequest;
+      const organizationId = authReq.user!.defaultOrganizationId!;
+      const userRole = authReq.userRole || 'viewer';
+      const userPermissions = rolePermissions[userRole] || [];
+
+      const hasPermission = userPermissions.includes('manage_users') || 
+                           userPermissions.includes('manage_organization');
+      
+      if (!hasPermission) {
+        return res.status(403).json({ 
+          error: "Forbidden - Requires manage_users or manage_organization permission"
+        });
+      }
+
+      const querySchema = z.object({
+        userId: z.string().optional(),
+        action: z.string().optional(),
+        resourceType: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        limit: z.string().optional(),
+        offset: z.string().optional(),
+      });
+
+      const validated = querySchema.parse(req.query);
+
+      const filters: any = {};
+      if (validated.userId) filters.userId = validated.userId;
+      if (validated.action) filters.action = validated.action;
+      if (validated.resourceType) filters.resourceType = validated.resourceType;
+      if (validated.startDate) filters.startDate = new Date(validated.startDate);
+      if (validated.endDate) filters.endDate = new Date(validated.endDate);
+
+      const limit = validated.limit ? parseInt(validated.limit) : 100;
+      const offset = validated.offset ? parseInt(validated.offset) : 0;
+
+      const allLogs = await storage.getAuditLogs(organizationId, filters);
+      const total = allLogs.length;
+      const logs = allLogs.slice(offset, offset + limit);
+
+      res.json({ logs, total });
+    } catch (error) {
+      console.error("Get audit logs error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid query parameters" });
+      }
+      res.status(500).json({ error: "Failed to fetch audit logs" });
+    }
+  });
+
+  // ============================================
+  // END SPRINT 3 ROUTES
+  // ============================================
 
   app.get("/api/stats", requireAuth, async (req, res) => {
     try {

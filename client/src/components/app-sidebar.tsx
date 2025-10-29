@@ -12,6 +12,9 @@ import {
   Activity,
   BookOpen,
   Download,
+  UserCog,
+  Building2,
+  ScrollText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -98,6 +101,24 @@ const menuItemsConfig = [
     url: "/settings",
     icon: Settings,
     testId: "link-settings",
+  },
+  {
+    titleKey: "team" as const,
+    url: "/team",
+    icon: UserCog,
+    testId: "link-team",
+  },
+  {
+    titleKey: "organization" as const,
+    url: "/organization",
+    icon: Building2,
+    testId: "link-organization",
+  },
+  {
+    titleKey: "auditLogs" as const,
+    url: "/audit-logs",
+    icon: ScrollText,
+    testId: "link-audit-logs",
   },
 ];
 
