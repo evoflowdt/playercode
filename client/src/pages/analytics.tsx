@@ -77,9 +77,9 @@ export default function Analytics() {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('analyticsDashboard')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('analyticsTitle')}</h1>
         <p className="text-muted-foreground text-base">
-          {t('analyticsDashboardDesc')}
+          {t('analyticsSubtitle')}
         </p>
       </div>
 
