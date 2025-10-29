@@ -158,6 +158,7 @@ export default function Documentation() {
                       <li><strong>{t('customDuration')}:</strong> {t('customDurationDesc')}</li>
                       <li><strong>{t('reordering')}:</strong> {t('reorderingDesc')}</li>
                       <li><strong>{t('scheduleIntegration')}:</strong> {t('scheduleIntegrationDesc')}</li>
+                      <li><strong>{t('radioStreamFeature')}:</strong> {t('radioStreamFeatureDesc')}</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
