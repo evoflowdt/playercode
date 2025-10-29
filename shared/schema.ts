@@ -641,6 +641,19 @@ export const webhookEvents = pgTable("webhook_events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  type: text("type").notNull(), // display.offline, display.online, content.uploaded, schedule.executed, etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  data: text("data"), // JSON stringified additional data
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  readAt: timestamp("read_at"),
+});
+
 export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
   id: true,
   createdAt: true,
@@ -659,6 +672,12 @@ export const insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
   lastAttemptAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  readAt: true,
+});
+
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 
@@ -667,6 +686,9 @@ export type InsertWebhook = z.infer<typeof insertWebhookSchema>;
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // Sprint 4: Advanced Analytics Types
 export type DisplayMetric = typeof displayMetrics.$inferSelect;
