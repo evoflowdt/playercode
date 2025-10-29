@@ -12,6 +12,8 @@ import {
   type InsertPlaylist,
   type PlaylistItem,
   type InsertPlaylistItem,
+  type RadioStream,
+  type InsertRadioStream,
   type PairingToken,
   type InsertPairingToken,
   type PlayerSession,
@@ -42,6 +44,7 @@ import {
   schedules,
   playlists,
   playlistItems,
+  radioStreams,
   pairingTokens,
   playerSessions,
   playerCapabilities,
@@ -90,6 +93,13 @@ export interface IStorage {
   deletePlaylist(id: string): Promise<boolean>;
   addItemToPlaylist(item: InsertPlaylistItem): Promise<PlaylistItem>;
   removeItemFromPlaylist(itemId: string): Promise<boolean>;
+  
+  getRadioStream(id: string): Promise<RadioStream | undefined>;
+  getRadioStreamsByPlaylist(playlistId: string): Promise<RadioStream[]>;
+  getAllRadioStreams(): Promise<RadioStream[]>;
+  createRadioStream(stream: InsertRadioStream): Promise<RadioStream>;
+  updateRadioStream(id: string, updates: Partial<RadioStream>): Promise<RadioStream | undefined>;
+  deleteRadioStream(id: string): Promise<boolean>;
   
   getPairingToken(token: string): Promise<PairingToken | undefined>;
   getPairingTokenById(id: string): Promise<PairingToken | undefined>;
@@ -502,6 +512,42 @@ export class DatabaseStorage implements IStorage {
           )
         );
     }
+  }
+
+  // Radio Stream methods
+  async getRadioStream(id: string): Promise<RadioStream | undefined> {
+    const [stream] = await db.select().from(radioStreams).where(eq(radioStreams.id, id));
+    return stream || undefined;
+  }
+
+  async getRadioStreamsByPlaylist(playlistId: string): Promise<RadioStream[]> {
+    return await db.select().from(radioStreams).where(eq(radioStreams.playlistId, playlistId));
+  }
+
+  async getAllRadioStreams(): Promise<RadioStream[]> {
+    return await db.select().from(radioStreams);
+  }
+
+  async createRadioStream(insertRadioStream: InsertRadioStream): Promise<RadioStream> {
+    const [stream] = await db
+      .insert(radioStreams)
+      .values(insertRadioStream)
+      .returning();
+    return stream;
+  }
+
+  async updateRadioStream(id: string, updates: Partial<RadioStream>): Promise<RadioStream | undefined> {
+    const [updated] = await db
+      .update(radioStreams)
+      .set(updates)
+      .where(eq(radioStreams.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteRadioStream(id: string): Promise<boolean> {
+    const result = await db.delete(radioStreams).where(eq(radioStreams.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Pairing Token methods

@@ -67,6 +67,16 @@ export const playlistItems = pgTable("playlist_items", {
   duration: integer("duration"),
 });
 
+export const radioStreams = pgTable("radio_streams", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  playlistId: varchar("playlist_id").notNull(),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  description: text("description"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const pairingTokens = pgTable("pairing_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   token: text("token").notNull().unique(),
@@ -222,6 +232,14 @@ export const insertPlaylistItemSchema = createInsertSchema(playlistItems).pick({
   duration: true,
 });
 
+export const insertRadioStreamSchema = createInsertSchema(radioStreams).pick({
+  playlistId: true,
+  name: true,
+  url: true,
+  description: true,
+  active: true,
+});
+
 export const insertPairingTokenSchema = createInsertSchema(pairingTokens).pick({
   token: true,
   displayName: true,
@@ -318,6 +336,9 @@ export type Playlist = typeof playlists.$inferSelect;
 
 export type InsertPlaylistItem = z.infer<typeof insertPlaylistItemSchema>;
 export type PlaylistItem = typeof playlistItems.$inferSelect;
+
+export type InsertRadioStream = z.infer<typeof insertRadioStreamSchema>;
+export type RadioStream = typeof radioStreams.$inferSelect;
 
 export type InsertPairingToken = z.infer<typeof insertPairingTokenSchema>;
 export type PairingToken = typeof pairingTokens.$inferSelect;
