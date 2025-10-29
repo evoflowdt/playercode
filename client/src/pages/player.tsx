@@ -514,6 +514,9 @@ export default function Player() {
         maxHeight: `${displayResolution.height}px`,
       } : {};
       
+      console.log('[Player] Rendering image with resolution:', displayResolution);
+      console.log('[Player] Image style:', imageStyle);
+      
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <img
