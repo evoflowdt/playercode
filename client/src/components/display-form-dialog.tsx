@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -72,6 +72,21 @@ export function DisplayFormDialog({
       resolution: "",
     },
   });
+
+  // Reset form when display changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset(display || {
+        name: "",
+        hashCode: "",
+        os: "",
+        location: "",
+        latitude: "",
+        longitude: "",
+        resolution: "",
+      });
+    }
+  }, [display, open, form]);
 
   const getCoordinates = async () => {
     const location = form.getValues("location");
