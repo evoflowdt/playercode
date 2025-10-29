@@ -510,7 +510,7 @@ export default function Player() {
             ref={videoRef}
             src={currentContent.url}
             autoPlay={!syncState.isActive || syncState.status === "playing"}
-            loop={!syncState.isActive}
+            loop={content.length === 1 && !syncState.isActive}
             muted
             className="max-w-full max-h-full"
             data-testid="player-video-content"
