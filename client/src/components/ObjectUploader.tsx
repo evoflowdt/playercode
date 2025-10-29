@@ -83,6 +83,14 @@ export function ObjectUploader({
         note="Immagini e video fino a 100MB"
         closeModalOnClickOutside
         closeAfterFinish={false}
+        locale={{
+          strings: {
+            browseFiles: 'Sfoglia file',
+            dropPasteFiles: 'Trascina i file qui o %{browseFiles}',
+            dropPasteFolders: 'Trascina i file qui o %{browseFolders}',
+            dropPasteBoth: 'Trascina i file qui o %{browseFiles}',
+          }
+        }}
       />
     </div>
   );

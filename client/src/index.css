@@ -345,4 +345,105 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Uppy Dashboard Custom Styling */
+  .uppy-Dashboard-AddFiles-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: hsl(var(--foreground)) !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .uppy-Dashboard-note {
+    font-size: 0.875rem !important;
+    color: hsl(var(--muted-foreground)) !important;
+    margin-top: 0.5rem !important;
+  }
+
+  /* Make Browse Files button more prominent */
+  .uppy-Dashboard-browse {
+    color: hsl(var(--accent)) !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    text-decoration: none !important;
+    padding: 0.5rem 1.25rem !important;
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-foreground) / 0.1) 100%) !important;
+    background: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
+    border-radius: 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 8px hsl(var(--accent) / 0.3) !important;
+    border: 2px solid hsl(var(--accent)) !important;
+  }
+
+  .uppy-Dashboard-browse:hover {
+    background: hsl(var(--accent) / 0.9) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px hsl(var(--accent) / 0.4) !important;
+  }
+
+  .uppy-Dashboard-browse:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px hsl(var(--accent) / 0.3) !important;
+  }
+
+  /* Style the drop zone */
+  .uppy-Dashboard-AddFiles {
+    border: 2px dashed hsl(var(--border)) !important;
+    border-radius: 0.75rem !important;
+    background: hsl(var(--background)) !important;
+    padding: 3rem 2rem !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .uppy-Dashboard-AddFiles:hover {
+    border-color: hsl(var(--accent)) !important;
+    background: hsl(var(--accent) / 0.05) !important;
+  }
+
+  .uppy-Dashboard-AddFiles-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1rem !important;
+  }
+
+  /* Improve overall dashboard appearance */
+  .uppy-Dashboard-inner {
+    background: hsl(var(--card)) !important;
+    border-radius: 0.75rem !important;
+  }
+
+  .uppy-Dashboard-innerWrap {
+    border: none !important;
+  }
+
+  /* Style file items */
+  .uppy-Dashboard-Item {
+    border-radius: 0.5rem !important;
+    border: 1px solid hsl(var(--border)) !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .uppy-Dashboard-Item:hover {
+    background: hsl(var(--muted) / 0.5) !important;
+  }
+
+  /* Upload button styling */
+  .uppy-StatusBar-actionBtn--upload {
+    background: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.625rem 1.5rem !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .uppy-StatusBar-actionBtn--upload:hover {
+    background: hsl(var(--primary) / 0.9) !important;
+    transform: translateY(-1px) !important;
+  }
 }
