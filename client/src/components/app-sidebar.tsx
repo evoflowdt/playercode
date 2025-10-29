@@ -11,6 +11,7 @@ import {
   Settings,
   Activity,
   BookOpen,
+  Download,
 } from "lucide-react";
 import {
   Sidebar,
@@ -85,6 +86,12 @@ const menuItemsConfig = [
     url: "/documentation",
     icon: BookOpen,
     testId: "link-documentation",
+  },
+  {
+    titleKey: "downloads" as const,
+    url: "/downloads",
+    icon: Download,
+    testId: "link-downloads",
   },
   {
     titleKey: "settings" as const,

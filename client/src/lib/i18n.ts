@@ -15,6 +15,7 @@ export const translations = {
     playlists: 'Playlists',
     syncGroups: 'Sync Groups',
     analytics: 'Analytics',
+    downloads: 'Download Player',
     settings: 'Settings',
     
     // Dashboard
@@ -493,6 +494,7 @@ export const translations = {
     playlists: 'Playlist',
     syncGroups: 'Gruppi Sync',
     analytics: 'Analisi',
+    downloads: 'Scarica Player',
     settings: 'Impostazioni',
     
     // Dashboard

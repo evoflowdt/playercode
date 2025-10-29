@@ -22,6 +22,7 @@ import PlaylistDetail from "@/pages/playlist-detail";
 import SyncGroups from "@/pages/sync-groups";
 import Analytics from "@/pages/analytics";
 import Documentation from "@/pages/documentation";
+import Downloads from "@/pages/downloads";
 import Settings from "@/pages/settings";
 import Player from "@/pages/player";
 import NotFound from "@/pages/not-found";
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/sync-groups" component={SyncGroups} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/documentation" component={Documentation} />
+      <Route path="/downloads" component={Downloads} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
