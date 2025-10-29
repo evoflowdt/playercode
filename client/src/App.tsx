@@ -18,6 +18,7 @@ import Schedules from "@/pages/schedules";
 import AdvancedScheduling from "@/pages/advanced-scheduling";
 import Groups from "@/pages/groups";
 import Playlists from "@/pages/playlists";
+import PlaylistDetail from "@/pages/playlist-detail";
 import Analytics from "@/pages/analytics";
 import Settings from "@/pages/settings";
 import Player from "@/pages/player";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/advanced-scheduling" component={AdvancedScheduling} />
       <Route path="/groups" component={Groups} />
       <Route path="/playlists" component={Playlists} />
+      <Route path="/playlists/:id" component={PlaylistDetail} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />

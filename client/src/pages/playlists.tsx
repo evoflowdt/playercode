@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2, Music } from "lucide-react";
+import { useLocation } from "wouter";
+import { Plus, Trash2, Music, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +14,7 @@ import type { PlaylistWithItems } from "@shared/schema";
 
 export default function PlaylistsPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -201,8 +203,19 @@ export default function PlaylistsPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4 text-xs text-muted-foreground">
-                  Created {new Date(playlist.createdAt).toLocaleDateString()}
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-xs text-muted-foreground">
+                    Created {new Date(playlist.createdAt).toLocaleDateString()}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/playlists/${playlist.id}`)}
+                    data-testid={`button-view-playlist-${playlist.id}`}
+                  >
+                    Manage
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
