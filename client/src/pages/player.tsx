@@ -32,6 +32,7 @@ export default function Player() {
   const [isConnected, setIsConnected] = useState(false);
   const [content, setContent] = useState<PlayerContent[]>([]);
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
+  const [radioStreamUrl, setRadioStreamUrl] = useState<string | null>(null);
   const [syncState, setSyncState] = useState<{
     isActive: boolean;
     sessionId?: string;
@@ -43,6 +44,7 @@ export default function Player() {
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const contentRotationRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const syncSessionRef = useRef<string | null>(null);
 
   // Reset player state (when display is deleted)
@@ -99,10 +101,24 @@ export default function Player() {
       if (!response.ok) {
         throw new Error("Failed to fetch content");
       }
-      const data: PlayerData = await response.json();
+      const data: PlayerData & { radioStreams?: any[] } = await response.json();
       console.log("[Player] Received content data:", data);
       console.log("[Player] Content array:", data.content);
+      console.log("[Player] Radio streams:", data.radioStreams);
       setContent(data.content || []);
+      
+      // Set radio stream if available
+      if (data.radioStreams && data.radioStreams.length > 0) {
+        const activeStream = data.radioStreams.find(s => s.active);
+        if (activeStream) {
+          console.log("[Player] Setting radio stream:", activeStream.url);
+          setRadioStreamUrl(activeStream.url);
+        } else {
+          setRadioStreamUrl(null);
+        }
+      } else {
+        setRadioStreamUrl(null);
+      }
       
       if (data.content && data.content.length > 0) {
         console.log("[Player] Content loaded successfully, count:", data.content.length);
@@ -387,6 +403,25 @@ export default function Player() {
     }
   }, [isPaired]);
 
+  // Handle radio stream playback
+  useEffect(() => {
+    if (!radioAudioRef.current) return;
+
+    if (radioStreamUrl && content.length > 0) {
+      // Start playing radio stream
+      console.log("[Player] Starting radio stream:", radioStreamUrl);
+      radioAudioRef.current.src = radioStreamUrl;
+      radioAudioRef.current.play().catch(err => {
+        console.error("[Player] Failed to play radio stream:", err);
+      });
+    } else {
+      // Stop radio stream
+      console.log("[Player] Stopping radio stream");
+      radioAudioRef.current.pause();
+      radioAudioRef.current.src = "";
+    }
+  }, [radioStreamUrl, content.length]);
+
   // Render content
   const renderContent = () => {
     if (content.length === 0) {
@@ -599,6 +634,14 @@ export default function Player() {
           </div>
         </div>
       )}
+
+      {/* Radio stream audio (hidden) */}
+      <audio
+        ref={radioAudioRef}
+        loop
+        style={{ display: 'none' }}
+        data-testid="radio-audio-player"
+      />
 
       {/* Reset button (hidden, accessible via double-tap) */}
       <button

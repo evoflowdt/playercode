@@ -736,6 +736,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       }
 
       let contentItems: any[] = [];
+      let radioStreams: any[] = [];
 
       // Check if this schedule has a playlist or single content
       if (schedule.playlistId) {
@@ -760,6 +761,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
             }
           }
         }
+        
+        // Fetch radio streams for this playlist
+        const streams = await storage.getRadioStreamsByPlaylist(schedule.playlistId);
+        radioStreams = streams.filter(s => s.active);
       } else if (schedule.contentId) {
         // Single content item
         const contentItem = await storage.getContentItem(schedule.contentId);
@@ -777,6 +782,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json({
         display,
         content: contentItems,
+        radioStreams: radioStreams,
         schedules: [schedule],
         priority: scheduledContent.priority,
         source: scheduledContent.source,
