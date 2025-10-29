@@ -20,6 +20,7 @@ import Groups from "@/pages/groups";
 import Playlists from "@/pages/playlists";
 import PlaylistDetail from "@/pages/playlist-detail";
 import Analytics from "@/pages/analytics";
+import Documentation from "@/pages/documentation";
 import Settings from "@/pages/settings";
 import Player from "@/pages/player";
 import NotFound from "@/pages/not-found";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/playlists" component={Playlists} />
       <Route path="/playlists/:id" component={PlaylistDetail} />
       <Route path="/analytics" component={Analytics} />
+      <Route path="/documentation" component={Documentation} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

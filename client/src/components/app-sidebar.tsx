@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   Activity,
+  BookOpen,
 } from "lucide-react";
 import {
   Sidebar,
@@ -71,6 +72,12 @@ const menuItemsConfig = [
     url: "/analytics",
     icon: BarChart3,
     testId: "link-analytics",
+  },
+  {
+    titleKey: "documentation" as const,
+    url: "/documentation",
+    icon: BookOpen,
+    testId: "link-documentation",
   },
   {
     titleKey: "settings" as const,
