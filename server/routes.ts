@@ -1,7 +1,8 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { randomBytes } from "crypto";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
 import {
@@ -21,6 +22,11 @@ import {
   insertSyncGroupSchema,
   insertSyncGroupMemberSchema,
   insertSyncSessionSchema,
+  insertOrganizationSchema,
+  insertUserSchema,
+  insertOrganizationMemberSchema,
+  insertSessionSchema,
+  type User,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -99,6 +105,228 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       }
     });
   }
+
+  // Authentication Middleware
+  interface AuthRequest extends Request {
+    user?: User;
+    userId?: string;
+  }
+
+  async function requireAuth(req: Request, res: Response, next: NextFunction) {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.replace('Bearer ', '');
+
+      if (!token) {
+        return res.status(401).json({ error: "Unauthorized - No token provided" });
+      }
+
+      const session = await storage.getSessionByToken(token);
+      if (!session) {
+        return res.status(401).json({ error: "Unauthorized - Invalid or expired session" });
+      }
+
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized - User not found" });
+      }
+
+      (req as AuthRequest).user = user;
+      (req as AuthRequest).userId = user.id;
+      next();
+    } catch (error) {
+      console.error("Auth middleware error:", error);
+      res.status(500).json({ error: "Authentication failed" });
+    }
+  }
+
+  // Authentication Routes
+  const registerSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    organizationName: z.string().min(1),
+  });
+
+  const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1),
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const validated = registerSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByEmail(validated.email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User with this email already exists" });
+      }
+
+      const passwordHash = await bcrypt.hash(validated.password, 10);
+      
+      const slug = validated.organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      let uniqueSlug = slug;
+      let counter = 1;
+      while (await storage.getOrganizationBySlug(uniqueSlug)) {
+        uniqueSlug = `${slug}-${counter}`;
+        counter++;
+      }
+      
+      const organization = await storage.createOrganization({
+        name: validated.organizationName,
+        slug: uniqueSlug,
+        plan: "free",
+        maxDisplays: 5,
+      });
+
+      const user = await storage.createUser({
+        email: validated.email,
+        passwordHash,
+        firstName: validated.firstName,
+        lastName: validated.lastName,
+        defaultOrganizationId: organization.id,
+      });
+
+      await storage.createOrganizationMember({
+        userId: user.id,
+        organizationId: organization.id,
+        role: "owner",
+      });
+
+      const sessionToken = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      
+      const session = await storage.createSession({
+        userId: user.id,
+        token: sessionToken,
+        expiresAt,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.status(201).json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        organization: {
+          id: organization.id,
+          name: organization.name,
+          slug: organization.slug,
+        },
+        token: session.token,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid registration data", details: error.errors });
+      }
+      res.status(500).json({ error: "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const validated = loginSchema.parse(req.body);
+      
+      const user = await storage.getUserByEmail(validated.email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      const isValidPassword = await bcrypt.compare(validated.password, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      await storage.updateUser(user.id, { lastLoginAt: new Date() });
+
+      const sessionToken = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      
+      const session = await storage.createSession({
+        userId: user.id,
+        token: sessionToken,
+        expiresAt,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      const userWithOrgs = await storage.getUserWithOrganizations(user.id);
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          defaultOrganizationId: user.defaultOrganizationId,
+        },
+        organizations: userWithOrgs?.organizations || [],
+        token: session.token,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid login data" });
+      }
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", requireAuth, async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (token) {
+        const session = await storage.getSessionByToken(token);
+        if (session) {
+          await storage.deleteSession(session.id);
+        }
+      }
+      
+      res.json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Logout failed" });
+    }
+  });
+
+  app.get("/api/auth/me", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthRequest).userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const userWithOrgs = await storage.getUserWithOrganizations(userId);
+      if (!userWithOrgs) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        user: {
+          id: userWithOrgs.id,
+          email: userWithOrgs.email,
+          firstName: userWithOrgs.firstName,
+          lastName: userWithOrgs.lastName,
+          defaultOrganizationId: userWithOrgs.defaultOrganizationId,
+        },
+        organizations: userWithOrgs.organizations,
+      });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Failed to fetch user data" });
+    }
+  });
 
   app.get("/api/stats", async (_req, res) => {
     try {
