@@ -77,7 +77,7 @@ export default function SyncGroups() {
     onError: () => {
       toast({
         title: t("error"),
-        description: "Failed to delete sync group",
+        description: t("failedDeleteSyncGroup"),
         variant: "destructive",
       });
     },
@@ -97,7 +97,7 @@ export default function SyncGroups() {
     onError: () => {
       toast({
         title: t("error"),
-        description: "Failed to remove member",
+        description: t("failedRemoveMember"),
         variant: "destructive",
       });
     },
@@ -252,7 +252,7 @@ export default function SyncGroups() {
                     ))}
                     {group.members.length > 3 && (
                       <p className="text-xs text-muted-foreground px-2">
-                        +{group.members.length - 3} more
+                        +{group.members.length - 3} {t("more")}
                       </p>
                     )}
                   </div>
@@ -289,7 +289,7 @@ export default function SyncGroups() {
 
                 {group.createdAt && (
                   <p className="text-xs text-muted-foreground pt-2">
-                    Created {format(new Date(group.createdAt), "MMM d, yyyy")}
+                    {t("created")} {format(new Date(group.createdAt), "MMM d, yyyy")}
                   </p>
                 )}
               </div>
@@ -347,7 +347,7 @@ export default function SyncGroups() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("delete")} {t("syncGroupsTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteGroup?.name}"? This will remove all members and stop any active playback.
+              {t("confirmDeleteSyncGroup").replace("{name}", deleteGroup?.name || "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -370,7 +370,7 @@ export default function SyncGroups() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("removeMember")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove "{deleteMember?.memberName}" from this sync group?
+              {t("confirmRemoveMember").replace("{name}", deleteMember?.memberName || "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -426,7 +426,7 @@ function CreateSyncGroupDialog({
     onError: () => {
       toast({
         title: t("error"),
-        description: "Failed to create sync group",
+        description: t("failedCreateSyncGroup"),
         variant: "destructive",
       });
     },
@@ -438,7 +438,7 @@ function CreateSyncGroupDialog({
         <DialogHeader>
           <DialogTitle>{t("createSyncGroup")}</DialogTitle>
           <DialogDescription>
-            Create a new sync group to synchronize content playback across multiple displays
+            {t("createSyncGroupDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -448,7 +448,7 @@ function CreateSyncGroupDialog({
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Video Wall A"
+              placeholder={t("syncGroupNamePlaceholder")}
               data-testid="input-sync-group-name"
             />
           </div>
@@ -458,7 +458,7 @@ function CreateSyncGroupDialog({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Main lobby video wall"
+              placeholder={t("syncGroupDescPlaceholder")}
               data-testid="input-sync-group-description"
             />
           </div>
@@ -514,7 +514,7 @@ function AddMemberDialog({
     onError: () => {
       toast({
         title: t("error"),
-        description: "Failed to add member. Display may already be in another sync group.",
+        description: t("failedAddMember"),
         variant: "destructive",
       });
     },
@@ -531,7 +531,7 @@ function AddMemberDialog({
         <DialogHeader>
           <DialogTitle>{t("addMemberToGroup")}</DialogTitle>
           <DialogDescription>
-            Select a display to add to this sync group
+            {t("selectDisplayDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -550,7 +550,7 @@ function AddMemberDialog({
                   ))
                 ) : (
                   <SelectItem value="no-displays" disabled>
-                    No available displays
+                    {t("noAvailableDisplays")}
                   </SelectItem>
                 )}
               </SelectContent>
@@ -608,12 +608,12 @@ function PlayContentDialog({
         <DialogHeader>
           <DialogTitle>{t("playContent")}</DialogTitle>
           <DialogDescription>
-            Select content or playlist to play on all displays in this sync group
+            {t("selectContentPlaylistDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Type</Label>
+            <Label>{t("type")}</Label>
             <Select
               value={selectedType}
               onValueChange={(v) => setSelectedType(v as "content" | "playlist")}
@@ -622,13 +622,13 @@ function PlayContentDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="content">Single Content</SelectItem>
-                <SelectItem value="playlist">Playlist</SelectItem>
+                <SelectItem value="content">{t("singleContent")}</SelectItem>
+                <SelectItem value="playlist">{t("playlists")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>{selectedType === "content" ? t("selectContent") : "Select Playlist"}</Label>
+            <Label>{selectedType === "content" ? t("selectContent") : t("selectPlaylist")}</Label>
             <Select value={selectedId} onValueChange={setSelectedId}>
               <SelectTrigger data-testid="select-content">
                 <SelectValue placeholder={t("selectContentOrPlaylist")} />
@@ -643,7 +643,7 @@ function PlayContentDialog({
                     ))
                   ) : (
                     <SelectItem value="no-content" disabled>
-                      No content available
+                      {t("noContentAvailable")}
                     </SelectItem>
                   )
                 ) : playlists.length > 0 ? (
@@ -654,7 +654,7 @@ function PlayContentDialog({
                   ))
                 ) : (
                   <SelectItem value="no-playlists" disabled>
-                    No playlists available
+                    {t("noPlaylistsAvailable")}
                   </SelectItem>
                 )}
               </SelectContent>
