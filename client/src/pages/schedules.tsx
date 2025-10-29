@@ -16,13 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Plus, Clock, Trash2 } from "lucide-react";
+import { Calendar, Plus, Clock, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Schedules() {
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editSchedule, setEditSchedule] = useState<ScheduleWithDetails | null>(null);
   const [deleteSchedule, setDeleteSchedule] = useState<ScheduleWithDetails | null>(null);
   const { toast } = useToast();
 
@@ -94,6 +95,17 @@ export default function Schedules() {
                     size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setEditSchedule(schedule);
+                    }}
+                    data-testid={`button-edit-schedule-${schedule.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setDeleteSchedule(schedule);
                     }}
                     data-testid={`button-delete-schedule-${schedule.id}`}
@@ -105,7 +117,11 @@ export default function Schedules() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Content: {schedule.contentName}</span>
+                  <span>
+                    {schedule.playlistName 
+                      ? `Playlist: ${schedule.playlistName}` 
+                      : `Content: ${schedule.contentName}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="h-4 w-4" />
@@ -137,6 +153,12 @@ export default function Schedules() {
       <ScheduleFormDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+      />
+      
+      <ScheduleFormDialog
+        open={!!editSchedule}
+        onOpenChange={(open) => !open && setEditSchedule(null)}
+        schedule={editSchedule || undefined}
       />
 
       <AlertDialog

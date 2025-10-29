@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { type Display, type DisplayGroup, type ContentItem, type Playlist } from "@shared/schema";
+import { useEffect } from "react";
+import { type Display, type DisplayGroup, type ContentItem, type Playlist, type ScheduleWithDetails } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -49,13 +50,16 @@ type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
 interface ScheduleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  schedule?: ScheduleWithDetails;
 }
 
 export function ScheduleFormDialog({
   open,
   onOpenChange,
+  schedule,
 }: ScheduleFormDialogProps) {
   const { toast } = useToast();
+  const isEditing = !!schedule;
 
   const { data: displays } = useQuery<Display[]>({
     queryKey: ["/api/displays"],
@@ -75,7 +79,17 @@ export function ScheduleFormDialog({
 
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: {
+    defaultValues: schedule ? {
+      name: schedule.name,
+      sourceType: schedule.playlistId ? "playlist" : "content",
+      contentId: schedule.contentId || "",
+      playlistId: schedule.playlistId || "",
+      targetType: schedule.targetType as "display" | "group",
+      targetId: schedule.targetId,
+      startTime: new Date(schedule.startTime).toISOString().slice(0, 16),
+      endTime: new Date(schedule.endTime).toISOString().slice(0, 16),
+      repeat: schedule.repeat || "",
+    } : {
       name: "",
       sourceType: "content",
       contentId: "",
@@ -87,6 +101,40 @@ export function ScheduleFormDialog({
       repeat: "",
     },
   });
+
+  // Reset form when schedule changes or dialog opens/closes
+  useEffect(() => {
+    if (open && schedule) {
+      // Editing mode - populate with schedule data
+      form.reset({
+        name: schedule.name,
+        sourceType: schedule.playlistId ? "playlist" : "content",
+        contentId: schedule.contentId || "",
+        playlistId: schedule.playlistId || "",
+        targetType: schedule.targetType as "display" | "group",
+        targetId: schedule.targetId,
+        startTime: new Date(schedule.startTime).toISOString().slice(0, 16),
+        endTime: new Date(schedule.endTime).toISOString().slice(0, 16),
+        repeat: schedule.repeat || "",
+      });
+    } else if (open && !schedule) {
+      // Create mode - reset to empty
+      form.reset({
+        name: "",
+        sourceType: "content",
+        contentId: "",
+        playlistId: "",
+        targetType: "display",
+        targetId: "",
+        startTime: "",
+        endTime: "",
+        repeat: "",
+      });
+    } else if (!open) {
+      // Dialog closed - reset to avoid stale data
+      form.reset();
+    }
+  }, [open, schedule, form]);
 
   const createMutation = useMutation({
     mutationFn: (data: ScheduleFormValues) => {
@@ -128,8 +176,55 @@ export function ScheduleFormDialog({
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: ScheduleFormValues) => {
+      const payload: any = {
+        name: data.name,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        startTime: new Date(data.startTime).toISOString(),
+        endTime: new Date(data.endTime).toISOString(),
+      };
+      
+      // Clear both contentId and playlistId first, then set the correct one
+      payload.contentId = null;
+      payload.playlistId = null;
+      
+      if (data.sourceType === "content" && data.contentId) {
+        payload.contentId = data.contentId;
+      } else if (data.sourceType === "playlist" && data.playlistId) {
+        payload.playlistId = data.playlistId;
+      }
+      
+      if (data.repeat) {
+        payload.repeat = data.repeat;
+      }
+      
+      return apiRequest("PATCH", `/api/schedules/${schedule!.id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
+      toast({
+        title: "Success",
+        description: "Schedule updated successfully",
+      });
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update schedule",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: ScheduleFormValues) => {
-    createMutation.mutate(data);
+    if (isEditing) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const targetType = form.watch("targetType");
@@ -139,7 +234,7 @@ export function ScheduleFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Schedule</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Schedule" : "Create Schedule"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -411,10 +506,12 @@ export function ScheduleFormDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
                 data-testid="button-submit-schedule"
               >
-                {createMutation.isPending ? "Creating..." : "Create Schedule"}
+                {isEditing 
+                  ? (updateMutation.isPending ? "Updating..." : "Update Schedule")
+                  : (createMutation.isPending ? "Creating..." : "Create Schedule")}
               </Button>
             </div>
           </form>

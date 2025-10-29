@@ -303,6 +303,83 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
+  app.patch("/api/schedules/:id", async (req, res) => {
+    try {
+      console.log('Schedule update request body:', req.body);
+      
+      // Get the existing schedule first to compare targetType/targetId changes
+      const existingSchedule = await storage.getSchedule(req.params.id);
+      if (!existingSchedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+      
+      // Process the update data, converting dates if present
+      const updateData: any = { ...req.body };
+      if (updateData.startTime) {
+        updateData.startTime = new Date(updateData.startTime);
+      }
+      if (updateData.endTime) {
+        updateData.endTime = new Date(updateData.endTime);
+      }
+      
+      console.log('Processed update data:', updateData);
+      
+      // Update the schedule
+      const updated = await storage.updateSchedule(req.params.id, updateData);
+      if (!updated) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+      
+      // Notify affected displays via WebSocket
+      // Notify old target if it changed
+      if (existingSchedule.targetType === 'display' && 
+          (existingSchedule.targetId !== updated.targetId || existingSchedule.targetType !== updated.targetType)) {
+        const oldDisplay = await storage.getDisplay(existingSchedule.targetId);
+        if (oldDisplay) {
+          broadcast({
+            type: 'display_updated',
+            data: oldDisplay
+          });
+        }
+      } else if (existingSchedule.targetType === 'group' && 
+                 (existingSchedule.targetId !== updated.targetId || existingSchedule.targetType !== updated.targetType)) {
+        const allDisplays = await storage.getDisplaysWithGroups();
+        const oldGroupDisplays = allDisplays.filter(d => d.groupId === existingSchedule.targetId);
+        oldGroupDisplays.forEach((display: typeof allDisplays[0]) => {
+          broadcast({
+            type: 'display_updated',
+            data: display
+          });
+        });
+      }
+      
+      // Notify new target
+      if (updated.targetType === 'display') {
+        const display = await storage.getDisplay(updated.targetId);
+        if (display) {
+          broadcast({
+            type: 'display_updated',
+            data: display
+          });
+        }
+      } else if (updated.targetType === 'group') {
+        const allDisplays = await storage.getDisplaysWithGroups();
+        const groupDisplays = allDisplays.filter(d => d.groupId === updated.targetId);
+        groupDisplays.forEach((display: typeof allDisplays[0]) => {
+          broadcast({
+            type: 'display_updated',
+            data: display
+          });
+        });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error('Schedule update error:', error);
+      res.status(400).json({ error: "Invalid schedule data", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   app.delete("/api/schedules/:id", async (req, res) => {
     try {
       const schedule = await storage.getSchedule(req.params.id);
