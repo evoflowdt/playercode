@@ -53,7 +53,7 @@ export function ObjectUploader({
           await onComplete(result);
         }
         setTimeout(() => {
-          uppy.reset();
+          uppy.cancelAll();
           setShowModal(false);
         }, 500);
       })
@@ -81,7 +81,6 @@ export function ObjectUploader({
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
         note="Immagini e video fino a 100MB"
-        height={450}
         closeModalOnClickOutside
         closeAfterFinish={false}
       />
