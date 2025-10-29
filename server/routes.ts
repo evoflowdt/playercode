@@ -463,6 +463,23 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
+  app.patch("/api/playlists/:id/items/reorder", async (req, res) => {
+    try {
+      const playlistId = req.params.id;
+      const { itemIds } = req.body;
+      
+      if (!Array.isArray(itemIds)) {
+        return res.status(400).json({ error: "itemIds must be an array" });
+      }
+      
+      await storage.reorderPlaylistItems(playlistId, itemIds);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Reorder items error:", error);
+      res.status(500).json({ error: "Failed to reorder items" });
+    }
+  });
+
   // Player API Routes
   
   // Validation schemas

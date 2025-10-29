@@ -442,6 +442,21 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async reorderPlaylistItems(playlistId: string, itemIds: string[]): Promise<void> {
+    // Update order for each item
+    for (let i = 0; i < itemIds.length; i++) {
+      await db
+        .update(playlistItems)
+        .set({ order: i })
+        .where(
+          and(
+            eq(playlistItems.id, itemIds[i]),
+            eq(playlistItems.playlistId, playlistId)
+          )
+        );
+    }
+  }
+
   // Pairing Token methods
   async getPairingToken(token: string): Promise<PairingToken | undefined> {
     const [pairingToken] = await db
