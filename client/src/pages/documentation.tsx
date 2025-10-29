@@ -175,6 +175,20 @@ export default function Documentation() {
                   </AccordionContent>
                 </AccordionItem>
 
+                <AccordionItem value="sync-groups">
+                  <AccordionTrigger>{t('multiMonitorSync')}</AccordionTrigger>
+                  <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <p>{t('multiMonitorSyncDesc')}</p>
+                    <h4 className="font-semibold mt-4">{t('features')}</h4>
+                    <ul>
+                      <li><strong>{t('syncFeatureRealtime')}:</strong> {t('syncFeatureRealtimeDesc')}</li>
+                      <li><strong>{t('syncFeaturePlayback')}:</strong> {t('syncFeaturePlaybackDesc')}</li>
+                      <li><strong>{t('syncFeatureControl')}:</strong> {t('syncFeatureControlDesc')}</li>
+                      <li><strong>{t('syncFeatureSessions')}:</strong> {t('syncFeatureSessionsDesc')}</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="analytics">
                   <AccordionTrigger>{t('analytics')}</AccordionTrigger>
                   <AccordionContent className="prose dark:prose-invert max-w-none">
@@ -256,6 +270,32 @@ export default function Documentation() {
                 </li>
                 <li>
                   <strong>{t('bulkSchedule')}:</strong> {t('tutorialBulkScheduleDesc')}
+                </li>
+              </ol>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('tutorialSyncGroups')}</CardTitle>
+              <CardDescription>{t('tutorialSyncGroupsDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="prose dark:prose-invert max-w-none">
+              <ol className="list-decimal pl-5 space-y-3">
+                <li>
+                  <strong>{t('tutorialNavigateSyncGroups')}:</strong> {t('tutorialNavigateSyncGroupsDesc')}
+                </li>
+                <li>
+                  <strong>{t('tutorialCreateSyncGroup')}:</strong> {t('tutorialCreateSyncGroupDesc')}
+                </li>
+                <li>
+                  <strong>{t('tutorialAddDisplays')}:</strong> {t('tutorialAddDisplaysDesc')}
+                </li>
+                <li>
+                  <strong>{t('tutorialStartSync')}:</strong> {t('tutorialStartSyncDesc')}
+                </li>
+                <li>
+                  <strong>{t('tutorialControlSync')}:</strong> {t('tutorialControlSyncDesc')}
                 </li>
               </ol>
             </CardContent>
@@ -347,6 +387,62 @@ export default function Documentation() {
                     </pre>
                     <p className="text-sm text-muted-foreground mt-4">
                       {t('apiContentNote')}
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="sync-create">
+                  <AccordionTrigger>POST /api/sync-groups</AccordionTrigger>
+                  <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <p>{t('apiSyncCreateDesc')}</p>
+                    <h4 className="font-semibold mt-4">Request Body:</h4>
+                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+{`{
+  "name": "Video Wall A",
+  "description": "Main lobby video wall",
+  "active": true
+}`}
+                    </pre>
+                    <h4 className="font-semibold mt-4">Response:</h4>
+                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+{`{
+  "id": "uuid",
+  "name": "Video Wall A",
+  "description": "Main lobby video wall",
+  "active": true,
+  "createdAt": "2025-01-01T00:00:00Z",
+  "memberCount": 0
+}`}
+                    </pre>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="sync-members">
+                  <AccordionTrigger>POST /api/sync-groups/:id/members</AccordionTrigger>
+                  <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <p>{t('apiSyncMembersDesc')}</p>
+                    <h4 className="font-semibold mt-4">Request Body:</h4>
+                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+{`{
+  "displayId": "display-uuid"
+}`}
+                    </pre>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="sync-control">
+                  <AccordionTrigger>POST /api/sync-control/:id/play</AccordionTrigger>
+                  <AccordionContent className="prose dark:prose-invert max-w-none">
+                    <p>{t('apiSyncControlDesc')}</p>
+                    <h4 className="font-semibold mt-4">Request Body:</h4>
+                    <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+{`{
+  "contentId": "content-uuid",  // For single content
+  "playlistId": "playlist-uuid" // Or for playlist
+}`}
+                    </pre>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      {t('apiSyncControlNote')}
                     </p>
                   </AccordionContent>
                 </AccordionItem>
