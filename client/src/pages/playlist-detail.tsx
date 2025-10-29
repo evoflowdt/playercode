@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Clock } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Clock, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { PlaylistWithItems, ContentItem } from "@shared/schema";
+import type { PlaylistWithItems, ContentItem, RadioStream } from "@shared/schema";
 
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +20,13 @@ export default function PlaylistDetailPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<string | null>(null);
   const [duration, setDuration] = useState("");
+  
+  // Radio stream states
+  const [radioDialogOpen, setRadioDialogOpen] = useState(false);
+  const [radioName, setRadioName] = useState("");
+  const [radioUrl, setRadioUrl] = useState("");
+  const [radioDescription, setRadioDescription] = useState("");
+  const [radioActive, setRadioActive] = useState(true);
 
   const { data: playlist, isLoading } = useQuery<PlaylistWithItems>({
     queryKey: ["/api/playlists", id],
@@ -30,6 +39,15 @@ export default function PlaylistDetailPage() {
 
   const { data: allContent = [] } = useQuery<ContentItem[]>({
     queryKey: ["/api/content"],
+  });
+
+  const { data: radioStreams = [] } = useQuery<RadioStream[]>({
+    queryKey: ["/api/radio-streams/playlist", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/radio-streams/playlist/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch radio streams");
+      return response.json();
+    },
   });
 
   const addItemMutation = useMutation({
@@ -95,6 +113,51 @@ export default function PlaylistDetailPage() {
     },
   });
 
+  const createRadioStreamMutation = useMutation({
+    mutationFn: async (data: { playlistId: string; name: string; url: string; description?: string; active: boolean }) => {
+      return apiRequest("POST", "/api/radio-streams", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/radio-streams/playlist", id] });
+      toast({
+        title: "Success",
+        description: "Radio stream added successfully",
+      });
+      setRadioDialogOpen(false);
+      setRadioName("");
+      setRadioUrl("");
+      setRadioDescription("");
+      setRadioActive(true);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add radio stream",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteRadioStreamMutation = useMutation({
+    mutationFn: async (streamId: string) => {
+      return apiRequest("DELETE", `/api/radio-streams/${streamId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/radio-streams/playlist", id] });
+      toast({
+        title: "Success",
+        description: "Radio stream removed successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove radio stream",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddItem = () => {
     if (!selectedContent) {
       toast({
@@ -127,6 +190,33 @@ export default function PlaylistDetailPage() {
     const newItems = [...playlist.items];
     [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
     reorderMutation.mutate(newItems.map(item => item.id));
+  };
+
+  const handleAddRadioStream = () => {
+    if (!radioName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a stream name",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!radioUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a stream URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createRadioStreamMutation.mutate({
+      playlistId: id!,
+      name: radioName,
+      url: radioUrl,
+      description: radioDescription,
+      active: radioActive,
+    });
   };
 
   if (isLoading) {
@@ -247,6 +337,74 @@ export default function PlaylistDetailPage() {
         </div>
       )}
 
+      {/* Radio Streams Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Radio className="h-5 w-5" />
+                Radio Streams
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Add streaming radio URLs to play during this playlist
+              </CardDescription>
+            </div>
+            <Button onClick={() => setRadioDialogOpen(true)} data-testid="button-add-radio-stream">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Stream
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {radioStreams.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No radio streams configured for this playlist</p>
+              <p className="text-sm mt-2">Add a streaming radio URL to play audio during playlist playback</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {radioStreams.map((stream) => (
+                <Card key={stream.id} data-testid={`radio-stream-${stream.id}`}>
+                  <CardHeader className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Radio className="h-4 w-4 text-primary" />
+                          <CardTitle className="text-base">{stream.name}</CardTitle>
+                          {!stream.active && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground font-mono break-all">
+                          {stream.url}
+                        </p>
+                        {stream.description && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {stream.description}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteRadioStreamMutation.mutate(stream.id)}
+                        disabled={deleteRadioStreamMutation.isPending}
+                        data-testid={`button-delete-radio-stream-${stream.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -290,6 +448,70 @@ export default function PlaylistDetailPage() {
               data-testid="button-confirm-add"
             >
               {addItemMutation.isPending ? "Adding..." : "Add to Playlist"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={radioDialogOpen} onOpenChange={setRadioDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Radio Stream</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="radio-name">Stream Name</Label>
+              <Input
+                id="radio-name"
+                value={radioName}
+                onChange={(e) => setRadioName(e.target.value)}
+                placeholder="Classic FM"
+                data-testid="input-radio-name"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="radio-url">Stream URL</Label>
+              <Input
+                id="radio-url"
+                value={radioUrl}
+                onChange={(e) => setRadioUrl(e.target.value)}
+                placeholder="https://stream.example.com/radio.mp3"
+                data-testid="input-radio-url"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter the direct URL to the audio stream (MP3, AAC, etc.)
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="radio-description">Description (optional)</Label>
+              <Textarea
+                id="radio-description"
+                value={radioDescription}
+                onChange={(e) => setRadioDescription(e.target.value)}
+                placeholder="Background music for store ambiance"
+                data-testid="input-radio-description"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="radio-active">Active</Label>
+              <Switch
+                id="radio-active"
+                checked={radioActive}
+                onCheckedChange={setRadioActive}
+                data-testid="switch-radio-active"
+              />
+            </div>
+            
+            <Button
+              onClick={handleAddRadioStream}
+              disabled={createRadioStreamMutation.isPending || !radioName || !radioUrl}
+              className="w-full"
+              data-testid="button-confirm-add-radio"
+            >
+              {createRadioStreamMutation.isPending ? "Adding..." : "Add Radio Stream"}
             </Button>
           </div>
         </DialogContent>
