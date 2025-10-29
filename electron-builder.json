@@ -1,0 +1,103 @@
+{
+  "appId": "com.evoflow.player",
+  "productName": "EvoFlow Player",
+  "copyright": "Copyright © 2025 EvoFlow",
+  "directories": {
+    "output": "electron-dist",
+    "buildResources": "electron/resources"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/main.js",
+    "electron/preload.js",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "electron/resources",
+      "to": "resources",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "electron/resources/icon.ico",
+    "publisherName": "EvoFlow"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "EvoFlow Player",
+    "runAfterFinish": true
+  },
+  "portable": {
+    "artifactName": "EvoFlow-Player-Portable-${version}.exe"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "electron/resources/icon.icns",
+    "category": "public.app-category.utilities",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "electron/entitlements.mac.plist",
+    "entitlementsInherit": "electron/entitlements.mac.plist"
+  },
+  "dmg": {
+    "title": "EvoFlow Player ${version}",
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb",
+      "rpm"
+    ],
+    "icon": "electron/resources/icon.png",
+    "category": "Utility",
+    "maintainer": "EvoFlow <support@evoflow.com>",
+    "vendor": "EvoFlow",
+    "synopsis": "Digital Signage Player"
+  },
+  "deb": {
+    "depends": [
+      "gconf2",
+      "gconf-service",
+      "libnotify4",
+      "libappindicator1",
+      "libxtst6",
+      "libnss3"
+    ]
+  },
+  "publish": null
+}
