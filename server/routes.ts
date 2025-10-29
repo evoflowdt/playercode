@@ -17,6 +17,9 @@ import {
   insertSchedulingRuleSchema,
   insertContentPrioritySchema,
   insertTransitionSchema,
+  insertSyncGroupSchema,
+  insertSyncGroupMemberSchema,
+  insertSyncSessionSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1049,6 +1052,324 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete transition" });
+    }
+  });
+
+  // Sync Group endpoints
+  app.get("/api/sync-groups", async (_req, res) => {
+    try {
+      const groups = await storage.getAllSyncGroupsWithMembers();
+      res.json(groups);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sync groups" });
+    }
+  });
+
+  app.get("/api/sync-groups/:id", async (req, res) => {
+    try {
+      const group = await storage.getSyncGroupWithMembers(req.params.id);
+      if (!group) {
+        return res.status(404).json({ error: "Sync group not found" });
+      }
+      res.json(group);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sync group" });
+    }
+  });
+
+  app.post("/api/sync-groups", async (req, res) => {
+    try {
+      const validatedData = insertSyncGroupSchema.parse(req.body);
+      const group = await storage.createSyncGroup(validatedData);
+      res.status(201).json(group);
+    } catch (error) {
+      console.error("Sync group creation error:", error);
+      res.status(400).json({ error: "Invalid sync group data" });
+    }
+  });
+
+  app.put("/api/sync-groups/:id", async (req, res) => {
+    try {
+      const validatedData = insertSyncGroupSchema.partial().parse(req.body);
+      const updated = await storage.updateSyncGroup(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Sync group not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Sync group update error:", error);
+      res.status(400).json({ error: "Invalid sync group data" });
+    }
+  });
+
+  app.delete("/api/sync-groups/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteSyncGroup(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Sync group not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete sync group" });
+    }
+  });
+
+  app.post("/api/sync-groups/:id/members", async (req, res) => {
+    try {
+      const validatedData = insertSyncGroupMemberSchema.parse({
+        ...req.body,
+        syncGroupId: req.params.id,
+      });
+      const member = await storage.addMemberToSyncGroup(validatedData);
+      broadcast({
+        type: "sync_group_member_added",
+        data: member,
+      });
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Member addition error:", error);
+      res.status(400).json({ error: "Invalid member data" });
+    }
+  });
+
+  app.delete("/api/sync-groups/:groupId/members/:memberId", async (req, res) => {
+    try {
+      const deleted = await storage.removeMemberFromSyncGroup(req.params.memberId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+      broadcast({
+        type: "sync_group_member_removed",
+        data: { memberId: req.params.memberId, syncGroupId: req.params.groupId },
+      });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove member" });
+    }
+  });
+
+  // Sync Session endpoints
+  app.get("/api/sync-sessions", async (_req, res) => {
+    try {
+      const sessions = await storage.getAllSyncSessionsWithDetails();
+      res.json(sessions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sync sessions" });
+    }
+  });
+
+  app.get("/api/sync-sessions/:id", async (req, res) => {
+    try {
+      const session = await storage.getSyncSession(req.params.id);
+      if (!session) {
+        return res.status(404).json({ error: "Sync session not found" });
+      }
+      res.json(session);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sync session" });
+    }
+  });
+
+  app.post("/api/sync-sessions", async (req, res) => {
+    try {
+      const validatedData = insertSyncSessionSchema.parse(req.body);
+      const session = await storage.createSyncSession(validatedData);
+      
+      broadcast({
+        type: "sync_session_created",
+        data: session,
+      });
+      
+      res.status(201).json(session);
+    } catch (error) {
+      console.error("Sync session creation error:", error);
+      res.status(400).json({ error: "Invalid sync session data" });
+    }
+  });
+
+  app.put("/api/sync-sessions/:id", async (req, res) => {
+    try {
+      const validatedData = insertSyncSessionSchema.partial().parse(req.body);
+      const updated = await storage.updateSyncSession(req.params.id, validatedData);
+      if (!updated) {
+        return res.status(404).json({ error: "Sync session not found" });
+      }
+      
+      broadcast({
+        type: "sync_session_updated",
+        data: updated,
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Sync session update error:", error);
+      res.status(400).json({ error: "Invalid sync session data" });
+    }
+  });
+
+  app.delete("/api/sync-sessions/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteSyncSession(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Sync session not found" });
+      }
+      
+      broadcast({
+        type: "sync_session_deleted",
+        data: { id: req.params.id },
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete sync session" });
+    }
+  });
+
+  // Sync control endpoints - for controlling playback across sync groups
+  app.post("/api/sync-control/:syncGroupId/play", async (req, res) => {
+    try {
+      const { contentId, playlistId } = req.body;
+      const syncGroup = await storage.getSyncGroup(req.params.syncGroupId);
+      
+      if (!syncGroup) {
+        return res.status(404).json({ error: "Sync group not found" });
+      }
+
+      let session = await storage.getSyncSessionByGroup(req.params.syncGroupId);
+      if (!session) {
+        session = await storage.createSyncSession({
+          syncGroupId: req.params.syncGroupId,
+          contentId,
+          playlistId,
+          status: "playing",
+          currentPosition: 0,
+          startedAt: new Date(),
+        });
+      } else {
+        session = await storage.updateSyncSession(session.id, {
+          contentId,
+          playlistId,
+          status: "playing",
+          currentPosition: 0,
+          startedAt: new Date(),
+        });
+      }
+
+      broadcast({
+        type: "sync_play",
+        data: {
+          syncGroupId: req.params.syncGroupId,
+          session,
+        },
+      });
+
+      res.json(session);
+    } catch (error) {
+      console.error("Sync play error:", error);
+      res.status(500).json({ error: "Failed to start sync playback" });
+    }
+  });
+
+  app.post("/api/sync-control/:syncGroupId/pause", async (req, res) => {
+    try {
+      const session = await storage.getSyncSessionByGroup(req.params.syncGroupId);
+      if (!session) {
+        return res.status(404).json({ error: "No active session" });
+      }
+
+      const updated = await storage.updateSyncSession(session.id, {
+        status: "paused",
+      });
+
+      broadcast({
+        type: "sync_pause",
+        data: {
+          syncGroupId: req.params.syncGroupId,
+          session: updated,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to pause sync playback" });
+    }
+  });
+
+  app.post("/api/sync-control/:syncGroupId/resume", async (req, res) => {
+    try {
+      const session = await storage.getSyncSessionByGroup(req.params.syncGroupId);
+      if (!session) {
+        return res.status(404).json({ error: "No active session" });
+      }
+
+      const updated = await storage.updateSyncSession(session.id, {
+        status: "playing",
+      });
+
+      broadcast({
+        type: "sync_resume",
+        data: {
+          syncGroupId: req.params.syncGroupId,
+          session: updated,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to resume sync playback" });
+    }
+  });
+
+  app.post("/api/sync-control/:syncGroupId/stop", async (req, res) => {
+    try {
+      const session = await storage.getSyncSessionByGroup(req.params.syncGroupId);
+      if (!session) {
+        return res.status(404).json({ error: "No active session" });
+      }
+
+      const updated = await storage.updateSyncSession(session.id, {
+        status: "stopped",
+        currentPosition: 0,
+      });
+
+      broadcast({
+        type: "sync_stop",
+        data: {
+          syncGroupId: req.params.syncGroupId,
+          session: updated,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to stop sync playback" });
+    }
+  });
+
+  app.post("/api/sync-control/:syncGroupId/seek", async (req, res) => {
+    try {
+      const { position } = req.body;
+      const session = await storage.getSyncSessionByGroup(req.params.syncGroupId);
+      if (!session) {
+        return res.status(404).json({ error: "No active session" });
+      }
+
+      const updated = await storage.updateSyncSession(session.id, {
+        currentPosition: position,
+      });
+
+      broadcast({
+        type: "sync_seek",
+        data: {
+          syncGroupId: req.params.syncGroupId,
+          session: updated,
+          position,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to seek sync playback" });
     }
   });
 }

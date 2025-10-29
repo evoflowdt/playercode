@@ -24,10 +24,18 @@ import {
   type InsertContentPriority,
   type Transition,
   type InsertTransition,
+  type SyncGroup,
+  type InsertSyncGroup,
+  type SyncGroupMember,
+  type InsertSyncGroupMember,
+  type SyncSession,
+  type InsertSyncSession,
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
   type PlaylistWithItems,
+  type SyncGroupWithMembers,
+  type SyncSessionWithDetails,
   displays,
   contentItems,
   displayGroups,
@@ -40,6 +48,9 @@ import {
   schedulingRules,
   contentPriority,
   transitions,
+  syncGroups,
+  syncGroupMembers,
+  syncSessions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt } from "drizzle-orm";
@@ -116,6 +127,25 @@ export interface IStorage {
   createTransition(transition: InsertTransition): Promise<Transition>;
   updateTransition(id: string, updates: Partial<Transition>): Promise<Transition | undefined>;
   deleteTransition(id: string): Promise<boolean>;
+  
+  getSyncGroup(id: string): Promise<SyncGroup | undefined>;
+  getAllSyncGroups(): Promise<SyncGroup[]>;
+  getSyncGroupWithMembers(id: string): Promise<SyncGroupWithMembers | undefined>;
+  getAllSyncGroupsWithMembers(): Promise<SyncGroupWithMembers[]>;
+  createSyncGroup(group: InsertSyncGroup): Promise<SyncGroup>;
+  updateSyncGroup(id: string, updates: Partial<SyncGroup>): Promise<SyncGroup | undefined>;
+  deleteSyncGroup(id: string): Promise<boolean>;
+  addMemberToSyncGroup(member: InsertSyncGroupMember): Promise<SyncGroupMember>;
+  removeMemberFromSyncGroup(memberId: string): Promise<boolean>;
+  getSyncGroupMembers(syncGroupId: string): Promise<SyncGroupMember[]>;
+  
+  getSyncSession(id: string): Promise<SyncSession | undefined>;
+  getSyncSessionByGroup(syncGroupId: string): Promise<SyncSession | undefined>;
+  getAllSyncSessions(): Promise<SyncSession[]>;
+  getAllSyncSessionsWithDetails(): Promise<SyncSessionWithDetails[]>;
+  createSyncSession(session: InsertSyncSession): Promise<SyncSession>;
+  updateSyncSession(id: string, updates: Partial<SyncSession>): Promise<SyncSession | undefined>;
+  deleteSyncSession(id: string): Promise<boolean>;
   
   getDashboardStats(): Promise<DashboardStats>;
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
@@ -737,6 +767,191 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(transitions)
       .where(eq(transitions.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Sync Group methods
+  async getSyncGroup(id: string): Promise<SyncGroup | undefined> {
+    const [group] = await db
+      .select()
+      .from(syncGroups)
+      .where(eq(syncGroups.id, id));
+    return group || undefined;
+  }
+
+  async getAllSyncGroups(): Promise<SyncGroup[]> {
+    return await db.select().from(syncGroups);
+  }
+
+  async getSyncGroupWithMembers(id: string): Promise<SyncGroupWithMembers | undefined> {
+    const group = await this.getSyncGroup(id);
+    if (!group) return undefined;
+
+    const members = await db
+      .select({
+        id: syncGroupMembers.id,
+        syncGroupId: syncGroupMembers.syncGroupId,
+        displayId: syncGroupMembers.displayId,
+        joinedAt: syncGroupMembers.joinedAt,
+        displayName: displays.name,
+      })
+      .from(syncGroupMembers)
+      .leftJoin(displays, eq(syncGroupMembers.displayId, displays.id))
+      .where(eq(syncGroupMembers.syncGroupId, id));
+
+    return {
+      ...group,
+      members: members.map((m) => ({
+        id: m.id,
+        syncGroupId: m.syncGroupId,
+        displayId: m.displayId,
+        joinedAt: m.joinedAt,
+        displayName: m.displayName || "Unknown",
+      })),
+      memberCount: members.length,
+    };
+  }
+
+  async getAllSyncGroupsWithMembers(): Promise<SyncGroupWithMembers[]> {
+    const groups = await this.getAllSyncGroups();
+    const groupsWithMembers = await Promise.all(
+      groups.map(async (group) => {
+        const withMembers = await this.getSyncGroupWithMembers(group.id);
+        return withMembers!;
+      })
+    );
+    return groupsWithMembers;
+  }
+
+  async createSyncGroup(insertGroup: InsertSyncGroup): Promise<SyncGroup> {
+    const [group] = await db
+      .insert(syncGroups)
+      .values(insertGroup)
+      .returning();
+    return group;
+  }
+
+  async updateSyncGroup(
+    id: string,
+    updates: Partial<SyncGroup>
+  ): Promise<SyncGroup | undefined> {
+    const [updated] = await db
+      .update(syncGroups)
+      .set(updates)
+      .where(eq(syncGroups.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteSyncGroup(id: string): Promise<boolean> {
+    await db.delete(syncGroupMembers).where(eq(syncGroupMembers.syncGroupId, id));
+    await db.delete(syncSessions).where(eq(syncSessions.syncGroupId, id));
+    const result = await db.delete(syncGroups).where(eq(syncGroups.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async addMemberToSyncGroup(insertMember: InsertSyncGroupMember): Promise<SyncGroupMember> {
+    const [member] = await db
+      .insert(syncGroupMembers)
+      .values(insertMember)
+      .returning();
+    return member;
+  }
+
+  async removeMemberFromSyncGroup(memberId: string): Promise<boolean> {
+    const result = await db
+      .delete(syncGroupMembers)
+      .where(eq(syncGroupMembers.id, memberId));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getSyncGroupMembers(syncGroupId: string): Promise<SyncGroupMember[]> {
+    return await db
+      .select()
+      .from(syncGroupMembers)
+      .where(eq(syncGroupMembers.syncGroupId, syncGroupId));
+  }
+
+  // Sync Session methods
+  async getSyncSession(id: string): Promise<SyncSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(syncSessions)
+      .where(eq(syncSessions.id, id));
+    return session || undefined;
+  }
+
+  async getSyncSessionByGroup(syncGroupId: string): Promise<SyncSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(syncSessions)
+      .where(eq(syncSessions.syncGroupId, syncGroupId));
+    return session || undefined;
+  }
+
+  async getAllSyncSessions(): Promise<SyncSession[]> {
+    return await db.select().from(syncSessions);
+  }
+
+  async getAllSyncSessionsWithDetails(): Promise<SyncSessionWithDetails[]> {
+    const sessions = await db
+      .select({
+        id: syncSessions.id,
+        syncGroupId: syncSessions.syncGroupId,
+        contentId: syncSessions.contentId,
+        playlistId: syncSessions.playlistId,
+        status: syncSessions.status,
+        currentPosition: syncSessions.currentPosition,
+        startedAt: syncSessions.startedAt,
+        updatedAt: syncSessions.updatedAt,
+        syncGroupName: syncGroups.name,
+        contentName: contentItems.name,
+        playlistName: playlists.name,
+      })
+      .from(syncSessions)
+      .leftJoin(syncGroups, eq(syncSessions.syncGroupId, syncGroups.id))
+      .leftJoin(contentItems, eq(syncSessions.contentId, contentItems.id))
+      .leftJoin(playlists, eq(syncSessions.playlistId, playlists.id));
+
+    return sessions.map((s) => ({
+      id: s.id,
+      syncGroupId: s.syncGroupId,
+      contentId: s.contentId,
+      playlistId: s.playlistId,
+      status: s.status,
+      currentPosition: s.currentPosition,
+      startedAt: s.startedAt,
+      updatedAt: s.updatedAt,
+      syncGroupName: s.syncGroupName || "Unknown",
+      contentName: s.contentName ?? undefined,
+      playlistName: s.playlistName ?? undefined,
+    }));
+  }
+
+  async createSyncSession(insertSession: InsertSyncSession): Promise<SyncSession> {
+    const [session] = await db
+      .insert(syncSessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async updateSyncSession(
+    id: string,
+    updates: Partial<SyncSession>
+  ): Promise<SyncSession | undefined> {
+    const [updated] = await db
+      .update(syncSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(syncSessions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteSyncSession(id: string): Promise<boolean> {
+    const result = await db
+      .delete(syncSessions)
+      .where(eq(syncSessions.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   }
 }
