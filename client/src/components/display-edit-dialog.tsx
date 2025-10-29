@@ -102,6 +102,20 @@ export function DisplayEditDialog({
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
       );
+      
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast({
+            title: "Rate Limit",
+            description: "Too many geocoding requests. Please wait a moment and try again.",
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return;
+      }
+
       const data = await response.json();
 
       if (data && data.length > 0) {
@@ -131,7 +145,15 @@ export function DisplayEditDialog({
   };
 
   const onSubmit = (data: DisplayEditValues) => {
-    updateMutation.mutate(data);
+    // Normalize empty optional fields to undefined to avoid storing empty strings
+    const normalizedData = {
+      name: data.name,
+      location: data.location?.trim() || undefined,
+      latitude: data.latitude?.trim() || undefined,
+      longitude: data.longitude?.trim() || undefined,
+      resolution: data.resolution?.trim() || undefined,
+    };
+    updateMutation.mutate(normalizedData);
   };
 
   const location = form.watch("location");
