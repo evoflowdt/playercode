@@ -213,18 +213,23 @@ export function ScheduleFormDialog({
                           displays.length > 0 ? (
                             displays.map((display) => (
                               <SelectItem key={display.id} value={display.id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{display.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    ({display.os})
-                                  </span>
-                                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                    display.status === 'online' 
-                                      ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-                                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                  }`}>
-                                    {display.status}
-                                  </span>
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span>{display.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({display.os})
+                                    </span>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                      display.status === 'online' 
+                                        ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                                        : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                    }`}>
+                                      {display.status}
+                                    </span>
+                                  </div>
+                                  <code className="text-xs text-muted-foreground font-mono">
+                                    ID: {display.id}
+                                  </code>
                                 </div>
                               </SelectItem>
                             ))

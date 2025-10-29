@@ -181,9 +181,11 @@ export default function Player() {
       setIsPaired(true);
       
       toast({
-        title: "Paired successfully",
-        description: `Display: ${data.display.name}`,
+        title: "Display Created & Paired Successfully",
+        description: `Display Name: ${data.display.name}\nDisplay ID: ${data.display.id}\n\nYou can now create schedules targeting this display ID.`,
       });
+
+      console.log("[Player] Display created with ID:", data.display.id);
 
       // Fetch content after pairing
       await fetchContent(data.display.id);

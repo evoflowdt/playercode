@@ -112,7 +112,7 @@ export function ContentItemCard({
         <h3 className="font-medium truncate mb-1" data-testid={`text-name-${item.id}`}>
           {item.name}
         </h3>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <Badge variant="secondary" className="text-xs">
             {item.type}
           </Badge>
@@ -120,8 +120,14 @@ export function ContentItemCard({
             {formatFileSize(item.fileSize)}
           </span>
         </div>
+        <div className="flex items-center gap-1 mb-1">
+          <span className="text-xs font-medium text-muted-foreground">ID:</span>
+          <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono" data-testid={`text-id-${item.id}`}>
+            {item.id}
+          </code>
+        </div>
         {item.uploadedAt && (
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-1">
             {formatDistanceToNow(new Date(item.uploadedAt), {
               addSuffix: true,
             })}
