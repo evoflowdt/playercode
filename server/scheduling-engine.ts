@@ -25,7 +25,8 @@ interface ConditionRule {
 type RuleConfig = DayOfWeekRule | TimeRangeRule | DateRangeRule | ConditionRule;
 
 export interface ScheduledContent {
-  contentId: string;
+  contentId?: string; // Present if schedule has single content
+  playlistId?: string; // Present if schedule has playlist
   scheduleId: string;
   priority: number;
   source: "schedule" | "priority" | "default";
@@ -232,11 +233,14 @@ export class SchedulingEngine {
     
     // Build list of scheduled content with priorities
     const scheduledContent: ScheduledContent[] = allSchedules.map((schedule) => {
-      // Find priority for this content
-      const priority = activePriorities.find((p) => p.contentId === schedule.contentId);
+      // Find priority for this content (use contentId if available)
+      const priority = schedule.contentId 
+        ? activePriorities.find((p) => p.contentId === schedule.contentId)
+        : undefined;
       
       return {
-        contentId: schedule.contentId,
+        contentId: schedule.contentId || undefined,
+        playlistId: schedule.playlistId || undefined,
         scheduleId: schedule.id,
         priority: priority?.priority || 0,
         source: "schedule" as const,
@@ -283,10 +287,14 @@ export class SchedulingEngine {
     
     // Build list with priorities
     const scheduledContent: ScheduledContent[] = groupSchedules.map((schedule) => {
-      const priority = activePriorities.find((p) => p.contentId === schedule.contentId);
+      // Find priority for this content (use contentId if available)
+      const priority = schedule.contentId
+        ? activePriorities.find((p) => p.contentId === schedule.contentId)
+        : undefined;
       
       return {
-        contentId: schedule.contentId,
+        contentId: schedule.contentId || undefined,
+        playlistId: schedule.playlistId || undefined,
         scheduleId: schedule.id,
         priority: priority?.priority || 0,
         source: "schedule" as const,

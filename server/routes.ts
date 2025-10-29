@@ -667,30 +667,59 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         });
       }
       
-      // Get the actual content item
-      const contentItem = await storage.getContentItem(scheduledContent.contentId);
-      if (!contentItem) {
+      // Get the schedule details
+      const schedule = await storage.getSchedule(scheduledContent.scheduleId);
+      if (!schedule) {
         return res.json({
           display,
           content: [],
           schedules: [],
         });
       }
-      
-      // Convert internal object path to public URL
-      let contentWithUrl = { ...contentItem };
-      if (contentItem.url && contentItem.url.startsWith('/objects/')) {
-        const publicPath = contentItem.url.replace('/objects/', '/public-objects/');
-        contentWithUrl.url = publicPath;
+
+      let contentItems: any[] = [];
+
+      // Check if this schedule has a playlist or single content
+      if (schedule.playlistId) {
+        // Expand playlist into array of content items
+        const playlistWithItems = await storage.getPlaylistWithItems(schedule.playlistId);
+        if (playlistWithItems && playlistWithItems.items.length > 0) {
+          // Get all content items from playlist in order
+          for (const item of playlistWithItems.items) {
+            const contentItem = await storage.getContentItem(item.contentId);
+            if (contentItem) {
+              // Convert internal object path to public URL
+              let contentWithUrl = { ...contentItem };
+              if (contentItem.url && contentItem.url.startsWith('/objects/')) {
+                const publicPath = contentItem.url.replace('/objects/', '/public-objects/');
+                contentWithUrl.url = publicPath;
+              }
+              // Add custom duration if specified in playlist
+              if (item.duration) {
+                contentWithUrl.duration = item.duration;
+              }
+              contentItems.push(contentWithUrl);
+            }
+          }
+        }
+      } else if (schedule.contentId) {
+        // Single content item
+        const contentItem = await storage.getContentItem(schedule.contentId);
+        if (contentItem) {
+          // Convert internal object path to public URL
+          let contentWithUrl = { ...contentItem };
+          if (contentItem.url && contentItem.url.startsWith('/objects/')) {
+            const publicPath = contentItem.url.replace('/objects/', '/public-objects/');
+            contentWithUrl.url = publicPath;
+          }
+          contentItems.push(contentWithUrl);
+        }
       }
-      
-      // Get the schedule details
-      const schedule = await storage.getSchedule(scheduledContent.scheduleId);
       
       res.json({
         display,
-        content: [contentWithUrl],
-        schedules: schedule ? [schedule] : [],
+        content: contentItems,
+        schedules: [schedule],
         priority: scheduledContent.priority,
         source: scheduledContent.source,
       });
