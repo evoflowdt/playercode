@@ -28,6 +28,7 @@ import {
   insertSessionSchema,
   insertApiKeySchema,
   insertWebhookSchema,
+  insertNotificationSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";

@@ -260,7 +260,7 @@ export interface IStorage {
   getAdvancedAnalytics(organizationId: string, startDate?: Date, endDate?: Date): Promise<AdvancedAnalytics>;
   
   // Notification methods (Sprint 4)
-  createNotification(organizationId: string, userId: string, type: string, title: string, message: string, data?: any): Promise<Notification>;
+  createNotification(insertNotification: InsertNotification): Promise<Notification>;
   listNotifications(organizationId: string, userId: string, options?: { unreadOnly?: boolean; limit?: number }): Promise<Notification[]>;
   getUnreadCount(organizationId: string, userId: string): Promise<number>;
   markNotificationAsRead(id: string, organizationId: string, userId: string): Promise<Notification | undefined>;
@@ -2065,22 +2065,13 @@ export class DatabaseStorage implements IStorage {
 
   // Notification methods (Sprint 4)
   async createNotification(
-    organizationId: string,
-    userId: string,
-    type: string,
-    title: string,
-    message: string,
-    data?: any
+    insertNotification: InsertNotification
   ): Promise<Notification> {
     const [notification] = await db
       .insert(notifications)
       .values({
-        organizationId,
-        userId,
-        type,
-        title,
-        message,
-        data: data ? JSON.stringify(data) : null,
+        ...insertNotification,
+        data: insertNotification.data ? JSON.stringify(insertNotification.data) : null,
       })
       .returning();
     return notification;
