@@ -19,6 +19,7 @@ interface PlayerData {
     id: string;
     name: string;
     os: string;
+    resolution?: string;
   };
   content: PlayerContent[];
   schedules: any[];
@@ -33,6 +34,7 @@ export default function Player() {
   const [content, setContent] = useState<PlayerContent[]>([]);
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
   const [radioStreamUrl, setRadioStreamUrl] = useState<string | null>(null);
+  const [displayResolution, setDisplayResolution] = useState<{ width: number; height: number } | null>(null);
   const [syncState, setSyncState] = useState<{
     isActive: boolean;
     sessionId?: string;
@@ -105,6 +107,22 @@ export default function Player() {
       console.log("[Player] Received content data:", data);
       console.log("[Player] Content array:", data.content);
       console.log("[Player] Radio streams:", data.radioStreams);
+      
+      // Parse display resolution
+      if (data.display.resolution) {
+        const [width, height] = data.display.resolution.split('x').map(Number);
+        if (!isNaN(width) && !isNaN(height)) {
+          console.log("[Player] Setting display resolution:", { width, height });
+          setDisplayResolution({ width, height });
+        } else {
+          console.log("[Player] Invalid resolution format, resetting to null");
+          setDisplayResolution(null);
+        }
+      } else {
+        console.log("[Player] No resolution configured, resetting to null");
+        setDisplayResolution(null);
+      }
+      
       setContent(data.content || []);
       
       // Set radio stream if available
@@ -491,6 +509,11 @@ export default function Player() {
         );
       }
       
+      const imageStyle = displayResolution ? {
+        maxWidth: `${displayResolution.width}px`,
+        maxHeight: `${displayResolution.height}px`,
+      } : {};
+      
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <img
@@ -498,6 +521,7 @@ export default function Player() {
             src={currentContent.url}
             alt={currentContent.name}
             className="max-w-full max-h-full object-contain"
+            style={imageStyle}
             data-testid="player-image-content"
             onError={(e) => {
               console.error('Failed to load image:', currentContent.url);
@@ -518,6 +542,11 @@ export default function Player() {
         }
       };
 
+      const videoStyle = displayResolution ? {
+        maxWidth: `${displayResolution.width}px`,
+        maxHeight: `${displayResolution.height}px`,
+      } : {};
+
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <video
@@ -528,6 +557,7 @@ export default function Player() {
             loop={content.length === 1 && !syncState.isActive}
             muted
             className="max-w-full max-h-full"
+            style={videoStyle}
             data-testid="player-video-content"
             onError={() => console.error('Failed to load video:', currentContent.url)}
             onEnded={handleVideoEnded}
