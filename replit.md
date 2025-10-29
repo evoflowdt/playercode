@@ -24,7 +24,7 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 ### Feature Specifications
 -   **Dashboard**: Real-time statistics, geographic display map, recent displays grid, and auto-refreshing data.
 -   **Display Management**: View, search, filter, and monitor displays with real-time status updates and hash code verification for registration.
--   **Content Library**: Upload images and videos to object storage with drag-and-drop, search, filtering, visual thumbnails with graceful fallback, and metadata display. Content paths automatically convert from `/objects/` to `/public-objects/` for display.
+-   **Content Library**: Upload images and videos to object storage with drag-and-drop, search, filtering, visual thumbnails with graceful fallback, and metadata display. Uploaded files are stored in `/.private/uploads/` and served publicly via a dedicated route for player access. Legacy content paths convert from `/objects/` to `/public-objects/` for display.
 -   **Scheduling**: Create and manage time-based, recurring content schedules for individual displays or groups, including advanced conditional rules, content priorities, and transition effects.
 -   **Display Groups**: Organize displays for bulk content deployment and simplified management.
 -   **Content Playlists**: Create sequential content playlists with management capabilities.

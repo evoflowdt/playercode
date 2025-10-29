@@ -353,6 +353,13 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   // Serve private uploads publicly (for player content display)
   app.get("/.private/uploads/:fileId", async (req, res) => {
     const fileId = req.params.fileId;
+    
+    // Validate UUID format to prevent malformed requests
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(fileId)) {
+      return res.status(400).json({ error: "Invalid file ID format" });
+    }
+    
     const objectStorageService = new ObjectStorageService();
     try {
       const privateDir = objectStorageService.getPrivateObjectDir();
