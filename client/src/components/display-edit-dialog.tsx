@@ -20,9 +20,32 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+
+// Standard display resolutions
+const STANDARD_RESOLUTIONS = [
+  "1920x1080", // Full HD
+  "1280x720",  // HD
+  "3840x2160", // 4K UHD
+  "2560x1440", // QHD
+  "1366x768",  // HD Ready
+  "1024x768",  // XGA
+  "1600x900",  // HD+
+  "2048x1152", // QWXGA
+  "3440x1440", // UWQHD
+  "1080x1920", // Vertical Full HD
+  "720x1280",  // Vertical HD
+  "2160x3840", // Vertical 4K
+] as const;
 
 const displayEditSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -264,13 +287,27 @@ export function DisplayEditDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Resolution (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="e.g., 1920x1080"
-                      data-testid="input-resolution"
-                    />
-                  </FormControl>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger data-testid="select-resolution">
+                        <SelectValue placeholder="Select resolution" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {STANDARD_RESOLUTIONS.map((resolution) => (
+                        <SelectItem 
+                          key={resolution} 
+                          value={resolution}
+                          data-testid={`option-resolution-${resolution}`}
+                        >
+                          {resolution}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
