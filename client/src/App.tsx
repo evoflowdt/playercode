@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider } from "@/lib/language-provider";
 import { LanguageToggle } from "@/components/language-toggle";
+import { NotificationBell } from "@/components/notification-bell";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -171,6 +172,7 @@ export default function App() {
                           <SidebarTrigger data-testid="button-sidebar-toggle" />
                           <div className="flex items-center gap-2">
                             <UserMenu />
+                            <NotificationBell />
                             <LanguageToggle />
                             <ThemeToggle />
                           </div>

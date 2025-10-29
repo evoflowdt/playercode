@@ -807,6 +807,12 @@ export const translations = {
     invalidInvitation: 'Invalid or expired invitation',
     loadingInvitation: 'Loading invitation...',
     
+    // Notifications
+    notificationsTitle: 'Notifications',
+    notificationsMarkAllRead: 'Mark All as Read',
+    notificationsLoading: 'Loading notifications...',
+    notificationsEmpty: 'No notifications',
+    
     // Not Found
     pageNotFound: '404 Page Not Found',
     pageNotFoundDesc: 'Did you forget to add the page to the router?',
@@ -1617,6 +1623,12 @@ export const translations = {
     failedDeclineInvitation: 'Impossibile rifiutare l\'invito',
     invalidInvitation: 'Invito non valido o scaduto',
     loadingInvitation: 'Caricamento invito...',
+    
+    // Notifications
+    notificationsTitle: 'Notifiche',
+    notificationsMarkAllRead: 'Segna Tutte Come Lette',
+    notificationsLoading: 'Caricamento notifiche...',
+    notificationsEmpty: 'Nessuna notifica',
     
     // Not Found
     pageNotFound: '404 Pagina Non Trovata',
