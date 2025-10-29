@@ -18,9 +18,7 @@ export const translations = {
     downloads: 'Download Player',
     settings: 'Settings',
     team: 'Team',
-    organization: 'Organization',
     auditLogs: 'Audit Logs',
-    documentation: 'Documentation',
     
     // Dashboard
     dashboardTitle: 'Dashboard',
@@ -127,7 +125,6 @@ export const translations = {
     groupName: 'Group Name',
     description: 'Description',
     displaysCount: '{count} displays',
-    created: 'Created',
     more: 'more',
     
     // Playlists
@@ -346,7 +343,6 @@ export const translations = {
     confirm: 'Confirm',
     search: 'Search',
     filter: 'Filter',
-    actions: 'Actions',
     viewDetails: 'View Details',
     noDataAvailable: 'No data available',
     loadingData: 'Loading data...',
@@ -1491,3 +1487,7 @@ export const translations = {
 } as const;
 
 export type TranslationKey = keyof typeof translations.en;
+
+export function getTranslation(lang: Language, key: TranslationKey): string {
+  return translations[lang][key] || key;
+}

@@ -32,6 +32,10 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Player Auto-Reset**: Automatic player disconnection and reset upon session deletion.
 -   **Documentation**: Comprehensive built-in bilingual (English/Italian) documentation system.
 -   **Internationalization**: Full bilingual support (English/Italian) across the application, with a centralized translation system and language toggle.
+-   **Team Management (Sprint 3)**: Complete RBAC system with Owner/Admin/Editor/Viewer roles, secure team invitations with 7-day expiry tokens, role updates, member removal, and granular permissions.
+-   **Organization Settings (Sprint 3)**: Configurable organization details including name, subscription plan (Free/Pro/Enterprise), and max displays limits.
+-   **Audit Logging (Sprint 3)**: Comprehensive audit trail system tracking all organization actions (user invited, role updated, organization updated, etc.) with IP address, user agent, and detailed change records.
+-   **Invitation Workflow (Sprint 3)**: Secure team invitation system with email-ready token links, accept/decline functionality, automatic organization switching, and invitation status tracking.
 
 ### System Design Choices
 -   **Data Flow**: Frontend uses TanStack Query with authorization headers to communicate with the Express backend, which interacts with PostgreSQL via Drizzle ORM. WebSockets broadcast real-time updates.
