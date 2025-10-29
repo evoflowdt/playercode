@@ -37,6 +37,13 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Audit Logging (Sprint 3)**: Comprehensive audit trail system tracking all organization actions (user invited, role updated, organization updated, etc.) with IP address, user agent, and detailed change records.
 -   **Invitation Workflow (Sprint 3)**: Secure team invitation system with email-ready token links, accept/decline functionality, automatic organization switching, and invitation status tracking.
 
+### Sprint 4 (In Progress)
+-   **Email Notifications**: SKIPPED - No email service integration configured (user preference). Email infrastructure can be added later with Resend/SendGrid/SMTP.
+-   **Advanced Analytics** (PLANNED): Enhanced analytics dashboard with detailed metrics, time-series data, export capabilities, and advanced filtering.
+-   **API Keys & Webhooks** (PLANNED): Developer API for external integrations with API key management, webhook endpoints, and event subscriptions.
+-   **Notification Center** (PLANNED): In-app notification system with real-time updates, notification history, and read/unread states.
+-   **Granular Permissions** (PLANNED): Resource-level permission system for fine-grained access control beyond role-based permissions.
+
 ### System Design Choices
 -   **Data Flow**: Frontend uses TanStack Query with authorization headers to communicate with the Express backend, which interacts with PostgreSQL via Drizzle ORM. WebSockets broadcast real-time updates.
 -   **Storage Layer**: PostgreSQL (Neon) for persistent data, managed with Drizzle ORM. Features multi-tenant architecture with bcrypt-hashed passwords and UUID-based session tokens.

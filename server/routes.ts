@@ -762,6 +762,71 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
+  // ============================================
+  // SPRINT 4: ADVANCED ANALYTICS ROUTES
+  // ============================================
+
+  app.get("/api/analytics/advanced", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+      
+      const analytics = await storage.getAdvancedAnalytics(organizationId, start, end);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Get advanced analytics error:", error);
+      res.status(500).json({ error: "Failed to fetch advanced analytics" });
+    }
+  });
+
+  app.get("/api/analytics/export", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const { format = 'json', startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+      
+      const analytics = await storage.getAdvancedAnalytics(organizationId, start, end);
+      
+      if (format === 'csv') {
+        // Convert to CSV format
+        let csv = 'Type,Name,Value1,Value2,Value3\n';
+        
+        // Display Uptime
+        analytics.displayUptime.forEach(d => {
+          csv += `Display Uptime,${d.displayName},${d.uptimePercentage.toFixed(2)}%,${d.totalOnlineTime},${d.totalOfflineTime}\n`;
+        });
+        
+        // Content Popularity
+        analytics.contentPopularity.forEach(c => {
+          csv += `Content Popularity,${c.contentName},${c.viewCount},${c.totalViewTime},-\n`;
+        });
+        
+        // Schedule Performance
+        analytics.schedulePerformance.forEach(s => {
+          csv += `Schedule Performance,${s.scheduleName},${s.successRate.toFixed(2)}%,${s.successCount},${s.failedCount}\n`;
+        });
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="analytics-${new Date().toISOString()}.csv"`);
+        res.send(csv);
+      } else {
+        res.json(analytics);
+      }
+    } catch (error) {
+      console.error("Export analytics error:", error);
+      res.status(500).json({ error: "Failed to export analytics" });
+    }
+  });
+
+  // ============================================
+  // END SPRINT 4: ADVANCED ANALYTICS ROUTES
+  // ============================================
+
   app.get("/api/displays-with-groups", requireAuth, async (req, res) => {
     try {
       const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;

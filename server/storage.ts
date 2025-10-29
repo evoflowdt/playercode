@@ -54,6 +54,10 @@ import {
   type TeamMember,
   type InvitationWithDetails,
   type AuditLogWithDetails,
+  type DisplayMetric,
+  type ContentView,
+  type ScheduleExecution,
+  type AdvancedAnalytics,
   displays,
   contentItems,
   displayGroups,
@@ -76,6 +80,9 @@ import {
   sessions,
   invitations,
   auditLogs,
+  displayMetrics,
+  contentViews,
+  scheduleExecutions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt, lt, gte, lte } from "drizzle-orm";
@@ -237,6 +244,12 @@ export interface IStorage {
   // Audit Log methods
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(organizationId: string, filters?: { userId?: string; action?: string; resourceType?: string; startDate?: Date; endDate?: Date }): Promise<AuditLogWithDetails[]>;
+  
+  // Advanced Analytics methods (Sprint 4)
+  recordDisplayMetric(displayId: string, organizationId: string, status: string, uptime?: number, cpuUsage?: number, memoryUsage?: number, storageUsage?: number): Promise<DisplayMetric>;
+  recordContentView(contentId: string, displayId: string, organizationId: string, scheduleId?: string, playlistId?: string, duration?: number): Promise<ContentView>;
+  recordScheduleExecution(scheduleId: string, displayId: string, organizationId: string, status: string, errorMessage?: string): Promise<ScheduleExecution>;
+  getAdvancedAnalytics(organizationId: string, startDate?: Date, endDate?: Date): Promise<AdvancedAnalytics>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1600,6 +1613,215 @@ export class DatabaseStorage implements IStorage {
       userLastName: log.userLastName,
       userEmail: log.userEmail,
     }));
+  }
+
+  // Advanced Analytics methods (Sprint 4)
+  async recordDisplayMetric(
+    displayId: string,
+    organizationId: string,
+    status: string,
+    uptime?: number,
+    cpuUsage?: number,
+    memoryUsage?: number,
+    storageUsage?: number
+  ): Promise<DisplayMetric> {
+    const [metric] = await db
+      .insert(displayMetrics)
+      .values({
+        displayId,
+        organizationId,
+        status,
+        uptime,
+        cpuUsage,
+        memoryUsage,
+        storageUsage,
+      })
+      .returning();
+    return metric;
+  }
+
+  async recordContentView(
+    contentId: string,
+    displayId: string,
+    organizationId: string,
+    scheduleId?: string,
+    playlistId?: string,
+    duration?: number
+  ): Promise<ContentView> {
+    const [view] = await db
+      .insert(contentViews)
+      .values({
+        contentId,
+        displayId,
+        organizationId,
+        scheduleId,
+        playlistId,
+        duration,
+      })
+      .returning();
+    return view;
+  }
+
+  async recordScheduleExecution(
+    scheduleId: string,
+    displayId: string,
+    organizationId: string,
+    status: string,
+    errorMessage?: string
+  ): Promise<ScheduleExecution> {
+    const [execution] = await db
+      .insert(scheduleExecutions)
+      .values({
+        scheduleId,
+        displayId,
+        organizationId,
+        status,
+        errorMessage,
+      })
+      .returning();
+    return execution;
+  }
+
+  async getAdvancedAnalytics(
+    organizationId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<AdvancedAnalytics> {
+    const dateConditions = [];
+    if (startDate) {
+      dateConditions.push(sql`${displayMetrics.timestamp} >= ${startDate}`);
+    }
+    if (endDate) {
+      dateConditions.push(sql`${displayMetrics.timestamp} <= ${endDate}`);
+    }
+
+    // Display Uptime Calculation
+    const displayUptimeQuery = await db.execute<{
+      display_id: string;
+      display_name: string;
+      online_count: number;
+      offline_count: number;
+      total_count: number;
+    }>(sql`
+      SELECT 
+        dm.display_id,
+        d.name as display_name,
+        COUNT(CASE WHEN dm.status = 'online' THEN 1 END)::int as online_count,
+        COUNT(CASE WHEN dm.status = 'offline' THEN 1 END)::int as offline_count,
+        COUNT(*)::int as total_count
+      FROM ${displayMetrics} dm
+      JOIN ${displays} d ON dm.display_id = d.id
+      WHERE dm.organization_id = ${organizationId}
+      ${startDate ? sql`AND dm.timestamp >= ${startDate}` : sql``}
+      ${endDate ? sql`AND dm.timestamp <= ${endDate}` : sql``}
+      GROUP BY dm.display_id, d.name
+      ORDER BY d.name
+    `);
+
+    const displayUptime = displayUptimeQuery.rows.map(row => ({
+      displayId: row.display_id,
+      displayName: row.display_name,
+      uptimePercentage: row.total_count > 0 ? (row.online_count / row.total_count) * 100 : 0,
+      totalOnlineTime: row.online_count,
+      totalOfflineTime: row.offline_count,
+    }));
+
+    // Content Popularity
+    const contentPopularityQuery = await db.execute<{
+      content_id: string;
+      content_name: string;
+      view_count: number;
+      total_view_time: number;
+    }>(sql`
+      SELECT 
+        cv.content_id,
+        c.name as content_name,
+        COUNT(*)::int as view_count,
+        COALESCE(SUM(cv.duration), 0)::int as total_view_time
+      FROM ${contentViews} cv
+      JOIN ${contentItems} c ON cv.content_id = c.id
+      WHERE cv.organization_id = ${organizationId}
+      ${startDate ? sql`AND cv.viewed_at >= ${startDate}` : sql``}
+      ${endDate ? sql`AND cv.viewed_at <= ${endDate}` : sql``}
+      GROUP BY cv.content_id, c.name
+      ORDER BY view_count DESC
+      LIMIT 20
+    `);
+
+    const contentPopularity = contentPopularityQuery.rows.map(row => ({
+      contentId: row.content_id,
+      contentName: row.content_name,
+      viewCount: row.view_count,
+      totalViewTime: row.total_view_time,
+    }));
+
+    // Schedule Performance
+    const schedulePerformanceQuery = await db.execute<{
+      schedule_id: string;
+      schedule_name: string;
+      success_count: number;
+      failed_count: number;
+      total_count: number;
+    }>(sql`
+      SELECT 
+        se.schedule_id,
+        s.name as schedule_name,
+        COUNT(CASE WHEN se.status = 'success' THEN 1 END)::int as success_count,
+        COUNT(CASE WHEN se.status = 'failed' THEN 1 END)::int as failed_count,
+        COUNT(*)::int as total_count
+      FROM ${scheduleExecutions} se
+      JOIN ${schedules} s ON se.schedule_id = s.id
+      WHERE se.organization_id = ${organizationId}
+      ${startDate ? sql`AND se.executed_at >= ${startDate}` : sql``}
+      ${endDate ? sql`AND se.executed_at <= ${endDate}` : sql``}
+      GROUP BY se.schedule_id, s.name
+      ORDER BY s.name
+    `);
+
+    const schedulePerformance = schedulePerformanceQuery.rows.map(row => ({
+      scheduleId: row.schedule_id,
+      scheduleName: row.schedule_name,
+      successCount: row.success_count,
+      failedCount: row.failed_count,
+      successRate: row.total_count > 0 ? (row.success_count / row.total_count) * 100 : 0,
+    }));
+
+    // Time-series Metrics (hourly aggregation)
+    const timeSeriesQuery = await db.execute<{
+      hour_timestamp: string;
+      online_displays: number;
+      offline_displays: number;
+      total_views: number;
+    }>(sql`
+      SELECT 
+        date_trunc('hour', COALESCE(dm.timestamp, cv.viewed_at)) as hour_timestamp,
+        COUNT(DISTINCT CASE WHEN dm.status = 'online' THEN dm.display_id END)::int as online_displays,
+        COUNT(DISTINCT CASE WHEN dm.status = 'offline' THEN dm.display_id END)::int as offline_displays,
+        COUNT(cv.id)::int as total_views
+      FROM ${displayMetrics} dm
+      FULL OUTER JOIN ${contentViews} cv ON date_trunc('hour', dm.timestamp) = date_trunc('hour', cv.viewed_at)
+        AND dm.organization_id = cv.organization_id
+      WHERE COALESCE(dm.organization_id, cv.organization_id) = ${organizationId}
+      ${startDate ? sql`AND COALESCE(dm.timestamp, cv.viewed_at) >= ${startDate}` : sql``}
+      ${endDate ? sql`AND COALESCE(dm.timestamp, cv.viewed_at) <= ${endDate}` : sql``}
+      GROUP BY hour_timestamp
+      ORDER BY hour_timestamp DESC
+      LIMIT 168
+    `);
+
+    const timeSeriesMetrics = timeSeriesQuery.rows.map(row => ({
+      timestamp: row.hour_timestamp,
+      onlineDisplays: row.online_displays,
+      offlineDisplays: row.offline_displays,
+      totalViews: row.total_views,
+    }));
+
+    return {
+      displayUptime,
+      contentPopularity,
+      schedulePerformance,
+      timeSeriesMetrics,
+    };
   }
 }
 

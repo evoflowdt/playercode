@@ -254,6 +254,40 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Sprint 4: Advanced Analytics
+export const displayMetrics = pgTable("display_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayId: varchar("display_id").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  status: text("status").notNull(), // online, offline, warning
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  uptime: integer("uptime"), // seconds since last status change
+  cpuUsage: integer("cpu_usage"), // percentage 0-100
+  memoryUsage: integer("memory_usage"), // percentage 0-100
+  storageUsage: integer("storage_usage"), // percentage 0-100
+});
+
+export const contentViews = pgTable("content_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentId: varchar("content_id").notNull(),
+  displayId: varchar("display_id").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  scheduleId: varchar("schedule_id"), // null if not from schedule
+  playlistId: varchar("playlist_id"), // null if not from playlist
+  viewedAt: timestamp("viewed_at").notNull().defaultNow(),
+  duration: integer("duration"), // actual view duration in seconds
+});
+
+export const scheduleExecutions = pgTable("schedule_executions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scheduleId: varchar("schedule_id").notNull(),
+  displayId: varchar("display_id").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  executedAt: timestamp("executed_at").notNull().defaultNow(),
+  status: text("status").notNull(), // success, failed, skipped
+  errorMessage: text("error_message"),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -565,4 +599,38 @@ export interface AuditLogWithDetails extends AuditLog {
   userFirstName: string;
   userLastName: string;
   userEmail: string;
+}
+
+// Sprint 4: Advanced Analytics Types
+export type DisplayMetric = typeof displayMetrics.$inferSelect;
+export type ContentView = typeof contentViews.$inferSelect;
+export type ScheduleExecution = typeof scheduleExecutions.$inferSelect;
+
+export interface AdvancedAnalytics {
+  displayUptime: Array<{
+    displayId: string;
+    displayName: string;
+    uptimePercentage: number;
+    totalOnlineTime: number;
+    totalOfflineTime: number;
+  }>;
+  contentPopularity: Array<{
+    contentId: string;
+    contentName: string;
+    viewCount: number;
+    totalViewTime: number;
+  }>;
+  schedulePerformance: Array<{
+    scheduleId: string;
+    scheduleName: string;
+    successCount: number;
+    failedCount: number;
+    successRate: number;
+  }>;
+  timeSeriesMetrics: Array<{
+    timestamp: string;
+    onlineDisplays: number;
+    offlineDisplays: number;
+    totalViews: number;
+  }>;
 }
