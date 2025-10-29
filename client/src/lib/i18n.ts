@@ -584,11 +584,8 @@ export const translations = {
     failedDeletePlaylist: 'Failed to delete playlist',
     noPlaylistsYet: 'No playlists yet',
     createPlaylistsDesc: 'Create your first playlist to group content items for sequential playback',
-    newPlaylist: 'New Playlist',
-    playlistName: 'Playlist Name',
     loadingPlaylists: 'Loading playlists...',
     pleaseEnterPlaylistName: 'Please enter a playlist name',
-    createPlaylist: 'Create Playlist',
     
     // Playlist Detail Extended
     addVideo: 'Add Video',
@@ -598,7 +595,6 @@ export const translations = {
     failedRemoveVideo: 'Failed to remove video',
     playlistReordered: 'Playlist reordered',
     failedReorderPlaylist: 'Failed to reorder playlist',
-    radioStreams: 'Radio Streams',
     radioStreamsDesc: 'Add streaming radio URLs to play during this playlist',
     addStream: 'Add Stream',
     noVideosInPlaylist: 'No videos in playlist',
@@ -611,14 +607,10 @@ export const translations = {
     addToPlaylist: 'Add to Playlist',
     streamName: 'Stream Name',
     streamNamePlaceholder: 'Classic FM',
-    streamUrl: 'Stream URL',
     streamUrlPlaceholder: 'Enter the direct URL to the audio stream (MP3, AAC, etc.)',
     descriptionOptional: 'Description (optional)',
     descriptionPlaceholder: 'Background music for store ambiance',
-    addRadioStream: 'Add Radio Stream',
-    radioStreamAdded: 'Radio stream added successfully',
     radioStreamRemoved: 'Radio stream removed successfully',
-    failedAddRadioStream: 'Failed to add radio stream',
     failedRemoveRadioStream: 'Failed to remove radio stream',
     
     // Not Found
@@ -1209,11 +1201,8 @@ export const translations = {
     failedDeletePlaylist: 'Impossibile eliminare la playlist',
     noPlaylistsYet: 'Nessuna playlist ancora',
     createPlaylistsDesc: 'Crea la tua prima playlist per raggruppare contenuti per la riproduzione sequenziale',
-    newPlaylist: 'Nuova Playlist',
-    playlistName: 'Nome Playlist',
     loadingPlaylists: 'Caricamento playlist...',
     pleaseEnterPlaylistName: 'Inserisci un nome per la playlist',
-    createPlaylist: 'Crea Playlist',
     
     // Playlist Detail Extended
     addVideo: 'Aggiungi Video',
@@ -1223,7 +1212,6 @@ export const translations = {
     failedRemoveVideo: 'Impossibile rimuovere il video',
     playlistReordered: 'Playlist riordinata',
     failedReorderPlaylist: 'Impossibile riordinare la playlist',
-    radioStreams: 'Streaming Radio',
     radioStreamsDesc: 'Aggiungi URL di streaming radio da riprodurre durante questa playlist',
     addStream: 'Aggiungi Stream',
     noVideosInPlaylist: 'Nessun video nella playlist',
@@ -1236,14 +1224,10 @@ export const translations = {
     addToPlaylist: 'Aggiungi alla Playlist',
     streamName: 'Nome Stream',
     streamNamePlaceholder: 'Classic FM',
-    streamUrl: 'URL Stream',
     streamUrlPlaceholder: 'Inserisci l\'URL diretto dello stream audio (MP3, AAC, ecc.)',
     descriptionOptional: 'Descrizione (opzionale)',
     descriptionPlaceholder: 'Musica di sottofondo per l\'atmosfera del negozio',
-    addRadioStream: 'Aggiungi Streaming Radio',
-    radioStreamAdded: 'Streaming radio aggiunto con successo',
     radioStreamRemoved: 'Streaming radio rimosso con successo',
-    failedAddRadioStream: 'Impossibile aggiungere lo streaming radio',
     failedRemoveRadioStream: 'Impossibile rimuovere lo streaming radio',
     
     // Not Found
