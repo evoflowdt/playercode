@@ -26,6 +26,8 @@ import {
   insertUserSchema,
   insertOrganizationMemberSchema,
   insertSessionSchema,
+  insertApiKeySchema,
+  insertWebhookSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -2646,6 +2648,92 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json(events);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch webhook events" });
+    }
+  });
+
+  // Notification routes (Sprint 4)
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      const unreadOnly = req.query.unreadOnly === 'true';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+      const notifications = await storage.listNotifications(organizationId, userId, {
+        unreadOnly,
+        limit,
+      });
+
+      res.json(notifications);
+    } catch (error) {
+      console.error("List notifications error:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/unread-count", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+
+      const count = await storage.getUnreadCount(organizationId, userId);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get unread count" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+
+      const notification = await storage.markNotificationAsRead(
+        req.params.id,
+        organizationId,
+        userId
+      );
+
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+
+      res.json(notification);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/mark-all-read", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+
+      const count = await storage.markAllAsRead(organizationId, userId);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to mark all as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+
+      const deleted = await storage.deleteNotification(
+        req.params.id,
+        organizationId,
+        userId
+      );
+
+      if (!deleted) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete notification" });
     }
   });
 }
