@@ -1615,6 +1615,229 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  // API Keys & Webhooks methods (Sprint 4)
+  async createApiKey(
+    organizationId: string,
+    userId: string,
+    name: string,
+    expiresAt?: Date
+  ): Promise<ApiKey> {
+    const key = `evo_${crypto.randomUUID().replace(/-/g, '')}`;
+    const [apiKey] = await db
+      .insert(apiKeys)
+      .values({
+        organizationId,
+        name,
+        key,
+        createdBy: userId,
+        expiresAt,
+      })
+      .returning();
+    return apiKey;
+  }
+
+  async listApiKeys(organizationId: string): Promise<ApiKey[]> {
+    return await db
+      .select()
+      .from(apiKeys)
+      .where(eq(apiKeys.organizationId, organizationId))
+      .orderBy(sql`${apiKeys.createdAt} DESC`);
+  }
+
+  async revokeApiKey(id: string, organizationId: string): Promise<void> {
+    await db
+      .update(apiKeys)
+      .set({ revoked: true, revokedAt: new Date() })
+      .where(and(eq(apiKeys.id, id), eq(apiKeys.organizationId, organizationId)));
+  }
+
+  async validateApiKey(key: string): Promise<ApiKey | null> {
+    const [apiKey] = await db
+      .select()
+      .from(apiKeys)
+      .where(and(
+        eq(apiKeys.key, key),
+        eq(apiKeys.revoked, false)
+      ))
+      .limit(1);
+
+    if (!apiKey) return null;
+
+    // Check expiration
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+      return null;
+    }
+
+    // Update last used timestamp
+    await db
+      .update(apiKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKeys.id, apiKey.id));
+
+    return apiKey;
+  }
+
+  async createWebhook(
+    organizationId: string,
+    userId: string,
+    name: string,
+    url: string,
+    events: string[]
+  ): Promise<Webhook> {
+    const secret = `whsec_${crypto.randomUUID().replace(/-/g, '')}`;
+    const [webhook] = await db
+      .insert(webhooks)
+      .values({
+        organizationId,
+        name,
+        url,
+        secret,
+        events,
+        createdBy: userId,
+      })
+      .returning();
+    return webhook;
+  }
+
+  async listWebhooks(organizationId: string): Promise<Webhook[]> {
+    return await db
+      .select()
+      .from(webhooks)
+      .where(eq(webhooks.organizationId, organizationId))
+      .orderBy(sql`${webhooks.createdAt} DESC`);
+  }
+
+  async getWebhookById(id: string, organizationId: string): Promise<Webhook | null> {
+    const [webhook] = await db
+      .select()
+      .from(webhooks)
+      .where(and(eq(webhooks.id, id), eq(webhooks.organizationId, organizationId)))
+      .limit(1);
+    return webhook || null;
+  }
+
+  async updateWebhook(
+    id: string,
+    organizationId: string,
+    updates: { name?: string; url?: string; events?: string[]; active?: boolean }
+  ): Promise<Webhook | null> {
+    const [webhook] = await db
+      .update(webhooks)
+      .set(updates)
+      .where(and(eq(webhooks.id, id), eq(webhooks.organizationId, organizationId)))
+      .returning();
+    return webhook || null;
+  }
+
+  async deleteWebhook(id: string, organizationId: string): Promise<void> {
+    await db
+      .delete(webhooks)
+      .where(and(eq(webhooks.id, id), eq(webhooks.organizationId, organizationId)));
+  }
+
+  async createWebhookEvent(
+    webhookId: string,
+    organizationId: string,
+    eventType: string,
+    payload: object
+  ): Promise<WebhookEvent> {
+    const [event] = await db
+      .insert(webhookEvents)
+      .values({
+        webhookId,
+        organizationId,
+        eventType,
+        payload: JSON.stringify(payload),
+        status: 'pending',
+      })
+      .returning();
+    return event;
+  }
+
+  async listWebhookEvents(
+    webhookId: string,
+    organizationId: string,
+    limit: number = 50
+  ): Promise<WebhookEvent[]> {
+    return await db
+      .select()
+      .from(webhookEvents)
+      .where(and(
+        eq(webhookEvents.webhookId, webhookId),
+        eq(webhookEvents.organizationId, organizationId)
+      ))
+      .orderBy(sql`${webhookEvents.createdAt} DESC`)
+      .limit(limit);
+  }
+
+  async updateWebhookEventStatus(
+    id: string,
+    status: string,
+    responseStatus?: number,
+    responseBody?: string
+  ): Promise<void> {
+    await db
+      .update(webhookEvents)
+      .set({
+        status,
+        lastAttemptAt: new Date(),
+        attempts: sql`${webhookEvents.attempts} + 1`,
+        responseStatus,
+        responseBody,
+      })
+      .where(eq(webhookEvents.id, id));
+  }
+
+  async triggerWebhookEvent(eventType: string, organizationId: string, payload: object): Promise<void> {
+    // Find all active webhooks subscribed to this event
+    const activeWebhooks = await db
+      .select()
+      .from(webhooks)
+      .where(and(
+        eq(webhooks.organizationId, organizationId),
+        eq(webhooks.active, true),
+        sql`${eventType} = ANY(${webhooks.events})`
+      ));
+
+    // Create webhook events for each subscribed webhook
+    for (const webhook of activeWebhooks) {
+      const event = await this.createWebhookEvent(webhook.id, organizationId, eventType, payload);
+
+      // Send webhook asynchronously (fire and forget)
+      this.sendWebhook(webhook, event).catch(err => {
+        console.error(`Failed to send webhook ${webhook.id}:`, err);
+      });
+    }
+  }
+
+  async sendWebhook(webhook: Webhook, event: WebhookEvent): Promise<void> {
+    try {
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Signature': webhook.secret,
+          'X-Event-Type': event.eventType,
+        },
+        body: event.payload,
+      });
+
+      await this.updateWebhookEventStatus(
+        event.id,
+        response.ok ? 'sent' : 'failed',
+        response.status,
+        await response.text().catch(() => undefined)
+      );
+    } catch (error) {
+      await this.updateWebhookEventStatus(
+        event.id,
+        'failed',
+        undefined,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    }
+  }
+
   // Advanced Analytics methods (Sprint 4)
   async recordDisplayMetric(
     displayId: string,

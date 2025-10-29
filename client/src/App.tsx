@@ -38,6 +38,7 @@ import Settings from "@/pages/settings";
 import Team from "@/pages/team";
 import Organization from "@/pages/organization";
 import AuditLogs from "@/pages/audit-logs";
+import Developer from "@/pages/developer";
 import AcceptInvitation from "@/pages/accept-invitation";
 import Player from "@/pages/player";
 import Login from "@/pages/login";
@@ -114,6 +115,7 @@ function ProtectedRouter() {
       <Route path="/team" component={() => <ProtectedRoute component={Team} />} />
       <Route path="/organization" component={() => <ProtectedRoute component={Organization} />} />
       <Route path="/audit-logs" component={() => <ProtectedRoute component={AuditLogs} />} />
+      <Route path="/developer" component={() => <ProtectedRoute component={Developer} />} />
       <Route component={NotFound} />
     </Switch>
   );

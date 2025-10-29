@@ -827,6 +827,156 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   // END SPRINT 4: ADVANCED ANALYTICS ROUTES
   // ============================================
 
+  // ============================================
+  // SPRINT 4: API KEYS & WEBHOOKS ROUTES
+  // ============================================
+
+  // API Keys
+  app.post("/api/api-keys", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      const { name, expiresAt } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ error: "Name is required" });
+      }
+
+      const apiKey = await storage.createApiKey(
+        organizationId,
+        userId,
+        name,
+        expiresAt ? new Date(expiresAt) : undefined
+      );
+
+      res.status(201).json(apiKey);
+    } catch (error) {
+      console.error("Create API key error:", error);
+      res.status(500).json({ error: "Failed to create API key" });
+    }
+  });
+
+  app.get("/api/api-keys", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const apiKeys = await storage.listApiKeys(organizationId);
+      res.json(apiKeys);
+    } catch (error) {
+      console.error("List API keys error:", error);
+      res.status(500).json({ error: "Failed to fetch API keys" });
+    }
+  });
+
+  app.delete("/api/api-keys/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      await storage.revokeApiKey(req.params.id, organizationId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Revoke API key error:", error);
+      res.status(500).json({ error: "Failed to revoke API key" });
+    }
+  });
+
+  // Webhooks
+  app.post("/api/webhooks", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      const { name, url, events } = req.body;
+
+      if (!name || !url || !events || !Array.isArray(events)) {
+        return res.status(400).json({ error: "Name, URL, and events are required" });
+      }
+
+      const webhook = await storage.createWebhook(organizationId, userId, name, url, events);
+      res.status(201).json(webhook);
+    } catch (error) {
+      console.error("Create webhook error:", error);
+      res.status(500).json({ error: "Failed to create webhook" });
+    }
+  });
+
+  app.get("/api/webhooks", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const webhooks = await storage.listWebhooks(organizationId);
+      res.json(webhooks);
+    } catch (error) {
+      console.error("List webhooks error:", error);
+      res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
+  });
+
+  app.patch("/api/webhooks/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const { name, url, events, active } = req.body;
+
+      const webhook = await storage.updateWebhook(req.params.id, organizationId, {
+        name,
+        url,
+        events,
+        active,
+      });
+
+      if (!webhook) {
+        return res.status(404).json({ error: "Webhook not found" });
+      }
+
+      res.json(webhook);
+    } catch (error) {
+      console.error("Update webhook error:", error);
+      res.status(500).json({ error: "Failed to update webhook" });
+    }
+  });
+
+  app.delete("/api/webhooks/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      await storage.deleteWebhook(req.params.id, organizationId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete webhook error:", error);
+      res.status(500).json({ error: "Failed to delete webhook" });
+    }
+  });
+
+  app.get("/api/webhooks/:id/events", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const events = await storage.listWebhookEvents(req.params.id, organizationId, limit);
+      res.json(events);
+    } catch (error) {
+      console.error("List webhook events error:", error);
+      res.status(500).json({ error: "Failed to fetch webhook events" });
+    }
+  });
+
+  app.post("/api/webhooks/:id/test", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const testPayload = {
+        event: "webhook.test",
+        timestamp: new Date().toISOString(),
+        data: {
+          message: "This is a test webhook event from EvoFlow",
+        },
+      };
+
+      await storage.triggerWebhookEvent("webhook.test", organizationId, testPayload);
+      res.json({ message: "Test webhook triggered successfully" });
+    } catch (error) {
+      console.error("Test webhook error:", error);
+      res.status(500).json({ error: "Failed to test webhook" });
+    }
+  });
+
+  // ============================================
+  // END SPRINT 4: API KEYS & WEBHOOKS ROUTES
+  // ============================================
+
   app.get("/api/displays-with-groups", requireAuth, async (req, res) => {
     try {
       const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
@@ -2341,6 +2491,161 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to seek sync playback" });
+    }
+  });
+
+  // API Keys & Webhooks routes (Sprint 4)
+  app.post("/api/api-keys", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      
+      const validatedData = insertApiKeySchema.parse({
+        organizationId,
+        createdBy: userId,
+        ...req.body,
+      });
+
+      const apiKey = await storage.createApiKey(
+        organizationId,
+        userId,
+        validatedData.name,
+        validatedData.expiresAt ? new Date(validatedData.expiresAt) : undefined
+      );
+
+      res.status(201).json(apiKey);
+    } catch (error) {
+      console.error("API key creation error:", error);
+      res.status(400).json({ error: "Invalid API key data" });
+    }
+  });
+
+  app.get("/api/api-keys", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const keys = await storage.listApiKeys(organizationId);
+      res.json(keys);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch API keys" });
+    }
+  });
+
+  app.delete("/api/api-keys/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      await storage.revokeApiKey(req.params.id, organizationId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to revoke API key" });
+    }
+  });
+
+  app.post("/api/webhooks", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      
+      const validatedData = insertWebhookSchema.parse({
+        organizationId,
+        createdBy: userId,
+        ...req.body,
+      });
+
+      const webhook = await storage.createWebhook(
+        organizationId,
+        userId,
+        validatedData.name,
+        validatedData.url,
+        validatedData.events
+      );
+
+      res.status(201).json(webhook);
+    } catch (error) {
+      console.error("Webhook creation error:", error);
+      res.status(400).json({ error: "Invalid webhook data" });
+    }
+  });
+
+  app.get("/api/webhooks", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const webhooks = await storage.listWebhooks(organizationId);
+      res.json(webhooks);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
+  });
+
+  app.patch("/api/webhooks/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const validatedData = insertWebhookSchema.partial().parse(req.body);
+
+      const webhook = await storage.updateWebhook(req.params.id, organizationId, {
+        name: validatedData.name,
+        url: validatedData.url,
+        events: validatedData.events,
+        active: validatedData.active,
+      });
+
+      if (!webhook) {
+        return res.status(404).json({ error: "Webhook not found" });
+      }
+
+      res.json(webhook);
+    } catch (error) {
+      console.error("Webhook update error:", error);
+      res.status(400).json({ error: "Invalid webhook data" });
+    }
+  });
+
+  app.delete("/api/webhooks/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      await storage.deleteWebhook(req.params.id, organizationId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete webhook" });
+    }
+  });
+
+  app.post("/api/webhooks/:id/test", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const webhook = await storage.getWebhookById(req.params.id, organizationId);
+
+      if (!webhook) {
+        return res.status(404).json({ error: "Webhook not found" });
+      }
+
+      // Create test event
+      const event = await storage.createWebhookEvent(
+        webhook.id,
+        organizationId,
+        "test.event",
+        { message: "This is a test webhook event" }
+      );
+
+      // Send test webhook asynchronously
+      storage.sendWebhook(webhook, event).catch(err => {
+        console.error(`Failed to send test webhook ${webhook.id}:`, err);
+      });
+
+      res.json({ success: true, eventId: event.id });
+    } catch (error) {
+      console.error("Test webhook error:", error);
+      res.status(500).json({ error: "Failed to send test webhook" });
+    }
+  });
+
+  app.get("/api/webhooks/:id/events", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const events = await storage.listWebhookEvents(req.params.id, organizationId);
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch webhook events" });
     }
   });
 }

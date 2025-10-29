@@ -15,6 +15,7 @@ import {
   UserCog,
   Building2,
   ScrollText,
+  Code,
 } from "lucide-react";
 import {
   Sidebar,
@@ -119,6 +120,12 @@ const menuItemsConfig = [
     url: "/audit-logs",
     icon: ScrollText,
     testId: "link-audit-logs",
+  },
+  {
+    titleKey: "developer" as const,
+    url: "/developer",
+    icon: Code,
+    testId: "link-developer",
   },
 ];
 
