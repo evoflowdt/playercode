@@ -365,17 +365,23 @@ export default function Player() {
     };
   }, [isPaired, displayId, sendHeartbeat]);
 
-  // Setup content rotation (disabled during sync mode)
+  // Setup content rotation for non-video content (disabled during sync mode)
   useEffect(() => {
-    // Don't rotate content if sync mode is active
+    // Don't rotate if sync mode is active or no content
     if (!isPaired || content.length === 0 || syncState.isActive) return;
+    
+    const currentContent = content[currentContentIndex];
+    
+    // Only use timeout for non-video content (images, html, webpages)
+    // Videos will rotate via onEnded event
+    if (currentContent?.type === "video") return;
 
     const rotateContent = () => {
       setCurrentContentIndex((prev) => (prev + 1) % content.length);
     };
 
     // Get duration for current content (default 10 seconds)
-    const duration = content[currentContentIndex]?.duration || 10000;
+    const duration = currentContent?.duration || 10000;
 
     contentRotationRef.current = setTimeout(rotateContent, duration);
 
@@ -503,6 +509,15 @@ export default function Player() {
     }
 
     if (currentContent.type === "video") {
+      const handleVideoEnded = () => {
+        console.log('[Player] Video ended');
+        // Only rotate if not in sync mode and there are multiple videos
+        if (!syncState.isActive && content.length > 1) {
+          console.log('[Player] Rotating to next video');
+          setCurrentContentIndex((prev) => (prev + 1) % content.length);
+        }
+      };
+
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <video
@@ -515,9 +530,7 @@ export default function Player() {
             className="max-w-full max-h-full"
             data-testid="player-video-content"
             onError={() => console.error('Failed to load video:', currentContent.url)}
-            onEnded={() => {
-              console.log('[Player] Video ended, content will rotate');
-            }}
+            onEnded={handleVideoEnded}
           />
         </div>
       );
