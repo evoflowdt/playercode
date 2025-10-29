@@ -509,28 +509,30 @@ export default function Player() {
         );
       }
       
-      const imageStyle = displayResolution ? {
-        maxWidth: `${displayResolution.width}px`,
-        maxHeight: `${displayResolution.height}px`,
+      // Create bounded wrapper style if resolution is configured
+      const wrapperStyle = displayResolution ? {
+        width: `${displayResolution.width}px`,
+        height: `${displayResolution.height}px`,
       } : {};
       
       console.log('[Player] Rendering image with resolution:', displayResolution);
-      console.log('[Player] Image style:', imageStyle);
+      console.log('[Player] Wrapper style:', wrapperStyle);
       
       return (
         <div className="flex items-center justify-center h-screen bg-black">
-          <img
-            key={currentContent.id}
-            src={currentContent.url}
-            alt={currentContent.name}
-            className="max-w-full max-h-full object-contain"
-            style={imageStyle}
-            data-testid="player-image-content"
-            onError={(e) => {
-              console.error('Failed to load image:', currentContent.url);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          <div style={wrapperStyle} className={displayResolution ? "" : "w-full h-full"}>
+            <img
+              key={currentContent.id}
+              src={currentContent.url}
+              alt={currentContent.name}
+              className="w-full h-full object-contain"
+              data-testid="player-image-content"
+              onError={(e) => {
+                console.error('Failed to load image:', currentContent.url);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
       );
     }
@@ -545,26 +547,28 @@ export default function Player() {
         }
       };
 
-      const videoStyle = displayResolution ? {
-        maxWidth: `${displayResolution.width}px`,
-        maxHeight: `${displayResolution.height}px`,
+      // Create bounded wrapper style if resolution is configured
+      const wrapperStyle = displayResolution ? {
+        width: `${displayResolution.width}px`,
+        height: `${displayResolution.height}px`,
       } : {};
 
       return (
         <div className="flex items-center justify-center h-screen bg-black">
-          <video
-            key={currentContent.id}
-            ref={videoRef}
-            src={currentContent.url}
-            autoPlay={!syncState.isActive || syncState.status === "playing"}
-            loop={content.length === 1 && !syncState.isActive}
-            muted
-            className="max-w-full max-h-full object-contain"
-            style={videoStyle}
-            data-testid="player-video-content"
-            onError={() => console.error('Failed to load video:', currentContent.url)}
-            onEnded={handleVideoEnded}
-          />
+          <div style={wrapperStyle} className={displayResolution ? "" : "w-full h-full"}>
+            <video
+              key={currentContent.id}
+              ref={videoRef}
+              src={currentContent.url}
+              autoPlay={!syncState.isActive || syncState.status === "playing"}
+              loop={content.length === 1 && !syncState.isActive}
+              muted
+              className="w-full h-full object-contain"
+              data-testid="player-video-content"
+              onError={() => console.error('Failed to load video:', currentContent.url)}
+              onEnded={handleVideoEnded}
+            />
+          </div>
         </div>
       );
     }
