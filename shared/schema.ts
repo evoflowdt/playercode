@@ -142,6 +142,33 @@ export const transitions = pgTable("transitions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Feature Set 3: Multi-Monitor Synchronization
+export const syncGroups = pgTable("sync_groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const syncGroupMembers = pgTable("sync_group_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  syncGroupId: varchar("sync_group_id").notNull(),
+  displayId: varchar("display_id").notNull().unique(), // A display can only be in one sync group
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+});
+
+export const syncSessions = pgTable("sync_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  syncGroupId: varchar("sync_group_id").notNull(),
+  contentId: varchar("content_id"), // Optional: single content
+  playlistId: varchar("playlist_id"), // Optional: playlist
+  status: text("status").notNull().default("stopped"), // 'playing', 'paused', 'stopped'
+  currentPosition: integer("current_position").notNull().default(0), // milliseconds
+  startedAt: timestamp("started_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -254,6 +281,26 @@ export const insertTransitionSchema = createInsertSchema(transitions).pick({
   enabled: true,
 });
 
+export const insertSyncGroupSchema = createInsertSchema(syncGroups).pick({
+  name: true,
+  description: true,
+  active: true,
+});
+
+export const insertSyncGroupMemberSchema = createInsertSchema(syncGroupMembers).pick({
+  syncGroupId: true,
+  displayId: true,
+});
+
+export const insertSyncSessionSchema = createInsertSchema(syncSessions).pick({
+  syncGroupId: true,
+  contentId: true,
+  playlistId: true,
+  status: true,
+  currentPosition: true,
+  startedAt: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -290,6 +337,15 @@ export type ContentPriority = typeof contentPriority.$inferSelect;
 export type InsertTransition = z.infer<typeof insertTransitionSchema>;
 export type Transition = typeof transitions.$inferSelect;
 
+export type InsertSyncGroup = z.infer<typeof insertSyncGroupSchema>;
+export type SyncGroup = typeof syncGroups.$inferSelect;
+
+export type InsertSyncGroupMember = z.infer<typeof insertSyncGroupMemberSchema>;
+export type SyncGroupMember = typeof syncGroupMembers.$inferSelect;
+
+export type InsertSyncSession = z.infer<typeof insertSyncSessionSchema>;
+export type SyncSession = typeof syncSessions.$inferSelect;
+
 export interface DashboardStats {
   totalDisplays: number;
   activeDisplays: number;
@@ -309,4 +365,15 @@ export interface ScheduleWithDetails extends Schedule {
 
 export interface PlaylistWithItems extends Playlist {
   items: Array<PlaylistItem & { contentName: string }>;
+}
+
+export interface SyncGroupWithMembers extends SyncGroup {
+  members: Array<SyncGroupMember & { displayName: string }>;
+  memberCount: number;
+}
+
+export interface SyncSessionWithDetails extends SyncSession {
+  syncGroupName: string;
+  contentName?: string;
+  playlistName?: string;
 }
