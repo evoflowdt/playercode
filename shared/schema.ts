@@ -90,6 +90,7 @@ export const pairingTokens = pgTable("pairing_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   used: boolean("used").notNull().default(false),
   displayId: varchar("display_id"),
+  organizationId: varchar("organization_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -293,6 +294,7 @@ export const insertPairingTokenSchema = createInsertSchema(pairingTokens).pick({
   displayName: true,
   os: true,
   expiresAt: true,
+  organizationId: true,
 });
 
 export const insertPlayerSessionSchema = createInsertSchema(playerSessions).pick({

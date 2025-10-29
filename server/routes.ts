@@ -50,32 +50,38 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         const message = JSON.parse(data.toString());
         
         if (message.type === 'display_register') {
-          const display = await storage.createDisplay(message.data);
+          const display = await storage.createDisplay(message.data, message.organizationId);
           broadcast({
             type: 'display_added',
             data: display
           });
         } else if (message.type === 'display_status') {
-          const updated = await storage.updateDisplay(message.displayId, {
-            status: message.status,
-            lastSeen: new Date(),
-          });
-          if (updated) {
-            broadcast({
-              type: 'display_updated',
-              data: updated
-            });
+          const display = await storage.getDisplayById(message.displayId);
+          if (display) {
+            const updated = await storage.updateDisplay(message.displayId, {
+              status: message.status,
+              lastSeen: new Date(),
+            }, display.organizationId);
+            if (updated) {
+              broadcast({
+                type: 'display_updated',
+                data: updated
+              });
+            }
           }
         } else if (message.type === 'display_screenshot') {
-          const updated = await storage.updateDisplay(message.displayId, {
-            screenshot: message.screenshot,
-            lastSeen: new Date(),
-          });
-          if (updated) {
-            broadcast({
-              type: 'display_updated',
-              data: updated
-            });
+          const display = await storage.getDisplayById(message.displayId);
+          if (display) {
+            const updated = await storage.updateDisplay(message.displayId, {
+              screenshot: message.screenshot,
+              lastSeen: new Date(),
+            }, display.organizationId);
+            if (updated) {
+              broadcast({
+                type: 'display_updated',
+                data: updated
+              });
+            }
           }
         }
       } catch (error) {
@@ -328,27 +334,40 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/stats", async (_req, res) => {
+  app.get("/api/stats", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const stats = await storage.getDashboardStats(organizationId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
 
-  app.get("/api/displays", async (_req, res) => {
+  app.get("/api/displays-with-groups", requireAuth, async (req, res) => {
     try {
-      const displays = await storage.getAllDisplays();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const displaysWithGroups = await storage.getDisplaysWithGroups(organizationId);
+      res.json(displaysWithGroups);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch displays with groups" });
+    }
+  });
+
+  app.get("/api/displays", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const displays = await storage.getAllDisplays(organizationId);
       res.json(displays);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch displays" });
     }
   });
 
-  app.get("/api/displays/:id", async (req, res) => {
+  app.get("/api/displays/:id", requireAuth, async (req, res) => {
     try {
-      const display = await storage.getDisplay(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const display = await storage.getDisplay(req.params.id, organizationId);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
@@ -358,10 +377,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.post("/api/displays", async (req, res) => {
+  app.post("/api/displays", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validatedData = insertDisplaySchema.parse(req.body);
-      const display = await storage.createDisplay(validatedData);
+      const display = await storage.createDisplay(validatedData, organizationId);
       broadcast({
         type: 'display_added',
         data: display
@@ -372,9 +392,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.patch("/api/displays/:id", async (req, res) => {
+  app.patch("/api/displays/:id", requireAuth, async (req, res) => {
     try {
-      const updated = await storage.updateDisplay(req.params.id, req.body);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const updated = await storage.updateDisplay(req.params.id, req.body, organizationId);
       if (!updated) {
         return res.status(404).json({ error: "Display not found" });
       }
@@ -388,9 +409,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.delete("/api/displays/:id", async (req, res) => {
+  app.delete("/api/displays/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deleteDisplay(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deleteDisplay(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Display not found" });
       }
@@ -404,17 +426,32 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/content", async (_req, res) => {
+  app.get("/api/content", requireAuth, async (req, res) => {
     try {
-      const items = await storage.getAllContentItems();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const items = await storage.getAllContentItems(organizationId);
       res.json(items);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch content" });
     }
   });
 
-  app.post("/api/content", async (req, res) => {
+  app.get("/api/content/:id", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const item = await storage.getContentItem(req.params.id, organizationId);
+      if (!item) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch content" });
+    }
+  });
+
+  app.post("/api/content", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const objectStorageService = new ObjectStorageService();
       let normalizedUrl = req.body.url;
       
@@ -427,7 +464,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         ...req.body,
         url: normalizedUrl,
       });
-      const item = await storage.createContentItem(validatedData);
+      const item = await storage.createContentItem(validatedData, organizationId);
       res.status(201).json(item);
     } catch (error) {
       console.error('Content creation error:', error);
@@ -438,9 +475,23 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.delete("/api/content/:id", async (req, res) => {
+  app.patch("/api/content/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deleteContentItem(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const updated = await storage.updateContentItem(req.params.id, req.body, organizationId);
+      if (!updated) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update content" });
+    }
+  });
+
+  app.delete("/api/content/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deleteContentItem(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Content not found" });
       }
@@ -450,28 +501,57 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/groups", async (_req, res) => {
+  app.get("/api/groups", requireAuth, async (req, res) => {
     try {
-      const groups = await storage.getAllDisplayGroups();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const groups = await storage.getAllDisplayGroups(organizationId);
       res.json(groups);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch groups" });
     }
   });
 
-  app.post("/api/groups", async (req, res) => {
+  app.get("/api/groups/:id", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const group = await storage.getDisplayGroup(req.params.id, organizationId);
+      if (!group) {
+        return res.status(404).json({ error: "Group not found" });
+      }
+      res.json(group);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch group" });
+    }
+  });
+
+  app.post("/api/groups", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validatedData = insertDisplayGroupSchema.parse(req.body);
-      const group = await storage.createDisplayGroup(validatedData);
+      const group = await storage.createDisplayGroup(validatedData, organizationId);
       res.status(201).json(group);
     } catch (error) {
       res.status(400).json({ error: "Invalid group data" });
     }
   });
 
-  app.delete("/api/groups/:id", async (req, res) => {
+  app.patch("/api/groups/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deleteDisplayGroup(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const updated = await storage.updateDisplayGroup(req.params.id, req.body, organizationId);
+      if (!updated) {
+        return res.status(404).json({ error: "Group not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update group" });
+    }
+  });
+
+  app.delete("/api/groups/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deleteDisplayGroup(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Group not found" });
       }
@@ -481,17 +561,32 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/schedules", async (_req, res) => {
+  app.get("/api/schedules", requireAuth, async (req, res) => {
     try {
-      const schedules = await storage.getSchedulesWithDetails();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const schedules = await storage.getSchedulesWithDetails(organizationId);
       res.json(schedules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch schedules" });
     }
   });
 
-  app.post("/api/schedules", async (req, res) => {
+  app.get("/api/schedules/:id", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const schedule = await storage.getSchedule(req.params.id, organizationId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+      res.json(schedule);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch schedule" });
+    }
+  });
+
+  app.post("/api/schedules", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       console.log('Schedule request body:', req.body);
       
       const scheduleData = {
@@ -502,11 +597,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       
       console.log('Processed schedule data:', scheduleData);
       const validatedData = insertScheduleSchema.parse(scheduleData);
-      const schedule = await storage.createSchedule(validatedData);
+      const schedule = await storage.createSchedule(validatedData, organizationId);
       
       // Notify affected displays via WebSocket
       if (schedule.targetType === 'display') {
-        const display = await storage.getDisplay(schedule.targetId);
+        const display = await storage.getDisplay(schedule.targetId, organizationId);
         if (display) {
           broadcast({
             type: 'display_updated',
@@ -514,7 +609,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
           });
         }
       } else if (schedule.targetType === 'group') {
-        const allDisplays = await storage.getDisplaysWithGroups();
+        const allDisplays = await storage.getDisplaysWithGroups(organizationId);
         const groupDisplays = allDisplays.filter(d => d.groupId === schedule.targetId);
         groupDisplays.forEach((display: typeof allDisplays[0]) => {
           broadcast({
@@ -531,12 +626,13 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.patch("/api/schedules/:id", async (req, res) => {
+  app.patch("/api/schedules/:id", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       console.log('Schedule update request body:', req.body);
       
       // Get the existing schedule first to compare targetType/targetId changes
-      const existingSchedule = await storage.getSchedule(req.params.id);
+      const existingSchedule = await storage.getSchedule(req.params.id, organizationId);
       if (!existingSchedule) {
         return res.status(404).json({ error: "Schedule not found" });
       }
@@ -553,7 +649,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       console.log('Processed update data:', updateData);
       
       // Update the schedule
-      const updated = await storage.updateSchedule(req.params.id, updateData);
+      const updated = await storage.updateSchedule(req.params.id, updateData, organizationId);
       if (!updated) {
         return res.status(404).json({ error: "Schedule not found" });
       }
@@ -562,7 +658,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       // Notify old target if it changed
       if (existingSchedule.targetType === 'display' && 
           (existingSchedule.targetId !== updated.targetId || existingSchedule.targetType !== updated.targetType)) {
-        const oldDisplay = await storage.getDisplay(existingSchedule.targetId);
+        const oldDisplay = await storage.getDisplay(existingSchedule.targetId, organizationId);
         if (oldDisplay) {
           broadcast({
             type: 'display_updated',
@@ -571,7 +667,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         }
       } else if (existingSchedule.targetType === 'group' && 
                  (existingSchedule.targetId !== updated.targetId || existingSchedule.targetType !== updated.targetType)) {
-        const allDisplays = await storage.getDisplaysWithGroups();
+        const allDisplays = await storage.getDisplaysWithGroups(organizationId);
         const oldGroupDisplays = allDisplays.filter(d => d.groupId === existingSchedule.targetId);
         oldGroupDisplays.forEach((display: typeof allDisplays[0]) => {
           broadcast({
@@ -583,7 +679,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       
       // Notify new target
       if (updated.targetType === 'display') {
-        const display = await storage.getDisplay(updated.targetId);
+        const display = await storage.getDisplay(updated.targetId, organizationId);
         if (display) {
           broadcast({
             type: 'display_updated',
@@ -591,7 +687,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
           });
         }
       } else if (updated.targetType === 'group') {
-        const allDisplays = await storage.getDisplaysWithGroups();
+        const allDisplays = await storage.getDisplaysWithGroups(organizationId);
         const groupDisplays = allDisplays.filter(d => d.groupId === updated.targetId);
         groupDisplays.forEach((display: typeof allDisplays[0]) => {
           broadcast({
@@ -608,10 +704,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.delete("/api/schedules/:id", async (req, res) => {
+  app.delete("/api/schedules/:id", requireAuth, async (req, res) => {
     try {
-      const schedule = await storage.getSchedule(req.params.id);
-      const deleted = await storage.deleteSchedule(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const schedule = await storage.getSchedule(req.params.id, organizationId);
+      const deleted = await storage.deleteSchedule(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Schedule not found" });
       }
@@ -619,7 +716,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       // Notify affected displays via WebSocket
       if (schedule) {
         if (schedule.targetType === 'display') {
-          const display = await storage.getDisplay(schedule.targetId);
+          const display = await storage.getDisplay(schedule.targetId, organizationId);
           if (display) {
             broadcast({
               type: 'display_updated',
@@ -627,7 +724,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
             });
           }
         } else if (schedule.targetType === 'group') {
-          const allDisplays = await storage.getDisplaysWithGroups();
+          const allDisplays = await storage.getDisplaysWithGroups(organizationId);
           const groupDisplays = allDisplays.filter(d => d.groupId === schedule.targetId);
           groupDisplays.forEach((display: typeof allDisplays[0]) => {
             broadcast({
@@ -701,18 +798,20 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/playlists", async (_req, res) => {
+  app.get("/api/playlists", requireAuth, async (req, res) => {
     try {
-      const playlists = await storage.getAllPlaylistsWithItems();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const playlists = await storage.getAllPlaylistsWithItems(organizationId);
       res.json(playlists);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch playlists" });
     }
   });
 
-  app.get("/api/playlists/:id", async (req, res) => {
+  app.get("/api/playlists/:id", requireAuth, async (req, res) => {
     try {
-      const playlist = await storage.getPlaylistWithItems(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const playlist = await storage.getPlaylistWithItems(req.params.id, organizationId);
       if (!playlist) {
         return res.status(404).json({ error: "Playlist not found" });
       }
@@ -722,10 +821,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.post("/api/playlists", async (req, res) => {
+  app.post("/api/playlists", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validatedData = insertPlaylistSchema.parse(req.body);
-      const playlist = await storage.createPlaylist(validatedData);
+      const playlist = await storage.createPlaylist(validatedData, organizationId);
       res.status(201).json(playlist);
     } catch (error) {
       console.error("Playlist creation error:", error);
@@ -733,9 +833,23 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.delete("/api/playlists/:id", async (req, res) => {
+  app.patch("/api/playlists/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deletePlaylist(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const updated = await storage.updatePlaylist(req.params.id, req.body, organizationId);
+      if (!updated) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update playlist" });
+    }
+  });
+
+  app.delete("/api/playlists/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deletePlaylist(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Playlist not found" });
       }
@@ -883,8 +997,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   });
   
   // Generate a pairing token
-  app.post("/api/player/pairing-token", async (req, res) => {
+  app.post("/api/player/pairing-token", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validated = pairingTokenRequestSchema.parse(req.body);
       
       // Generate cryptographically secure token
@@ -896,6 +1011,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         displayName: validated.displayName,
         os: validated.os,
         expiresAt,
+        organizationId,
       });
       
       res.status(201).json(pairingToken);
@@ -936,7 +1052,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         latitude: displayInfo.latitude,
         longitude: displayInfo.longitude,
         resolution: displayInfo.resolution,
-      });
+      }, pairingToken.organizationId);
       
       // Mark token as used
       await storage.usePairingToken(token, display.id);
@@ -974,7 +1090,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const { displayId, status, currentContentId } = validated;
       
       // Verify display exists
-      const display = await storage.getDisplay(displayId);
+      const display = await storage.getDisplayById(displayId);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
@@ -983,7 +1099,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       await storage.updateDisplay(displayId, {
         status: status || "online",
         lastSeen: new Date(),
-      });
+      }, display.organizationId);
       
       // Update session heartbeat
       const session = await storage.getPlayerSession(displayId);
@@ -1012,7 +1128,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     try {
       const { displayId } = req.params;
       
-      const display = await storage.getDisplay(displayId);
+      const display = await storage.getDisplayById(displayId);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
@@ -1031,7 +1147,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       }
       
       // Get the schedule details
-      const schedule = await storage.getSchedule(scheduledContent.scheduleId);
+      const schedule = await storage.getSchedule(scheduledContent.scheduleId, display.organizationId);
       if (!schedule) {
         return res.json({
           display,
@@ -1046,11 +1162,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       // Check if this schedule has a playlist or single content
       if (schedule.playlistId) {
         // Expand playlist into array of content items
-        const playlistWithItems = await storage.getPlaylistWithItems(schedule.playlistId);
+        const playlistWithItems = await storage.getPlaylistWithItems(schedule.playlistId, display.organizationId);
         if (playlistWithItems && playlistWithItems.items.length > 0) {
           // Get all content items from playlist in order
           for (const item of playlistWithItems.items) {
-            const contentItem = await storage.getContentItem(item.contentId);
+            const contentItem = await storage.getContentItemById(item.contentId);
             if (contentItem) {
               // Convert internal object path to public URL
               let contentWithUrl = { ...contentItem };
@@ -1072,7 +1188,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         radioStreams = streams.filter(s => s.active);
       } else if (schedule.contentId) {
         // Single content item
-        const contentItem = await storage.getContentItem(schedule.contentId);
+        const contentItem = await storage.getContentItemById(schedule.contentId);
         if (contentItem) {
           // Convert internal object path to public URL
           let contentWithUrl = { ...contentItem };
@@ -1106,7 +1222,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       // Enrich sessions with display information
       const enrichedSessions = await Promise.all(
         sessions.map(async (session) => {
-          const display = await storage.getDisplay(session.displayId);
+          const display = await storage.getDisplayById(session.displayId);
           return {
             ...session,
             displayName: display?.name || "Unknown Display",
@@ -1422,18 +1538,20 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   });
 
   // Sync Group endpoints
-  app.get("/api/sync-groups", async (_req, res) => {
+  app.get("/api/sync-groups", requireAuth, async (req, res) => {
     try {
-      const groups = await storage.getAllSyncGroupsWithMembers();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const groups = await storage.getAllSyncGroupsWithMembers(organizationId);
       res.json(groups);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch sync groups" });
     }
   });
 
-  app.get("/api/sync-groups/:id", async (req, res) => {
+  app.get("/api/sync-groups/:id", requireAuth, async (req, res) => {
     try {
-      const group = await storage.getSyncGroupWithMembers(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const group = await storage.getSyncGroupWithMembers(req.params.id, organizationId);
       if (!group) {
         return res.status(404).json({ error: "Sync group not found" });
       }
@@ -1443,10 +1561,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.post("/api/sync-groups", async (req, res) => {
+  app.post("/api/sync-groups", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validatedData = insertSyncGroupSchema.parse(req.body);
-      const group = await storage.createSyncGroup(validatedData);
+      const group = await storage.createSyncGroup(validatedData, organizationId);
       res.status(201).json(group);
     } catch (error) {
       console.error("Sync group creation error:", error);
@@ -1454,10 +1573,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.put("/api/sync-groups/:id", async (req, res) => {
+  app.patch("/api/sync-groups/:id", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const validatedData = insertSyncGroupSchema.partial().parse(req.body);
-      const updated = await storage.updateSyncGroup(req.params.id, validatedData);
+      const updated = await storage.updateSyncGroup(req.params.id, validatedData, organizationId);
       if (!updated) {
         return res.status(404).json({ error: "Sync group not found" });
       }
@@ -1468,9 +1588,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.delete("/api/sync-groups/:id", async (req, res) => {
+  app.delete("/api/sync-groups/:id", requireAuth, async (req, res) => {
     try {
-      const deleted = await storage.deleteSyncGroup(req.params.id);
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deleteSyncGroup(req.params.id, organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Sync group not found" });
       }
@@ -1592,10 +1713,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   });
 
   // Sync control endpoints - for controlling playback across sync groups
-  app.post("/api/sync-control/:syncGroupId/play", async (req, res) => {
+  app.post("/api/sync-control/:syncGroupId/play", requireAuth, async (req, res) => {
     try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
       const { contentId, playlistId } = req.body;
-      const syncGroup = await storage.getSyncGroup(req.params.syncGroupId);
+      const syncGroup = await storage.getSyncGroup(req.params.syncGroupId, organizationId);
       
       if (!syncGroup) {
         return res.status(404).json({ error: "Sync group not found" });
