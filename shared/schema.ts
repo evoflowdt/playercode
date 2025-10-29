@@ -228,6 +228,32 @@ export const sessions = pgTable("sessions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const invitations = pgTable("invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  role: text("role").notNull().default("viewer"), // owner, admin, editor, viewer
+  token: text("token").notNull().unique(),
+  invitedBy: varchar("invited_by").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  accepted: boolean("accepted").notNull().default(false),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  action: text("action").notNull(), // create, update, delete, login, logout, invite, etc.
+  resourceType: text("resource_type").notNull(), // display, content, schedule, user, etc.
+  resourceId: varchar("resource_id"),
+  details: text("details"), // JSON string with additional details
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -400,6 +426,26 @@ export const insertSessionSchema = createInsertSchema(sessions).pick({
   userAgent: true,
 });
 
+export const insertInvitationSchema = createInsertSchema(invitations).pick({
+  email: true,
+  organizationId: true,
+  role: true,
+  token: true,
+  invitedBy: true,
+  expiresAt: true,
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).pick({
+  organizationId: true,
+  userId: true,
+  action: true,
+  resourceType: true,
+  resourceId: true,
+  details: true,
+  ipAddress: true,
+  userAgent: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -460,6 +506,12 @@ export type OrganizationMember = typeof organizationMembers.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
 
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
+export type Invitation = typeof invitations.$inferSelect;
+
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
 export interface UserWithOrganizations extends User {
   organizations: Array<OrganizationMember & { organizationName: string }>;
 }
@@ -494,4 +546,23 @@ export interface SyncSessionWithDetails extends SyncSession {
   syncGroupName: string;
   contentName?: string;
   playlistName?: string;
+}
+
+export interface TeamMember extends OrganizationMember {
+  userEmail: string;
+  userFirstName: string;
+  userLastName: string;
+  inviterName?: string;
+}
+
+export interface InvitationWithDetails extends Invitation {
+  inviterFirstName: string;
+  inviterLastName: string;
+  organizationName: string;
+}
+
+export interface AuditLogWithDetails extends AuditLog {
+  userFirstName: string;
+  userLastName: string;
+  userEmail: string;
 }
