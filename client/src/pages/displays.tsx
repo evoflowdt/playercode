@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Display } from "@shared/schema";
 import { DisplayCard } from "@/components/display-card";
+import { DisplayTableView } from "@/components/display-table-view";
 import { EmptyState } from "@/components/empty-state";
 import { DisplayFormDialog } from "@/components/display-form-dialog";
 import { DisplayEditDialog } from "@/components/display-edit-dialog";
@@ -158,23 +159,36 @@ export default function Displays() {
       </Card>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i} className="h-72 animate-pulse bg-muted" />
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="h-72 animate-pulse bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <Card className="h-96 animate-pulse bg-muted" />
+        )
       ) : filteredDisplays && filteredDisplays.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredDisplays.map((display) => (
-            <DisplayCard
-              key={display.id}
-              display={display}
-              onViewDetails={setSelectedDisplay}
-              onEdit={setEditDisplay}
-              onDelete={setDeleteDisplay}
-            />
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredDisplays.map((display) => (
+              <DisplayCard
+                key={display.id}
+                display={display}
+                onViewDetails={setSelectedDisplay}
+                onEdit={setEditDisplay}
+                onDelete={setDeleteDisplay}
+              />
+            ))}
+          </div>
+        ) : (
+          <DisplayTableView
+            displays={filteredDisplays}
+            onViewDetails={setSelectedDisplay}
+            onEdit={setEditDisplay}
+            onDelete={setDeleteDisplay}
+          />
+        )
       ) : (
         <EmptyState
           icon={Monitor}
