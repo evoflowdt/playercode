@@ -58,6 +58,10 @@ import {
   type ContentView,
   type ScheduleExecution,
   type AdvancedAnalytics,
+  type ApiKey,
+  type Webhook,
+  type WebhookEvent,
+  type Notification,
   displays,
   contentItems,
   displayGroups,
@@ -83,9 +87,13 @@ import {
   displayMetrics,
   contentViews,
   scheduleExecutions,
+  apiKeys,
+  webhooks,
+  webhookEvents,
+  notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, and, gt, lt, gte, lte } from "drizzle-orm";
+import { eq, sql, and, gt, lt, gte, lte, desc } from "drizzle-orm";
 
 export interface IStorage {
   getDisplay(id: string, organizationId: string): Promise<Display | undefined>;
@@ -250,6 +258,14 @@ export interface IStorage {
   recordContentView(contentId: string, displayId: string, organizationId: string, scheduleId?: string, playlistId?: string, duration?: number): Promise<ContentView>;
   recordScheduleExecution(scheduleId: string, displayId: string, organizationId: string, status: string, errorMessage?: string): Promise<ScheduleExecution>;
   getAdvancedAnalytics(organizationId: string, startDate?: Date, endDate?: Date): Promise<AdvancedAnalytics>;
+  
+  // Notification methods (Sprint 4)
+  createNotification(organizationId: string, userId: string, type: string, title: string, message: string, data?: any): Promise<Notification>;
+  listNotifications(organizationId: string, userId: string, options?: { unreadOnly?: boolean; limit?: number }): Promise<Notification[]>;
+  getUnreadCount(organizationId: string, userId: string): Promise<number>;
+  markNotificationAsRead(id: string, organizationId: string, userId: string): Promise<Notification | undefined>;
+  markAllAsRead(organizationId: string, userId: string): Promise<number>;
+  deleteNotification(id: string, organizationId: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2045,6 +2061,122 @@ export class DatabaseStorage implements IStorage {
       schedulePerformance,
       timeSeriesMetrics,
     };
+  }
+
+  // Notification methods (Sprint 4)
+  async createNotification(
+    organizationId: string,
+    userId: string,
+    type: string,
+    title: string,
+    message: string,
+    data?: any
+  ): Promise<Notification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values({
+        organizationId,
+        userId,
+        type,
+        title,
+        message,
+        data: data ? JSON.stringify(data) : null,
+      })
+      .returning();
+    return notification;
+  }
+
+  async listNotifications(
+    organizationId: string,
+    userId: string,
+    options?: { unreadOnly?: boolean; limit?: number }
+  ): Promise<Notification[]> {
+    const conditions = [
+      eq(notifications.organizationId, organizationId),
+      eq(notifications.userId, userId),
+    ];
+
+    if (options?.unreadOnly) {
+      conditions.push(eq(notifications.read, false));
+    }
+
+    const baseQuery = db
+      .select()
+      .from(notifications)
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt));
+
+    if (options?.limit) {
+      return await baseQuery.limit(options.limit);
+    }
+
+    return await baseQuery;
+  }
+
+  async getUnreadCount(organizationId: string, userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.organizationId, organizationId),
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        )
+      );
+    return result[0]?.count || 0;
+  }
+
+  async markNotificationAsRead(
+    id: string,
+    organizationId: string,
+    userId: string
+  ): Promise<Notification | undefined> {
+    const [notification] = await db
+      .update(notifications)
+      .set({ read: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notifications.id, id),
+          eq(notifications.organizationId, organizationId),
+          eq(notifications.userId, userId)
+        )
+      )
+      .returning();
+    return notification;
+  }
+
+  async markAllAsRead(organizationId: string, userId: string): Promise<number> {
+    const result = await db
+      .update(notifications)
+      .set({ read: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notifications.organizationId, organizationId),
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        )
+      )
+      .returning();
+    return result.length;
+  }
+
+  async deleteNotification(
+    id: string,
+    organizationId: string,
+    userId: string
+  ): Promise<boolean> {
+    const result = await db
+      .delete(notifications)
+      .where(
+        and(
+          eq(notifications.id, id),
+          eq(notifications.organizationId, organizationId),
+          eq(notifications.userId, userId)
+        )
+      )
+      .returning();
+    return result.length > 0;
   }
 }
 
