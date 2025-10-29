@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { type Display, type DisplayGroup, type ContentItem } from "@shared/schema";
+import { type Display, type DisplayGroup, type ContentItem, type Playlist } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -31,13 +31,18 @@ import { useToast } from "@/hooks/use-toast";
 
 const scheduleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  contentId: z.string().min(1, "Content is required"),
+  sourceType: z.enum(["content", "playlist"]),
+  contentId: z.string().optional(),
+  playlistId: z.string().optional(),
   targetType: z.enum(["display", "group"]),
   targetId: z.string().min(1, "Target is required"),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   repeat: z.string().optional(),
-});
+}).refine(
+  (data) => (data.sourceType === "content" && data.contentId) || (data.sourceType === "playlist" && data.playlistId),
+  { message: "Either content or playlist must be selected", path: ["contentId"] }
+);
 
 type ScheduleFormValues = z.infer<typeof scheduleFormSchema>;
 
@@ -64,11 +69,17 @@ export function ScheduleFormDialog({
     queryKey: ["/api/content"],
   });
 
+  const { data: playlists } = useQuery<Playlist[]>({
+    queryKey: ["/api/playlists"],
+  });
+
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
       name: "",
+      sourceType: "content",
       contentId: "",
+      playlistId: "",
       targetType: "display",
       targetId: "",
       startTime: "",
@@ -81,12 +92,19 @@ export function ScheduleFormDialog({
     mutationFn: (data: ScheduleFormValues) => {
       const payload: any = {
         name: data.name,
-        contentId: data.contentId,
         targetType: data.targetType,
         targetId: data.targetId,
         startTime: new Date(data.startTime).toISOString(),
         endTime: new Date(data.endTime).toISOString(),
       };
+      
+      // Add either contentId or playlistId based on sourceType
+      if (data.sourceType === "content" && data.contentId) {
+        payload.contentId = data.contentId;
+      } else if (data.sourceType === "playlist" && data.playlistId) {
+        payload.playlistId = data.playlistId;
+      }
+      
       if (data.repeat) {
         payload.repeat = data.repeat;
       }
@@ -115,6 +133,7 @@ export function ScheduleFormDialog({
   };
 
   const targetType = form.watch("targetType");
+  const sourceType = form.watch("sourceType");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,34 +163,96 @@ export function ScheduleFormDialog({
 
             <FormField
               control={form.control}
-              name="contentId"
+              name="sourceType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Content Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger data-testid="select-content">
-                        <SelectValue placeholder="Select content" />
+                      <SelectTrigger data-testid="select-source-type">
+                        <SelectValue placeholder="Select content type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {content && content.length > 0 ? (
-                        content.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="none" disabled>
-                          No content available
-                        </SelectItem>
-                      )}
+                      <SelectItem value="content">Single Content</SelectItem>
+                      <SelectItem value="playlist">Playlist (Multiple Videos)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {sourceType === "content" && (
+              <FormField
+                control={form.control}
+                name="contentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-content">
+                          <SelectValue placeholder="Select content" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {content && content.length > 0 ? (
+                          content.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            No content available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {sourceType === "playlist" && (
+              <FormField
+                control={form.control}
+                name="playlistId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Playlist</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-playlist">
+                          <SelectValue placeholder="Select playlist" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {playlists && playlists.length > 0 ? (
+                          playlists.map((playlist) => (
+                            <SelectItem key={playlist.id} value={playlist.id}>
+                              {playlist.name}
+                              {playlist.description && (
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  - {playlist.description}
+                                </span>
+                              )}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            No playlists available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
