@@ -11,6 +11,8 @@ import {
 import { MoreVertical, Image, Video, FileText } from "lucide-react";
 import { ContentItem } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import { it, enUS } from "date-fns/locale";
+import { useLanguage } from "@/lib/language-provider";
 
 interface ContentItemCardProps {
   item: ContentItem;
@@ -27,6 +29,8 @@ export function ContentItemCard({
   onEdit,
   onDelete,
 }: ContentItemCardProps) {
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'it' ? it : enUS;
   const [mediaError, setMediaError] = useState(false);
   
   const getIcon = () => {
@@ -88,7 +92,7 @@ export function ContentItemCard({
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-8 w-8 backdrop-blur-sm bg-background/80"
+                className="backdrop-blur-sm bg-background/80"
                 data-testid={`button-menu-${item.id}`}
               >
                 <MoreVertical className="h-4 w-4" />
@@ -96,13 +100,13 @@ export function ContentItemCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.(item)}>
-                Edit
+                {t('edit')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDelete?.(item)}
                 className="text-destructive"
               >
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -130,6 +134,7 @@ export function ContentItemCard({
           <p className="text-xs text-muted-foreground mt-1">
             {formatDistanceToNow(new Date(item.uploadedAt), {
               addSuffix: true,
+              locale: dateLocale,
             })}
           </p>
         )}
