@@ -143,6 +143,7 @@ export const translations = {
     html: 'HTML',
     webPages: 'Web Pages',
     other: 'Other',
+    unknown: 'Unknown',
     
     // Radio Streams
     radioStreams: 'Radio Streams',
@@ -769,6 +770,7 @@ export const translations = {
     html: 'HTML',
     webPages: 'Pagine Web',
     other: 'Altro',
+    unknown: 'Sconosciuto',
     
     // Radio Streams
     radioStreams: 'Stream Radio',

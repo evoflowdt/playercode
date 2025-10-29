@@ -48,7 +48,7 @@ export default function Analytics() {
   ];
 
   const platformData = displays.reduce((acc, display) => {
-    const platform = display.os || "Unknown";
+    const platform = display.os || t('unknown');
     const existing = acc.find(item => item.name === platform);
     if (existing) {
       existing.value++;
