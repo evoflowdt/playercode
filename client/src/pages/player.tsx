@@ -197,7 +197,7 @@ export default function Player() {
             name: `Web Player`,
             os: "web",
             playerVersion: "1.0.0",
-            resolution: `${window.screen.width}x${window.screen.height}`,
+            // Don't send resolution during pairing - let user configure it manually
             capabilities: {
               supportsVideo: true,
               supportsAudio: true,
