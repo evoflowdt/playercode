@@ -11,6 +11,16 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider } from "@/lib/language-provider";
 import { LanguageToggle } from "@/components/language-toggle";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { User, LogOut } from "lucide-react";
 import { wsClient } from "@/lib/websocket";
 import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
@@ -29,6 +39,36 @@ import Player from "@/pages/player";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
+
+function UserMenu() {
+  const { user, logout } = useAuth();
+
+  if (!user) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" data-testid="button-user-menu">
+          <User className="h-4 w-4 mr-2" />
+          <span className="hidden sm:inline">{user.name || user.email}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          <div className="flex flex-col">
+            <span className="font-medium">{user.name || user.email}</span>
+            {user.name && <span className="text-xs text-muted-foreground">{user.email}</span>}
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={logout} data-testid="button-logout">
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -120,6 +160,7 @@ export default function App() {
                         <header className="flex items-center justify-between p-4 border-b bg-background">
                           <SidebarTrigger data-testid="button-sidebar-toggle" />
                           <div className="flex items-center gap-2">
+                            <UserMenu />
                             <LanguageToggle />
                             <ThemeToggle />
                           </div>
