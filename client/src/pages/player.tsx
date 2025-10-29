@@ -32,11 +32,18 @@ export default function Player() {
   const [isConnected, setIsConnected] = useState(false);
   const [content, setContent] = useState<PlayerContent[]>([]);
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
+  const [syncState, setSyncState] = useState<{
+    isActive: boolean;
+    sessionId?: string;
+    status: "playing" | "paused" | "stopped";
+  }>({ isActive: false, status: "stopped" });
   const { toast } = useToast();
   const wsRef = useRef<WebSocket | null>(null);
   const wsReconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const contentRotationRef = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const syncSessionRef = useRef<string | null>(null);
 
   // Reset player state (when display is deleted)
   const resetPlayer = useCallback(() => {
@@ -229,9 +236,62 @@ export default function Player() {
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          
           if (message.type === 'display_updated' && message.data?.id === displayId) {
             console.log("Display updated, refetching content");
             fetchContent(displayId);
+          }
+          
+          // Handle sync commands
+          if (message.type === 'sync:start' && message.data) {
+            console.log("[Sync] Received start command:", message.data);
+            syncSessionRef.current = message.data.sessionId;
+            setSyncState({
+              isActive: true,
+              sessionId: message.data.sessionId,
+              status: "playing",
+            });
+            // Fetch the new content for this sync session
+            fetchContent(displayId);
+          }
+          
+          if (message.type === 'sync:pause' && message.data?.sessionId === syncSessionRef.current) {
+            console.log("[Sync] Received pause command");
+            setSyncState(prev => ({ ...prev, status: "paused" }));
+            // Pause video if playing
+            if (videoRef.current && !videoRef.current.paused) {
+              videoRef.current.pause();
+            }
+          }
+          
+          if (message.type === 'sync:resume' && message.data?.sessionId === syncSessionRef.current) {
+            console.log("[Sync] Received resume command");
+            setSyncState(prev => ({ ...prev, status: "playing" }));
+            // Resume video if paused
+            if (videoRef.current && videoRef.current.paused) {
+              videoRef.current.play().catch(console.error);
+            }
+          }
+          
+          if (message.type === 'sync:stop' && message.data?.sessionId === syncSessionRef.current) {
+            console.log("[Sync] Received stop command");
+            syncSessionRef.current = null;
+            setSyncState({ isActive: false, status: "stopped" });
+            // Stop video and reset
+            if (videoRef.current) {
+              videoRef.current.pause();
+              videoRef.current.currentTime = 0;
+            }
+            // Return to regular content rotation
+            fetchContent(displayId);
+          }
+          
+          if (message.type === 'sync:seek' && message.data?.sessionId === syncSessionRef.current) {
+            console.log("[Sync] Received seek command:", message.data.position);
+            // Seek video to position
+            if (videoRef.current) {
+              videoRef.current.currentTime = message.data.position;
+            }
           }
         } catch (error) {
           console.error("WebSocket message error:", error);
@@ -289,9 +349,10 @@ export default function Player() {
     };
   }, [isPaired, displayId, sendHeartbeat]);
 
-  // Setup content rotation
+  // Setup content rotation (disabled during sync mode)
   useEffect(() => {
-    if (!isPaired || content.length === 0) return;
+    // Don't rotate content if sync mode is active
+    if (!isPaired || content.length === 0 || syncState.isActive) return;
 
     const rotateContent = () => {
       setCurrentContentIndex((prev) => (prev + 1) % content.length);
@@ -307,7 +368,7 @@ export default function Player() {
         clearTimeout(contentRotationRef.current);
       }
     };
-  }, [isPaired, content, currentContentIndex]);
+  }, [isPaired, content, currentContentIndex, syncState.isActive]);
 
   // Check for existing display ID on mount
   useEffect(() => {
@@ -408,9 +469,10 @@ export default function Player() {
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <video
+            ref={videoRef}
             src={currentContent.url}
-            autoPlay
-            loop
+            autoPlay={!syncState.isActive || syncState.status === "playing"}
+            loop={!syncState.isActive}
             muted
             className="max-w-full max-h-full"
             data-testid="player-video-content"
