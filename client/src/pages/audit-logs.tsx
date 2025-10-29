@@ -20,19 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "@/lib/i18n";
 
-const actionLabels: Record<string, string> = {
-  create: "Created",
-  update: "Updated",
-  delete: "Deleted",
-  login: "Logged in",
-  logout: "Logged out",
-  invite_member: "Invited member",
-  remove_member: "Removed member",
-  update_member_role: "Updated role",
-  revoke_invitation: "Revoked invitation",
-  update_organization: "Updated organization",
-};
 
 const actionColors: Record<string, string> = {
   create: "bg-green-500",
@@ -48,6 +37,19 @@ const actionColors: Record<string, string> = {
 };
 
 export default function AuditLogsPage() {
+  const { t } = useLanguage();
+  const actionLabels: Record<string, string> = {
+    create: t("displayRegistered"),
+    update: t("update"),
+    delete: t("delete"),
+    login: t("login"),
+    logout: t("logout"),
+    invite_member: t("invitationSent"),
+    remove_member: t("memberRemoved"),
+    update_member_role: t("update"),
+    revoke_invitation: t("invitationRevoked"),
+    update_organization: t("organizationUpdated"),
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [resourceFilter, setResourceFilter] = useState<string>("all");
@@ -84,9 +86,9 @@ export default function AuditLogsPage() {
           <ScrollText className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Audit Logs</h1>
+          <h1 className="text-3xl font-bold">{t("auditLogsTitle")}</h1>
           <p className="text-muted-foreground mt-1">
-            Track all actions and changes in your organization
+            {t("auditLogsSubtitle")}
           </p>
         </div>
       </div>
@@ -94,8 +96,8 @@ export default function AuditLogsPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter audit logs by action, resource type, or search</CardDescription>
+          <CardTitle>{t("filters")}</CardTitle>
+          <CardDescription>{t("filterAuditLogs")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -103,7 +105,7 @@ export default function AuditLogsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search logs..."
+                  placeholder={t("searchLogs")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -114,10 +116,10 @@ export default function AuditLogsPage() {
             <div className="space-y-2">
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger data-testid="select-action-filter">
-                  <SelectValue placeholder="All actions" />
+                  <SelectValue placeholder={t("allActions")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All actions</SelectItem>
+                  <SelectItem value="all">{t("allActions")}</SelectItem>
                   {uniqueActions.map((action) => (
                     <SelectItem key={action} value={action}>
                       {actionLabels[action] || action}
@@ -129,10 +131,10 @@ export default function AuditLogsPage() {
             <div className="space-y-2">
               <Select value={resourceFilter} onValueChange={setResourceFilter}>
                 <SelectTrigger data-testid="select-resource-filter">
-                  <SelectValue placeholder="All resources" />
+                  <SelectValue placeholder={t("allResources")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All resources</SelectItem>
+                  <SelectItem value="all">{t("allResources")}</SelectItem>
                   {uniqueResourceTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
@@ -151,32 +153,32 @@ export default function AuditLogsPage() {
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-muted-foreground" />
             <CardTitle>
-              {filteredLogs.length} Log{filteredLogs.length !== 1 ? "s" : ""}
+              {filteredLogs.length} {filteredLogs.length !== 1 ? t("logs") : t("log")}
             </CardTitle>
           </div>
           <CardDescription>
-            Showing {filteredLogs.length} of {auditLogs.length} total logs
+            {t("showingLogs").replace("{count}", filteredLogs.length.toString()).replace("{total}", auditLogs.length.toString())}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading audit logs...</div>
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-loading">{t("loading")}</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-logs">
               {auditLogs.length === 0
-                ? "No audit logs found"
-                : "No logs match your filters"}
+                ? t("noAuditLogs")
+                : t("noLogsMatchFilters")}
             </div>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Resource</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>{t("timestamp")}</TableHead>
+                    <TableHead>{t("user")}</TableHead>
+                    <TableHead>{t("action")}</TableHead>
+                    <TableHead>{t("resource")}</TableHead>
+                    <TableHead>{t("details")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

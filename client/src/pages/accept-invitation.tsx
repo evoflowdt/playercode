@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function AcceptInvitationPage() {
+  const { t } = useLanguage();
   const [, params] = useRoute("/accept-invitation/:token");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -25,8 +27,8 @@ export default function AcceptInvitationPage() {
     onSuccess: () => {
       setStatus("success");
       toast({
-        title: "Invitation accepted",
-        description: "You have successfully joined the organization!",
+        title: t("invitationAccepted"),
+        description: t("invitationAccepted"),
       });
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
@@ -35,10 +37,10 @@ export default function AcceptInvitationPage() {
     },
     onError: (error: any) => {
       setStatus("error");
-      setErrorMessage(error.message || "Failed to accept invitation");
+      setErrorMessage(error.message || t("failedAcceptInvitation"));
       toast({
-        title: "Error",
-        description: error.message || "Failed to accept invitation",
+        title: t("error"),
+        description: error.message || t("failedAcceptInvitation"),
         variant: "destructive",
       });
     },
@@ -48,14 +50,14 @@ export default function AcceptInvitationPage() {
     if (!authLoading && !user) {
       // User is not logged in
       setStatus("error");
-      setErrorMessage("You must be logged in to accept an invitation");
+      setErrorMessage(t("mustBeLoggedIn"));
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, t]);
 
   const handleAccept = () => {
     if (!user) {
       setStatus("error");
-      setErrorMessage("You must be logged in to accept an invitation");
+      setErrorMessage(t("mustBeLoggedIn"));
       return;
     }
     acceptMutation.mutate(token);
@@ -68,7 +70,7 @@ export default function AcceptInvitationPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground" data-testid="text-loading">{t("loading")}</p>
             </div>
           </CardContent>
         </Card>
@@ -85,8 +87,8 @@ export default function AcceptInvitationPage() {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle>Organization Invitation</CardTitle>
-              <CardDescription>Accept your invitation to join the team</CardDescription>
+              <CardTitle>{t("acceptInvitation")}</CardTitle>
+              <CardDescription>{t("acceptInvitationSubtitle")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -94,8 +96,7 @@ export default function AcceptInvitationPage() {
           {status === "pending" && !errorMessage && user && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                You have been invited to join an organization. Click the button below to accept the
-                invitation and become a team member.
+                {t("youHaveBeenInvited")}
               </p>
               <Button
                 onClick={handleAccept}
@@ -106,10 +107,10 @@ export default function AcceptInvitationPage() {
                 {acceptMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Accepting...
+                    {t("saving")}
                   </>
                 ) : (
-                  "Accept Invitation"
+                  t("acceptAndJoin")
                 )}
               </Button>
             </div>
@@ -119,9 +120,9 @@ export default function AcceptInvitationPage() {
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-16 w-16 text-green-500" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Invitation Accepted!</h3>
+                <h3 className="text-lg font-semibold" data-testid="text-success">{t("invitationAccepted")}</h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Redirecting you to the dashboard...
+                  {t("invitationAccepted")}
                 </p>
               </div>
             </div>
@@ -131,7 +132,7 @@ export default function AcceptInvitationPage() {
             <div className="flex flex-col items-center gap-4 py-8">
               <XCircle className="h-16 w-16 text-destructive" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Unable to Accept Invitation</h3>
+                <h3 className="text-lg font-semibold" data-testid="text-error">{t("invalidInvitation")}</h3>
                 <p className="text-sm text-muted-foreground mt-2">{errorMessage}</p>
                 {!user && (
                   <Button
@@ -139,7 +140,7 @@ export default function AcceptInvitationPage() {
                     className="mt-4"
                     data-testid="button-goto-login"
                   >
-                    Go to Login
+                    {t("login")}
                   </Button>
                 )}
               </div>

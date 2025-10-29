@@ -32,13 +32,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Mail, Clock, X } from "lucide-react";
 import type { TeamMember, InvitationWithDetails } from "@shared/schema";
+import { useLanguage } from "@/lib/i18n";
 
-const roleLabels: Record<string, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  editor: "Editor",
-  viewer: "Viewer",
-};
 
 const roleColors: Record<string, string> = {
   owner: "bg-purple-500",
@@ -48,7 +43,15 @@ const roleColors: Record<string, string> = {
 };
 
 export default function TeamPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
+  
+  const roleLabels: Record<string, string> = {
+    owner: t("owner"),
+    admin: t("admin"),
+    editor: t("editor"),
+    viewer: t("viewer"),
+  };
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<string>("viewer");
@@ -76,14 +79,14 @@ export default function TeamPage() {
       setInviteEmail("");
       setInviteRole("viewer");
       toast({
-        title: "Invitation sent",
-        description: "The team member has been invited successfully.",
+        title: t("invitationSent"),
+        description: t("invitationSent"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to send invitation",
+        title: t("error"),
+        description: error.message || t("failedSendInvitation"),
         variant: "destructive",
       });
     },
@@ -97,14 +100,14 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team"] });
       toast({
-        title: "Role updated",
-        description: "The team member's role has been updated successfully.",
+        title: t("update"),
+        description: t("memberRemoved"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update role",
+        title: t("error"),
+        description: error.message || t("failedRemoveMember"),
         variant: "destructive",
       });
     },
@@ -120,14 +123,14 @@ export default function TeamPage() {
       setRemoveDialogOpen(false);
       setMemberToRemove(null);
       toast({
-        title: "Member removed",
-        description: "The team member has been removed successfully.",
+        title: t("memberRemoved"),
+        description: t("memberRemoved"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to remove member",
+        title: t("error"),
+        description: error.message || t("failedRemoveMember"),
         variant: "destructive",
       });
     },
@@ -141,14 +144,14 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invitations"] });
       toast({
-        title: "Invitation revoked",
-        description: "The invitation has been revoked successfully.",
+        title: t("invitationRevoked"),
+        description: t("invitationRevoked"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to revoke invitation",
+        title: t("error"),
+        description: error.message || t("failedRevokeInvitation"),
         variant: "destructive",
       });
     },
@@ -157,8 +160,8 @@ export default function TeamPage() {
   const handleInvite = () => {
     if (!inviteEmail || !inviteRole) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: t("error"),
+        description: t("failedSendInvitation"),
         variant: "destructive",
       });
       return;
@@ -182,9 +185,9 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Team Management</h1>
+          <h1 className="text-3xl font-bold">{t("teamManagement")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your organization's team members and invitations
+            {t("teamManagementSubtitle")}
           </p>
         </div>
         <Button
@@ -192,32 +195,32 @@ export default function TeamPage() {
           data-testid="button-invite-member"
         >
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Member
+          {t("inviteTeamMember")}
         </Button>
       </div>
 
       {/* Team Members */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
+          <CardTitle>{t("teamMembers")}</CardTitle>
           <CardDescription>
-            {teamMembers.length} member{teamMembers.length !== 1 ? "s" : ""} in your organization
+            {teamMembers.length} {teamMembers.length !== 1 ? t("teamMembers").toLowerCase() : t("teamMembers").toLowerCase().slice(0, -1)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {membersLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading members...</div>
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-loading">{t("loading")}</div>
           ) : teamMembers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No team members found</div>
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-members">{t("noDisplaysRegistered")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("name")}</TableHead>
+                  <TableHead>{t("email")}</TableHead>
+                  <TableHead>{t("role")}</TableHead>
+                  <TableHead>{t("invitedOn")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -241,10 +244,10 @@ export default function TeamPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="owner">Owner</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="editor">Editor</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="owner">{t("owner")}</SelectItem>
+                          <SelectItem value="admin">{t("admin")}</SelectItem>
+                          <SelectItem value="editor">{t("editor")}</SelectItem>
+                          <SelectItem value="viewer">{t("viewer")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -273,25 +276,25 @@ export default function TeamPage() {
       {/* Pending Invitations */}
       <Card>
         <CardHeader>
-          <CardTitle>Pending Invitations</CardTitle>
+          <CardTitle>{t("pendingInvitations")}</CardTitle>
           <CardDescription>
-            {invitations.length} pending invitation{invitations.length !== 1 ? "s" : ""}
+            {invitations.length} {t("pendingInvitations").toLowerCase()}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {invitationsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading invitations...</div>
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-loading-invitations">{t("loading")}</div>
           ) : invitations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No pending invitations</div>
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-invitations">{t("pendingInvitations")}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Invited By</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("email")}</TableHead>
+                  <TableHead>{t("role")}</TableHead>
+                  <TableHead>{t("invitedBy")}</TableHead>
+                  <TableHead>{t("expiresAt")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -340,34 +343,34 @@ export default function TeamPage() {
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent data-testid="dialog-invite">
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogTitle>{t("inviteTeamMember")}</DialogTitle>
             <DialogDescription>
-              Send an invitation to join your organization. They will receive an email with instructions.
+              {t("teamManagementSubtitle")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="colleague@example.com"
+                placeholder={t("inviteEmailPlaceholder")}
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 data-testid="input-invite-email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{t("role")}</Label>
               <Select value={inviteRole} onValueChange={setInviteRole}>
                 <SelectTrigger id="role" data-testid="select-invite-role">
-                  <SelectValue />
+                  <SelectValue placeholder={t("selectRole")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="viewer">Viewer - Read only</SelectItem>
-                  <SelectItem value="editor">Editor - Can create and edit</SelectItem>
-                  <SelectItem value="admin">Admin - Full management access</SelectItem>
-                  <SelectItem value="owner">Owner - Complete control</SelectItem>
+                  <SelectItem value="viewer">{t("viewer")}</SelectItem>
+                  <SelectItem value="editor">{t("editor")}</SelectItem>
+                  <SelectItem value="admin">{t("admin")}</SelectItem>
+                  <SelectItem value="owner">{t("owner")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -378,14 +381,14 @@ export default function TeamPage() {
               onClick={() => setInviteDialogOpen(false)}
               data-testid="button-cancel-invite"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleInvite}
               disabled={inviteMutation.isPending}
               data-testid="button-send-invite"
             >
-              {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
+              {inviteMutation.isPending ? t("saving") : t("sendInvite")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -395,13 +398,9 @@ export default function TeamPage() {
       <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <DialogContent data-testid="dialog-remove-member">
           <DialogHeader>
-            <DialogTitle>Remove Team Member</DialogTitle>
+            <DialogTitle>{t("confirmRemoveMember").replace("{name}", "")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove{" "}
-              <span className="font-semibold">
-                {memberToRemove?.userFirstName} {memberToRemove?.userLastName}
-              </span>{" "}
-              from your organization? This action cannot be undone.
+              {t("confirmRemoveMember").replace("{name}", `${memberToRemove?.userFirstName} ${memberToRemove?.userLastName}`)} {t("thisActionCannotBeUndone")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -410,7 +409,7 @@ export default function TeamPage() {
               onClick={() => setRemoveDialogOpen(false)}
               data-testid="button-cancel-remove"
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -418,7 +417,7 @@ export default function TeamPage() {
               disabled={removeMemberMutation.isPending}
               data-testid="button-confirm-remove"
             >
-              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
+              {removeMemberMutation.isPending ? t("saving") : t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

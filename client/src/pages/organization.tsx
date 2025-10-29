@@ -15,8 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "@/lib/i18n";
 
 export default function OrganizationPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -48,14 +50,14 @@ export default function OrganizationPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       toast({
-        title: "Settings updated",
-        description: "Your organization settings have been updated successfully.",
+        title: t("organizationUpdated"),
+        description: t("organizationUpdated"),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update settings",
+        title: t("error"),
+        description: error.message || t("failedUpdateOrganization"),
         variant: "destructive",
       });
     },
@@ -70,7 +72,7 @@ export default function OrganizationPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground">Loading organization settings...</div>
+          <div className="text-lg text-muted-foreground" data-testid="text-loading">{t("loading")}</div>
         </div>
       </div>
     );
@@ -84,9 +86,9 @@ export default function OrganizationPage() {
           <Building2 className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Organization Settings</h1>
+          <h1 className="text-3xl font-bold">{t("organizationSettings")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your organization's configuration and preferences
+            {t("organizationSettingsSubtitle")}
           </p>
         </div>
       </div>
@@ -97,26 +99,26 @@ export default function OrganizationPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Settings2 className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>General Settings</CardTitle>
+              <CardTitle>{t("generalSettings")}</CardTitle>
             </div>
             <CardDescription>
-              Basic information about your organization
+              {t("basicInformation")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Organization Name</Label>
+              <Label htmlFor="name">{t("organizationName")}</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="My Organization"
+                placeholder={t("organizationNamePlaceholder")}
                 data-testid="input-organization-name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="slug">Organization Slug</Label>
+              <Label htmlFor="slug">{t("organizationSlug")}</Label>
               <Input
                 id="slug"
                 value={organization?.slug || ""}
@@ -125,7 +127,7 @@ export default function OrganizationPage() {
                 data-testid="input-organization-slug"
               />
               <p className="text-sm text-muted-foreground">
-                Your organization's unique identifier (cannot be changed)
+                {t("uniqueIdentifier")}
               </p>
             </div>
           </CardContent>
@@ -136,15 +138,15 @@ export default function OrganizationPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Server className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>Plan & Limits</CardTitle>
+              <CardTitle>{t("planLimits")}</CardTitle>
             </div>
             <CardDescription>
-              Subscription plan and resource limits
+              {t("subscriptionPlan")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="plan">Plan</Label>
+              <Label htmlFor="plan">{t("plan")}</Label>
               <Select
                 value={formData.plan}
                 onValueChange={(value) => setFormData({ ...formData, plan: value })}
@@ -153,15 +155,15 @@ export default function OrganizationPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="free">Free - Up to 5 displays</SelectItem>
-                  <SelectItem value="pro">Pro - Up to 25 displays</SelectItem>
-                  <SelectItem value="enterprise">Enterprise - Unlimited displays</SelectItem>
+                  <SelectItem value="free">{t("planFree")}</SelectItem>
+                  <SelectItem value="pro">{t("planPro")}</SelectItem>
+                  <SelectItem value="enterprise">{t("planEnterprise")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maxDisplays">Max Displays</Label>
+              <Label htmlFor="maxDisplays">{t("maxDisplays")}</Label>
               <Input
                 id="maxDisplays"
                 type="number"
@@ -174,22 +176,22 @@ export default function OrganizationPage() {
                 data-testid="input-max-displays"
               />
               <p className="text-sm text-muted-foreground">
-                Maximum number of displays allowed for your organization
+                {t("maxDisplaysDescription")}
               </p>
             </div>
 
             {organization && (
               <div className="rounded-lg bg-muted p-4 space-y-2">
-                <h4 className="font-medium text-sm">Organization Details</h4>
+                <h4 className="font-medium text-sm">{t("organizationDetails")}</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Created</p>
+                    <p className="text-muted-foreground">{t("created")}</p>
                     <p className="font-medium">
                       {new Date(organization.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Last Updated</p>
+                    <p className="text-muted-foreground">{t("lastUpdated")}</p>
                     <p className="font-medium">
                       {new Date(organization.updatedAt).toLocaleDateString()}
                     </p>
@@ -208,7 +210,7 @@ export default function OrganizationPage() {
             data-testid="button-save-settings"
           >
             <Save className="h-4 w-4 mr-2" />
-            {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending ? t("saving") : t("saveChanges")}
           </Button>
         </div>
       </form>
