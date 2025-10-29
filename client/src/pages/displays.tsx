@@ -30,16 +30,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Monitor, Plus, Search } from "lucide-react";
+import { Monitor, Plus, Search, LayoutGrid, List } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-provider";
 
+type ViewMode = "grid" | "list";
+
 export default function Displays() {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedDisplay, setSelectedDisplay] = useState<Display | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editDisplay, setEditDisplay] = useState<Display | null>(null);
@@ -133,6 +136,24 @@ export default function Displays() {
               <SelectItem value="warning">{t('warning')}</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex gap-1 border rounded-md p-1">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("grid")}
+              data-testid="button-view-grid"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+              data-testid="button-view-list"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </Card>
 
