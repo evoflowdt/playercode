@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Users,
   Music,
+  Layers,
   BarChart3,
   Settings,
   Activity,
@@ -66,6 +67,12 @@ const menuItemsConfig = [
     url: "/playlists",
     icon: Music,
     testId: "link-playlists",
+  },
+  {
+    titleKey: "syncGroups" as const,
+    url: "/sync-groups",
+    icon: Layers,
+    testId: "link-sync-groups",
   },
   {
     titleKey: "analytics" as const,
