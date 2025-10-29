@@ -106,16 +106,8 @@ export function ContentFormDialog({
   });
 
   const onSubmit = (data: ContentFormValues) => {
-    // Validate that media content has a URL
-    if ((data.type === "image" || data.type === "video") && !data.url) {
-      toast({
-        title: "Missing Media File",
-        description: "Please upload a file using the uploader or provide a URL for image/video content.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    // Note: We allow creating content without URL - the uploader should have populated it
+    // If URL is missing, the player will show an error message to the user
     createMutation.mutate(data);
   };
 
@@ -194,16 +186,16 @@ export function ContentFormDialog({
                   name="url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Media URL</FormLabel>
+                      <FormLabel>Media URL (Optional)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="https://example.com/image.jpg"
+                          placeholder="https://example.com/image.jpg or use uploader below"
                           data-testid="input-media-url"
                         />
                       </FormControl>
                       <FormDescription>
-                        Or use the uploader below to upload files
+                        Leave empty and use the uploader below to upload files from your computer
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -226,15 +218,26 @@ export function ContentFormDialog({
                       if (result.successful && result.successful.length > 0) {
                         const file = result.successful[0];
                         
+                        console.log("[ContentForm] Upload complete:", file);
+                        console.log("[ContentForm] file.response:", file.response);
+                        console.log("[ContentForm] file.uploadURL:", file.uploadURL);
+                        
                         // Extract the object path from the upload URL
-                        // Uppy stores the uploadURL in file.response.uploadURL
-                        if (file.response?.uploadURL) {
+                        // Try both file.response.uploadURL and file.uploadURL
+                        const uploadURL = (file.response?.uploadURL || file.uploadURL) as string;
+                        
+                        if (uploadURL) {
                           try {
-                            const uploadUrl = new URL(file.response.uploadURL);
+                            const uploadUrl = new URL(uploadURL);
+                            console.log("[ContentForm] Upload URL parsed:", uploadUrl.pathname);
+                            
                             // pathname format: /<bucket-name>/objects/uploads/<uuid>
                             // We need to extract everything after the bucket name (which is /objects/uploads/<uuid>)
                             const pathname = uploadUrl.pathname;
                             const pathParts = pathname.split('/').filter(p => p);
+                            
+                            console.log("[ContentForm] Path parts:", pathParts);
+                            
                             if (pathParts.length >= 2) {
                               // Remove bucket name (first part), keep the rest
                               // pathParts[0] = bucket-name
@@ -242,28 +245,34 @@ export function ContentFormDialog({
                               const objectPath = pathParts.slice(1).join('/');
                               // objectPath is already "objects/uploads/<uuid>", just add leading slash
                               const url = `/${objectPath}`;
+                              
+                              console.log("[ContentForm] Setting URL to:", url);
                               form.setValue("url", url);
-                              form.setValue("name", file.name || "Uploaded file");
+                              
+                              if (!form.getValues("name")) {
+                                form.setValue("name", file.name || "Uploaded file");
+                              }
+                              
                               toast({
-                                title: "File uploaded",
-                                description: file.name,
+                                title: "File uploaded successfully",
+                                description: `${file.name} - URL populated automatically`,
                               });
                             } else {
                               throw new Error("Invalid upload URL format");
                             }
                           } catch (error) {
-                            console.error("Failed to parse upload URL:", error);
+                            console.error("[ContentForm] Failed to parse upload URL:", error);
                             toast({
                               title: "Warning",
-                              description: "File uploaded but URL parsing failed",
+                              description: "File uploaded but URL parsing failed. Please enter URL manually.",
                               variant: "destructive",
                             });
                           }
                         } else {
-                          console.error("No uploadURL in file.response");
+                          console.error("[ContentForm] No uploadURL found in:", file);
                           toast({
                             title: "Error",
-                            description: "Upload completed but URL not found",
+                            description: "Upload completed but URL not found. Please try again.",
                             variant: "destructive",
                           });
                         }
