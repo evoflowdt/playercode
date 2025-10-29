@@ -33,6 +33,8 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Player API**: Endpoints for display pairing, registration, heartbeats, content delivery, session management, and capability updates.
 -   **Player Auto-Reset**: Automatic player disconnection and reset when sessions are deleted from Settings page. Players detect 404 from heartbeat/content endpoints, clear localStorage, stop WebSocket reconnection, and return to pairing form with user notification.
 -   **Advanced Scheduling API**: Comprehensive API for managing scheduling rules, content priorities, transition effects, detecting conflicts, and generating timeline previews.
+-   **Playlist Scheduling**: Schedules can target either single content items OR complete playlists. When a schedule has a `playlistId`, the player content API automatically expands the playlist into an ordered array of content items, respecting custom durations set for each video.
+-   **Documentation**: Comprehensive built-in documentation system accessible via sidebar. Features four main sections (Getting Started, Features, Tutorials, API) using Tabs and Accordion components. Content is fully internationalized (English/Italian) and auto-updated to reflect platform features as they evolve. Includes platform overview, step-by-step tutorials, feature guides, and API reference documentation.
 
 ### System Design Choices
 -   **Data Flow**: Frontend uses TanStack Query, which communicates with the Express backend. The backend interacts with PostgreSQL via Drizzle ORM, and WebSocket broadcasts changes for real-time updates.
