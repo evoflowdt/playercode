@@ -39,7 +39,7 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 
 ### Sprint 4 (In Progress)
 -   **Email Notifications**: SKIPPED - No email service integration configured (user preference). Email infrastructure can be added later with Resend/SendGrid/SMTP.
--   **Advanced Analytics** (PLANNED): Enhanced analytics dashboard with detailed metrics, time-series data, export capabilities, and advanced filtering.
+-   **Advanced Analytics** (COMPLETED): Enhanced analytics dashboard with detailed metrics (display uptime, content popularity, schedule performance), time-series hourly aggregation (168-hour window), CSV export functionality, and date range filtering. Implemented with 3 new database tables (displayMetrics, contentViews, scheduleExecutions), 4 backend aggregation methods, 2 API routes, and tabbed frontend UI. All queries properly scoped by organization for multi-tenant security.
 -   **API Keys & Webhooks** (PLANNED): Developer API for external integrations with API key management, webhook endpoints, and event subscriptions.
 -   **Notification Center** (PLANNED): In-app notification system with real-time updates, notification history, and read/unread states.
 -   **Granular Permissions** (PLANNED): Resource-level permission system for fine-grained access control beyond role-based permissions.
