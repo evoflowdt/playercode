@@ -41,7 +41,8 @@ export const displayGroups = pgTable("display_groups", {
 export const schedules = pgTable("schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  contentId: varchar("content_id").notNull(),
+  contentId: varchar("content_id"), // Optional: single content
+  playlistId: varchar("playlist_id"), // Optional: playlist (multiple contents in sequence)
   targetType: text("target_type").notNull(),
   targetId: varchar("target_id").notNull(),
   startTime: timestamp("start_time").notNull(),
@@ -170,13 +171,17 @@ export const insertDisplayGroupSchema = createInsertSchema(displayGroups).pick({
 export const insertScheduleSchema = createInsertSchema(schedules).pick({
   name: true,
   contentId: true,
+  playlistId: true,
   targetType: true,
   targetId: true,
   startTime: true,
   endTime: true,
   repeat: true,
   active: true,
-});
+}).refine(
+  (data) => data.contentId || data.playlistId,
+  { message: "Either contentId or playlistId must be provided" }
+);
 
 export const insertPlaylistSchema = createInsertSchema(playlists).pick({
   name: true,
