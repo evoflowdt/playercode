@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Monitor, RefreshCw, Clock, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/language-provider";
 
 interface PairingToken {
   id: string;
@@ -32,6 +33,7 @@ interface PlayerSession {
 }
 
 export default function Settings() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
   const [os, setOs] = useState("web");
@@ -77,8 +79,8 @@ export default function Settings() {
       
       queryClient.invalidateQueries({ queryKey: ["/api/player/sessions"] });
       toast({
-        title: "Session deleted",
-        description: "Player session has been removed",
+        title: t('sessionDeleted'),
+        description: t('sessionDeletedDesc'),
       });
     },
     onError: (error, displayId) => {
@@ -91,8 +93,8 @@ export default function Settings() {
       
       console.error("Delete session error:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete session",
+        title: t('error'),
+        description: t('failedDeleteSession'),
         variant: "destructive",
       });
     },
@@ -114,8 +116,8 @@ export default function Settings() {
     onSuccess: (data: PairingToken) => {
       setCurrentToken(data);
       toast({
-        title: "Pairing token generated",
-        description: "Use this token to pair a new display",
+        title: t('pairingTokenGenerated'),
+        description: t('pairingTokenGeneratedDesc'),
       });
       
       // Calculate time left
@@ -137,8 +139,8 @@ export default function Settings() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to generate pairing token",
+        title: t('error'),
+        description: t('failedGenerateToken'),
         variant: "destructive",
       });
     },
@@ -156,8 +158,8 @@ export default function Settings() {
       navigator.clipboard.writeText(currentToken.token);
       setCopiedToken(true);
       toast({
-        title: "Copied!",
-        description: "Pairing token copied to clipboard",
+        title: t('copied'),
+        description: t('tokenCopiedToClipboard'),
       });
       setTimeout(() => setCopiedToken(false), 2000);
     }
@@ -172,21 +174,20 @@ export default function Settings() {
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('settings')}</h1>
         <p className="text-muted-foreground">
           Configure your digital signage platform and manage player devices
         </p>
       </div>
 
-      {/* Pairing Token Generator */}
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Monitor className="w-5 h-5" />
-            Pair New Display
+            {t('pairNewDisplay')}
           </CardTitle>
           <CardDescription>
-            Generate a pairing token to connect a new display to EvoFlow
+            {t('generatePairingTokenDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -194,7 +195,7 @@ export default function Settings() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name (Optional)</Label>
+                  <Label htmlFor="displayName">{t('displayNameOptional')}</Label>
                   <Input
                     id="displayName"
                     placeholder="e.g., Reception Display"
@@ -204,7 +205,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="os">Platform (Optional)</Label>
+                  <Label htmlFor="os">{t('platformOptional')}</Label>
                   <select
                     id="os"
                     value={os}
@@ -237,7 +238,7 @@ export default function Settings() {
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Generate Pairing Token
+                    {t('generatePairingToken')}
                   </>
                 )}
               </Button>
@@ -250,7 +251,7 @@ export default function Settings() {
                   {timeLeft !== null && (
                     <Badge variant="outline" className="gap-1">
                       <Clock className="w-3 h-3" />
-                      Expires in {formatTime(timeLeft)}
+                      {t('expiresIn')} {formatTime(timeLeft)}
                     </Badge>
                   )}
                 </div>
@@ -300,7 +301,6 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Player Information */}
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Player Application</CardTitle>
@@ -312,7 +312,7 @@ export default function Settings() {
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-2">
-                Player URL (open this on your display devices):
+                {t('playerUrlDesc')}
               </p>
               <code className="block bg-muted px-4 py-2 rounded-md text-sm">
                 {window.location.origin}/player
@@ -325,7 +325,7 @@ export default function Settings() {
               }}
               data-testid="button-open-player"
             >
-              Open Player
+              {t('openPlayer')}
             </Button>
           </div>
           
@@ -342,12 +342,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Active Player Sessions */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>Active Player Sessions</CardTitle>
+          <CardTitle>{t('activePlayerSessions')}</CardTitle>
           <CardDescription>
-            Currently connected display players
+            {t('activePlayerSessionsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -359,8 +358,8 @@ export default function Settings() {
           ) : sessions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Monitor className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No active player sessions</p>
-              <p className="text-sm">Pair a display to see it here</p>
+              <p>{t('noActivePlayerSessions')}</p>
+              <p className="text-sm">{t('pairDisplayToSee')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -415,12 +414,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* System Information */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>System Information</CardTitle>
+          <CardTitle>{t('systemInformation')}</CardTitle>
           <CardDescription>
-            General information about your EvoFlow instance
+            {t('systemInformationDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

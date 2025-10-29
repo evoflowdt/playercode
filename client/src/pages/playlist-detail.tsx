@@ -12,8 +12,10 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PlaylistWithItems, ContentItem, RadioStream } from "@shared/schema";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function PlaylistDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -57,8 +59,8 @@ export default function PlaylistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/playlists", id] });
       toast({
-        title: "Success",
-        description: "Video added to playlist",
+        title: t('success'),
+        description: t('videoAdded'),
       });
       setAddDialogOpen(false);
       setSelectedContent(null);
@@ -66,8 +68,8 @@ export default function PlaylistDetailPage() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to add video",
+        title: t('error'),
+        description: t('failedAddVideo'),
         variant: "destructive",
       });
     },
@@ -80,14 +82,14 @@ export default function PlaylistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/playlists", id] });
       toast({
-        title: "Success",
-        description: "Video removed from playlist",
+        title: t('success'),
+        description: t('videoRemoved'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to remove video",
+        title: t('error'),
+        description: t('failedRemoveVideo'),
         variant: "destructive",
       });
     },
@@ -100,14 +102,14 @@ export default function PlaylistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/playlists", id] });
       toast({
-        title: "Success",
-        description: "Playlist reordered",
+        title: t('success'),
+        description: t('playlistReordered'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to reorder playlist",
+        title: t('error'),
+        description: t('failedReorderPlaylist'),
         variant: "destructive",
       });
     },
@@ -120,8 +122,8 @@ export default function PlaylistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/radio-streams/playlist", id] });
       toast({
-        title: "Success",
-        description: "Radio stream added successfully",
+        title: t('success'),
+        description: t('radioStreamAdded'),
       });
       setRadioDialogOpen(false);
       setRadioName("");
@@ -131,8 +133,8 @@ export default function PlaylistDetailPage() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to add radio stream",
+        title: t('error'),
+        description: t('failedAddRadioStream'),
         variant: "destructive",
       });
     },
@@ -145,14 +147,14 @@ export default function PlaylistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/radio-streams/playlist", id] });
       toast({
-        title: "Success",
-        description: "Radio stream removed successfully",
+        title: t('success'),
+        description: t('radioStreamRemoved'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to remove radio stream",
+        title: t('error'),
+        description: t('failedRemoveRadioStream'),
         variant: "destructive",
       });
     },
@@ -161,8 +163,8 @@ export default function PlaylistDetailPage() {
   const handleAddItem = () => {
     if (!selectedContent) {
       toast({
-        title: "Error",
-        description: "Please select a video",
+        title: t('error'),
+        description: t('selectVideo'),
         variant: "destructive",
       });
       return;
@@ -195,16 +197,16 @@ export default function PlaylistDetailPage() {
   const handleAddRadioStream = () => {
     if (!radioName.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a stream name",
+        title: t('error'),
+        description: t('streamName'),
         variant: "destructive",
       });
       return;
     }
     if (!radioUrl.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a stream URL",
+        title: t('error'),
+        description: t('streamUrl'),
         variant: "destructive",
       });
       return;
@@ -259,20 +261,20 @@ export default function PlaylistDetailPage() {
         </div>
         <Button onClick={() => setAddDialogOpen(true)} data-testid="button-add-video">
           <Plus className="h-4 w-4 mr-2" />
-          Add Video
+          {t('addVideo')}
         </Button>
       </div>
 
       {playlist.items.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-semibold mb-2">No videos in playlist</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noVideosInPlaylist')}</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Add videos to create a sequential playback playlist
+              {t('addVideosDesc')}
             </p>
             <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add First Video
+              {t('addFirstVideo')}
             </Button>
           </CardContent>
         </Card>
@@ -344,15 +346,15 @@ export default function PlaylistDetailPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Radio className="h-5 w-5" />
-                Radio Streams
+                {t('radioStreams')}
               </CardTitle>
               <CardDescription className="mt-2">
-                Add streaming radio URLs to play during this playlist
+                {t('radioStreamsDesc')}
               </CardDescription>
             </div>
             <Button onClick={() => setRadioDialogOpen(true)} data-testid="button-add-radio-stream">
               <Plus className="h-4 w-4 mr-2" />
-              Add Stream
+              {t('addStream')}
             </Button>
           </div>
         </CardHeader>
@@ -408,11 +410,11 @@ export default function PlaylistDetailPage() {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Video to Playlist</DialogTitle>
+            <DialogTitle>{t('addVideo')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="content">Select Video</Label>
+              <Label htmlFor="content">{t('selectVideo')}</Label>
               <select
                 id="content"
                 className="w-full h-10 px-3 rounded-md border border-input bg-background"
@@ -420,7 +422,7 @@ export default function PlaylistDetailPage() {
                 onChange={(e) => setSelectedContent(e.target.value)}
                 data-testid="select-content"
               >
-                <option value="">Choose a video...</option>
+                <option value="">{t('chooseVideo')}</option>
                 {availableContent.map((content) => (
                   <option key={content.id} value={content.id}>
                     {content.name} ({content.type})
@@ -430,13 +432,13 @@ export default function PlaylistDetailPage() {
             </div>
             
             <div>
-              <Label htmlFor="duration">Duration (seconds, optional)</Label>
+              <Label htmlFor="duration">{t('durationSecondsOptional')}</Label>
               <Input
                 id="duration"
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                placeholder="Leave empty for default duration"
+                placeholder={t('leaveEmptyForDefault')}
                 data-testid="input-duration"
               />
             </div>
@@ -447,7 +449,7 @@ export default function PlaylistDetailPage() {
               className="w-full"
               data-testid="button-confirm-add"
             >
-              {addItemMutation.isPending ? "Adding..." : "Add to Playlist"}
+              {addItemMutation.isPending ? "Adding..." : t('addToPlaylist')}
             </Button>
           </div>
         </DialogContent>
@@ -456,27 +458,27 @@ export default function PlaylistDetailPage() {
       <Dialog open={radioDialogOpen} onOpenChange={setRadioDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Radio Stream</DialogTitle>
+            <DialogTitle>{t('addRadioStream')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="radio-name">Stream Name</Label>
+              <Label htmlFor="radio-name">{t('streamName')}</Label>
               <Input
                 id="radio-name"
                 value={radioName}
                 onChange={(e) => setRadioName(e.target.value)}
-                placeholder="Classic FM"
+                placeholder={t('streamNamePlaceholder')}
                 data-testid="input-radio-name"
               />
             </div>
             
             <div>
-              <Label htmlFor="radio-url">Stream URL</Label>
+              <Label htmlFor="radio-url">{t('streamUrl')}</Label>
               <Input
                 id="radio-url"
                 value={radioUrl}
                 onChange={(e) => setRadioUrl(e.target.value)}
-                placeholder="https://stream.example.com/radio.mp3"
+                placeholder={t('streamUrlPlaceholder')}
                 data-testid="input-radio-url"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -485,12 +487,12 @@ export default function PlaylistDetailPage() {
             </div>
             
             <div>
-              <Label htmlFor="radio-description">Description (optional)</Label>
+              <Label htmlFor="radio-description">{t('descriptionOptional')}</Label>
               <Textarea
                 id="radio-description"
                 value={radioDescription}
                 onChange={(e) => setRadioDescription(e.target.value)}
-                placeholder="Background music for store ambiance"
+                placeholder={t('descriptionPlaceholder')}
                 data-testid="input-radio-description"
               />
             </div>
@@ -511,7 +513,7 @@ export default function PlaylistDetailPage() {
               className="w-full"
               data-testid="button-confirm-add-radio"
             >
-              {createRadioStreamMutation.isPending ? "Adding..." : "Add Radio Stream"}
+              {createRadioStreamMutation.isPending ? "Adding..." : t('addRadioStream')}
             </Button>
           </div>
         </DialogContent>

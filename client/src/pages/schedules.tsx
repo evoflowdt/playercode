@@ -20,8 +20,10 @@ import { Calendar, Plus, Clock, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function Schedules() {
+  const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editSchedule, setEditSchedule] = useState<ScheduleWithDetails | null>(null);
   const [deleteSchedule, setDeleteSchedule] = useState<ScheduleWithDetails | null>(null);
@@ -36,15 +38,15 @@ export default function Schedules() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
       toast({
-        title: "Success",
-        description: "Schedule deleted successfully",
+        title: t('success'),
+        description: t('scheduleDeleted'),
       });
       setDeleteSchedule(null);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete schedule",
+        title: t('error'),
+        description: t('failedDeleteSchedule'),
         variant: "destructive",
       });
     },
@@ -54,7 +56,7 @@ export default function Schedules() {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Scheduling</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('scheduling')}</h1>
           <p className="text-muted-foreground text-base">
             Create and manage content schedules for your displays
           </p>
@@ -64,7 +66,7 @@ export default function Schedules() {
           data-testid="button-add-schedule"
         >
           <Plus className="h-4 w-4 mr-2" />
-          New Schedule
+          {t('newSchedule')}
         </Button>
       </div>
 
@@ -88,7 +90,7 @@ export default function Schedules() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={schedule.active ? "default" : "secondary"}>
-                    {schedule.active ? "Active" : "Inactive"}
+                    {schedule.active ? t('active') : t('inactive')}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -140,10 +142,10 @@ export default function Schedules() {
       ) : (
         <EmptyState
           icon={Calendar}
-          title="No schedules found"
-          description="Create your first schedule to automate content playback on your displays"
+          title={t('noSchedulesFound')}
+          description={t('createSchedulesDesc')}
           action={{
-            label: "Create Schedule",
+            label: t('newSchedule'),
             onClick: () => setShowAddDialog(true),
             testId: "button-add-first-schedule",
           }}
@@ -167,19 +169,18 @@ export default function Schedules() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Schedule</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteSchedule')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteSchedule?.name}"? This action
-              cannot be undone.
+              {t('deleteScheduleConfirm', { name: deleteSchedule?.name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteSchedule && deleteMutation.mutate(deleteSchedule.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

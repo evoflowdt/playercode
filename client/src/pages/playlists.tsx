@@ -11,8 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PlaylistWithItems } from "@shared/schema";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function PlaylistsPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -29,8 +31,8 @@ export default function PlaylistsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/playlists"] });
       toast({
-        title: "Success",
-        description: "Playlist created successfully",
+        title: t('success'),
+        description: t('playlistCreated'),
       });
       setDialogOpen(false);
       setName("");
@@ -38,8 +40,8 @@ export default function PlaylistsPage() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to create playlist",
+        title: t('error'),
+        description: t('failedCreatePlaylist'),
         variant: "destructive",
       });
     },
@@ -50,14 +52,14 @@ export default function PlaylistsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/playlists"] });
       toast({
-        title: "Success",
-        description: "Playlist deleted successfully",
+        title: t('success'),
+        description: t('playlistDeleted'),
       });
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete playlist",
+        title: t('error'),
+        description: t('failedDeletePlaylist'),
         variant: "destructive",
       });
     },
@@ -66,8 +68,8 @@ export default function PlaylistsPage() {
   const handleCreate = () => {
     if (!name.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a playlist name",
+        title: t('error'),
+        description: t('pleaseEnterPlaylistName'),
         variant: "destructive",
       });
       return;
@@ -78,7 +80,7 @@ export default function PlaylistsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-muted-foreground">Loading playlists...</div>
+        <div className="text-muted-foreground">{t('loadingPlaylists')}</div>
       </div>
     );
   }
@@ -87,7 +89,7 @@ export default function PlaylistsPage() {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Content Playlists</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('playlists')}</h1>
           <p className="text-muted-foreground text-base">
             Create and manage content playlists for sequential playback
           </p>
@@ -96,16 +98,16 @@ export default function PlaylistsPage() {
           <DialogTrigger asChild>
             <Button data-testid="button-new-playlist">
               <Plus className="h-4 w-4 mr-2" />
-              New Playlist
+              {t('newPlaylist')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Playlist</DialogTitle>
+              <DialogTitle>{t('createPlaylist')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Playlist Name</Label>
+                <Label htmlFor="name">{t('playlistName')}</Label>
                 <Input
                   id="name"
                   value={name}
@@ -115,7 +117,7 @@ export default function PlaylistsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="description">Description (optional)</Label>
+                <Label htmlFor="description">{t('descriptionOptional')}</Label>
                 <Textarea
                   id="description"
                   value={description}
@@ -130,7 +132,7 @@ export default function PlaylistsPage() {
                 className="w-full"
                 data-testid="button-create-playlist"
               >
-                {createMutation.isPending ? "Creating..." : "Create Playlist"}
+                {createMutation.isPending ? "Creating..." : t('createPlaylist')}
               </Button>
             </div>
           </DialogContent>
@@ -141,13 +143,13 @@ export default function PlaylistsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Music className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No playlists yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noPlaylistsYet')}</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Create your first playlist to group content items for sequential playback
+              {t('createPlaylistsDesc')}
             </p>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Playlist
+              {t('createPlaylist')}
             </Button>
           </CardContent>
         </Card>
@@ -182,7 +184,7 @@ export default function PlaylistsPage() {
               <CardContent>
                 <div className="text-sm text-muted-foreground">
                   {playlist.items.length === 0 ? (
-                    <p>No items in this playlist</p>
+                    <p>{t('noVideosInPlaylist')}</p>
                   ) : (
                     <div>
                       <p className="font-medium mb-2">
@@ -213,7 +215,7 @@ export default function PlaylistsPage() {
                     onClick={() => navigate(`/playlists/${playlist.id}`)}
                     data-testid={`button-view-playlist-${playlist.id}`}
                   >
-                    Manage
+                    {t('manage')}
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Monitor, Activity, FileText, Wifi } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import type { Display, ContentItem, DisplayGroup, Schedule } from "@shared/schema";
+import { useLanguage } from "@/lib/language-provider";
 
 interface DashboardStats {
   totalDisplays: number;
@@ -12,6 +13,7 @@ interface DashboardStats {
 }
 
 export default function Analytics() {
+  const { t } = useLanguage();
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/stats"],
   });
@@ -35,7 +37,7 @@ export default function Analytics() {
   if (statsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-muted-foreground">Loading analytics...</div>
+        <div className="text-muted-foreground">{t('loadingAnalytics')}</div>
       </div>
     );
   }
@@ -75,16 +77,16 @@ export default function Analytics() {
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('analyticsDashboard')}</h1>
         <p className="text-muted-foreground text-base">
-          View insights and performance metrics for your digital signage network
+          {t('analyticsDashboardDesc')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Displays</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalDisplays')}</CardTitle>
             <Monitor className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -92,14 +94,14 @@ export default function Analytics() {
               {stats?.totalDisplays || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Registered devices
+              {t('registeredDevices')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Displays</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('activeDisplays')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -107,14 +109,14 @@ export default function Analytics() {
               {stats?.activeDisplays || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Currently online
+              {t('currentlyOnline')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Offline Displays</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('offlineDisplays')}</CardTitle>
             <Wifi className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -122,14 +124,14 @@ export default function Analytics() {
               {stats?.offlineDisplays || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Not connected
+              {t('notConnected')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Content Items</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('contentItems')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -137,7 +139,7 @@ export default function Analytics() {
               {stats?.totalContent || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Media files
+              {t('mediaFiles')}
             </p>
           </CardContent>
         </Card>
@@ -146,8 +148,8 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Display Status Distribution</CardTitle>
-            <CardDescription>Online vs Offline displays</CardDescription>
+            <CardTitle>{t('displayStatusDistribution')}</CardTitle>
+            <CardDescription>{t('displayStatusDistributionDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {displayStatusData.some(d => d.value > 0) ? (
@@ -173,7 +175,7 @@ export default function Analytics() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                No display data available
+                {t('noDisplayDataAvailable')}
               </div>
             )}
           </CardContent>
@@ -181,8 +183,8 @@ export default function Analytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Displays by Platform</CardTitle>
-            <CardDescription>Distribution across different OS platforms</CardDescription>
+            <CardTitle>{t('displaysByPlatform')}</CardTitle>
+            <CardDescription>{t('displaysByPlatformDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {platformData.length > 0 ? (
@@ -197,7 +199,7 @@ export default function Analytics() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                No platform data available
+                {t('noPlatformDataAvailable')}
               </div>
             )}
           </CardContent>
@@ -205,8 +207,8 @@ export default function Analytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Content Type Distribution</CardTitle>
-            <CardDescription>Images, Videos, and Other media</CardDescription>
+            <CardTitle>{t('contentTypeDistribution')}</CardTitle>
+            <CardDescription>{t('contentTypeDistributionDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {contentTypeData.length > 0 ? (
@@ -232,7 +234,7 @@ export default function Analytics() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                No content data available
+                {t('noContentDataAvailable')}
               </div>
             )}
           </CardContent>
@@ -240,25 +242,25 @@ export default function Analytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>System Overview</CardTitle>
-            <CardDescription>Summary of all resources</CardDescription>
+            <CardTitle>{t('systemOverview')}</CardTitle>
+            <CardDescription>{t('systemOverviewDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Groups</span>
+                <span className="text-sm font-medium">{t('groups')}</span>
                 <span className="text-2xl font-bold" data-testid="stat-groups">
                   {groups.length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Schedules</span>
+                <span className="text-sm font-medium">{t('schedules')}</span>
                 <span className="text-2xl font-bold" data-testid="stat-schedules">
                   {schedules.length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Uptime Rate</span>
+                <span className="text-sm font-medium">{t('uptimeRate')}</span>
                 <span className="text-2xl font-bold text-green-600">
                   {stats && stats.totalDisplays > 0
                     ? `${Math.round((stats.activeDisplays / stats.totalDisplays) * 100)}%`
@@ -266,7 +268,7 @@ export default function Analytics() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Avg Content per Display</span>
+                <span className="text-sm font-medium">{t('avgContentPerDisplay')}</span>
                 <span className="text-2xl font-bold">
                   {stats && stats.totalDisplays > 0 && content.length > 0
                     ? Math.round(content.length / stats.totalDisplays)

@@ -19,8 +19,10 @@ import { Users, Plus, Monitor, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function Groups() {
+  const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteGroup, setDeleteGroup] = useState<DisplayGroup | null>(null);
   const { toast } = useToast();
@@ -34,15 +36,15 @@ export default function Groups() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
       toast({
-        title: "Success",
-        description: "Group deleted successfully",
+        title: t('success'),
+        description: t('groupDeleted'),
       });
       setDeleteGroup(null);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to delete group",
+        title: t('error'),
+        description: t('failedDeleteGroup'),
         variant: "destructive",
       });
     },
@@ -52,7 +54,7 @@ export default function Groups() {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Display Groups</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('groups')}</h1>
           <p className="text-muted-foreground text-base">
             Organize displays into groups for easier management
           </p>
@@ -62,7 +64,7 @@ export default function Groups() {
           data-testid="button-add-group"
         >
           <Plus className="h-4 w-4 mr-2" />
-          New Group
+          {t('newGroup')}
         </Button>
       </div>
 
@@ -121,10 +123,10 @@ export default function Groups() {
       ) : (
         <EmptyState
           icon={Users}
-          title="No groups found"
-          description="Create display groups to manage multiple displays at once"
+          title={t('noGroupsFound')}
+          description={t('createGroupsDesc')}
           action={{
-            label: "Create Group",
+            label: t('newGroup'),
             onClick: () => setShowAddDialog(true),
             testId: "button-add-first-group",
           }}
@@ -142,19 +144,18 @@ export default function Groups() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteGroup')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteGroup?.name}"? This action
-              cannot be undone.
+              {t('deleteGroupConfirm', { name: deleteGroup?.name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteGroup && deleteMutation.mutate(deleteGroup.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
