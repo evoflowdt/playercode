@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -37,6 +37,41 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const { t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
+  
+  // Apply custom styles to Uppy browse button when modal is shown
+  useEffect(() => {
+    if (showModal) {
+      // Wait for Uppy to render
+      const timer = setTimeout(() => {
+        const browseButton = document.querySelector('.uppy-Dashboard-browse');
+        if (browseButton && browseButton instanceof HTMLElement) {
+          // Get computed accent color from CSS variables
+          const accentColor = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent').trim();
+          const accentFg = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent-foreground').trim();
+          
+          // Apply styles directly
+          browseButton.style.backgroundColor = `hsl(${accentColor})`;
+          browseButton.style.color = `hsl(${accentFg})`;
+          browseButton.style.borderRadius = '0.5rem';
+          browseButton.style.padding = '0.5rem 1.25rem';
+          browseButton.style.fontWeight = '700';
+          browseButton.style.fontSize = '1rem';
+          browseButton.style.border = `2px solid hsl(${accentColor})`;
+          browseButton.style.boxShadow = `0 2px 8px hsl(${accentColor} / 0.3)`;
+          browseButton.style.display = 'inline-flex';
+          browseButton.style.alignItems = 'center';
+          browseButton.style.justifyContent = 'center';
+          browseButton.style.minHeight = '2.5rem';
+          browseButton.style.transition = 'all 0.2s ease';
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showModal]);
+  
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {

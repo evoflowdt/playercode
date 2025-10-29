@@ -361,30 +361,34 @@
   }
 
   /* Make Browse Files button more prominent */
+  button.uppy-c-btn.uppy-Dashboard-browse,
   .uppy-Dashboard-browse {
-    color: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
     text-decoration: none !important;
     padding: 0.5rem 1.25rem !important;
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-foreground) / 0.1) 100%) !important;
-    background: hsl(var(--accent)) !important;
-    color: hsl(var(--accent-foreground)) !important;
+    background-color: hsl(var(--accent)) !important;
+    background-image: none !important;
     border-radius: 0.5rem !important;
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 0.5rem !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 2px 8px hsl(var(--accent) / 0.3) !important;
     border: 2px solid hsl(var(--accent)) !important;
+    min-height: 2.5rem !important;
   }
 
+  button.uppy-c-btn.uppy-Dashboard-browse:hover,
   .uppy-Dashboard-browse:hover {
-    background: hsl(var(--accent) / 0.9) !important;
+    background-color: hsl(var(--accent) / 0.9) !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 12px hsl(var(--accent) / 0.4) !important;
   }
 
+  button.uppy-c-btn.uppy-Dashboard-browse:active,
   .uppy-Dashboard-browse:active {
     transform: translateY(0) !important;
     box-shadow: 0 2px 8px hsl(var(--accent) / 0.3) !important;
