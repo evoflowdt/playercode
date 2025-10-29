@@ -234,10 +234,26 @@ export class DatabaseStorage implements IStorage {
     const result: ScheduleWithDetails[] = [];
     
     for (const schedule of allSchedules) {
-      const [content] = await db
-        .select()
-        .from(contentItems)
-        .where(eq(contentItems.id, schedule.contentId));
+      let contentName: string | undefined;
+      let playlistName: string | undefined;
+
+      // Get content name if contentId is set
+      if (schedule.contentId) {
+        const [content] = await db
+          .select()
+          .from(contentItems)
+          .where(eq(contentItems.id, schedule.contentId));
+        contentName = content?.name || "Unknown Content";
+      }
+
+      // Get playlist name if playlistId is set
+      if (schedule.playlistId) {
+        const [playlist] = await db
+          .select()
+          .from(playlists)
+          .where(eq(playlists.id, schedule.playlistId));
+        playlistName = playlist?.name || "Unknown Playlist";
+      }
       
       let targetName = "Unknown";
       if (schedule.targetType === "display") {
@@ -256,7 +272,8 @@ export class DatabaseStorage implements IStorage {
       
       result.push({
         ...schedule,
-        contentName: content?.name || "Unknown Content",
+        contentName,
+        playlistName,
         targetName,
       });
     }

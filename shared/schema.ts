@@ -302,7 +302,8 @@ export interface DisplayWithGroup extends Display {
 }
 
 export interface ScheduleWithDetails extends Schedule {
-  contentName: string;
+  contentName?: string; // Present if contentId is set
+  playlistName?: string; // Present if playlistId is set
   targetName: string;
 }
 
