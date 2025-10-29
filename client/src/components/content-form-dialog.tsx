@@ -106,6 +106,16 @@ export function ContentFormDialog({
   });
 
   const onSubmit = (data: ContentFormValues) => {
+    // Validate that media content has a URL
+    if ((data.type === "image" || data.type === "video") && !data.url) {
+      toast({
+        title: "Missing Media File",
+        description: "Please upload a file using the uploader or provide a URL for image/video content.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createMutation.mutate(data);
   };
 

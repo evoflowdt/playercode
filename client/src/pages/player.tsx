@@ -343,6 +343,29 @@ export default function Player() {
     }
 
     const currentContent = content[currentContentIndex];
+    
+    // Check if content has a valid URL (for media types)
+    if ((currentContent.type === "image" || currentContent.type === "video" || currentContent.type === "webpage") && !currentContent.url) {
+      const isMediaType = currentContent.type === "image" || currentContent.type === "video";
+      return (
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="text-center space-y-4">
+            <Monitor className="w-24 h-24 mx-auto text-destructive" />
+            <h2 className="text-2xl font-bold text-destructive">Content Error</h2>
+            <p className="text-muted-foreground max-w-md">
+              The content "{currentContent.name}" is missing a {isMediaType ? "file" : "webpage"} URL.
+              <br />
+              {isMediaType 
+                ? 'Please upload the file using "Upload Content" in the Content Library.'
+                : 'Please edit this content and provide a valid webpage URL.'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Content ID: <code className="bg-muted px-2 py-1 rounded">{currentContent.id}</code>
+            </p>
+          </div>
+        </div>
+      );
+    }
 
     // Check if URL is external (for iframe support)
     const isExternalUrl = currentContent.url && (
