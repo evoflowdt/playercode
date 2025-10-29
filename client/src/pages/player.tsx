@@ -559,7 +559,7 @@ export default function Player() {
             autoPlay={!syncState.isActive || syncState.status === "playing"}
             loop={content.length === 1 && !syncState.isActive}
             muted
-            className="max-w-full max-h-full"
+            className="max-w-full max-h-full object-contain"
             style={videoStyle}
             data-testid="player-video-content"
             onError={() => console.error('Failed to load video:', currentContent.url)}
