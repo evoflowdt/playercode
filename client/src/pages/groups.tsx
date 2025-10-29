@@ -56,7 +56,7 @@ export default function Groups() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">{t('groups')}</h1>
           <p className="text-muted-foreground text-base">
-            Organize displays into groups for easier management
+            {t('groupsSubtitle')}
           </p>
         </div>
         <Button
@@ -110,11 +110,11 @@ export default function Groups() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Monitor className="h-4 w-4" />
-                <span>0 displays</span>
+                <span>{t('displaysCount').replace('{count}', '0')}</span>
               </div>
               {group.createdAt && (
                 <p className="text-xs text-muted-foreground mt-3">
-                  Created {format(new Date(group.createdAt), "MMM d, yyyy")}
+                  {t('created')} {format(new Date(group.createdAt), "MMM d, yyyy")}
                 </p>
               )}
             </Card>

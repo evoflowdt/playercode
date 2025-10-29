@@ -43,8 +43,8 @@ export default function Analytics() {
   }
 
   const displayStatusData = [
-    { name: "Online", value: stats?.activeDisplays || 0, color: "#10b981" },
-    { name: "Offline", value: stats?.offlineDisplays || 0, color: "#ef4444" },
+    { name: t('online'), value: stats?.activeDisplays || 0, color: "#10b981" },
+    { name: t('offline'), value: stats?.offlineDisplays || 0, color: "#ef4444" },
   ];
 
   const platformData = displays.reduce((acc, display) => {
@@ -59,10 +59,10 @@ export default function Analytics() {
   }, [] as { name: string; value: number }[]);
 
   const contentTypeData = content.reduce((acc, item) => {
-    const type = item.type === 'image' ? 'Images' : 
-                 item.type === 'video' ? 'Videos' : 
-                 item.type === 'html' ? 'HTML' :
-                 item.type === 'webpage' ? 'Web Pages' : 'Other';
+    const type = item.type === 'image' ? t('images') : 
+                 item.type === 'video' ? t('videos') : 
+                 item.type === 'html' ? t('html') :
+                 item.type === 'webpage' ? t('webPages') : t('other');
     const existing = acc.find(c => c.name === type);
     if (existing) {
       existing.value++;

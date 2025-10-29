@@ -91,7 +91,7 @@ export default function PlaylistsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">{t('playlists')}</h1>
           <p className="text-muted-foreground text-base">
-            Create and manage content playlists for sequential playback
+            {t('playlistsSubtitle')}
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -112,7 +112,7 @@ export default function PlaylistsPage() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Morning Promotional Content"
+                  placeholder={t('playlistNamePlaceholder')}
                   data-testid="input-playlist-name"
                 />
               </div>
@@ -122,7 +122,7 @@ export default function PlaylistsPage() {
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Content sequence for morning hours"
+                  placeholder={t('playlistDescPlaceholder')}
                   data-testid="input-playlist-description"
                 />
               </div>
@@ -132,7 +132,7 @@ export default function PlaylistsPage() {
                 className="w-full"
                 data-testid="button-create-playlist"
               >
-                {createMutation.isPending ? "Creating..." : t('createPlaylist')}
+                {createMutation.isPending ? t('creating') : t('createPlaylist')}
               </Button>
             </div>
           </DialogContent>
@@ -188,7 +188,7 @@ export default function PlaylistsPage() {
                   ) : (
                     <div>
                       <p className="font-medium mb-2">
-                        {playlist.items.length} item{playlist.items.length !== 1 ? "s" : ""}
+                        {playlist.items.length} {playlist.items.length !== 1 ? t('items') : t('item')}
                       </p>
                       <ul className="space-y-1">
                         {playlist.items.slice(0, 3).map((item, index) => (
@@ -198,7 +198,7 @@ export default function PlaylistsPage() {
                         ))}
                         {playlist.items.length > 3 && (
                           <li className="text-xs italic">
-                            +{playlist.items.length - 3} more...
+                            +{playlist.items.length - 3} {t('more')}...
                           </li>
                         )}
                       </ul>
@@ -207,7 +207,7 @@ export default function PlaylistsPage() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">
-                    Created {new Date(playlist.createdAt).toLocaleDateString()}
+                    {t('created')} {new Date(playlist.createdAt).toLocaleDateString()}
                   </div>
                   <Button
                     variant="ghost"

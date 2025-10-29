@@ -118,10 +118,13 @@ export const translations = {
     
     // Groups
     groupsTitle: 'Groups',
-    groupsSubtitle: 'Organize displays into manageable groups',
+    groupsSubtitle: 'Organize displays into groups for easier management',
     createGroup: 'Create Group',
     groupName: 'Group Name',
     description: 'Description',
+    displaysCount: '{count} displays',
+    created: 'Created',
+    more: 'more',
     
     // Playlists
     playlistsTitle: 'Content Playlists',
@@ -134,6 +137,12 @@ export const translations = {
     noItems: 'No items in this playlist',
     items: 'items',
     item: 'item',
+    playlistNamePlaceholder: 'Morning Promotional Content',
+    playlistDescPlaceholder: 'Content sequence for morning hours',
+    creating: 'Creating...',
+    html: 'HTML',
+    webPages: 'Web Pages',
+    other: 'Other',
     
     // Radio Streams
     radioStreams: 'Radio Streams',
@@ -735,10 +744,13 @@ export const translations = {
     
     // Groups
     groupsTitle: 'Gruppi',
-    groupsSubtitle: 'Organizza i display in gruppi gestibili',
+    groupsSubtitle: 'Organizza i display in gruppi per una gestione più facile',
     createGroup: 'Crea Gruppo',
     groupName: 'Nome Gruppo',
     description: 'Descrizione',
+    displaysCount: '{count} display',
+    created: 'Creato',
+    more: 'altri',
     
     // Playlists
     playlistsTitle: 'Playlist Contenuti',
@@ -751,6 +763,12 @@ export const translations = {
     noItems: 'Nessun elemento in questa playlist',
     items: 'elementi',
     item: 'elemento',
+    playlistNamePlaceholder: 'Contenuto Promozionale Mattutino',
+    playlistDescPlaceholder: 'Sequenza di contenuti per le ore mattutine',
+    creating: 'Creazione...',
+    html: 'HTML',
+    webPages: 'Pagine Web',
+    other: 'Altro',
     
     // Radio Streams
     radioStreams: 'Stream Radio',
