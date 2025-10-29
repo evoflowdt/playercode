@@ -32,6 +32,15 @@ import {
   type InsertSyncGroupMember,
   type SyncSession,
   type InsertSyncSession,
+  type Organization,
+  type InsertOrganization,
+  type User,
+  type InsertUser,
+  type OrganizationMember,
+  type InsertOrganizationMember,
+  type Session,
+  type InsertSession,
+  type UserWithOrganizations,
   type DashboardStats,
   type DisplayWithGroup,
   type ScheduleWithDetails,
@@ -54,6 +63,10 @@ import {
   syncGroups,
   syncGroupMembers,
   syncSessions,
+  organizations,
+  users,
+  organizationMembers,
+  sessions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt } from "drizzle-orm";
@@ -159,6 +172,41 @@ export interface IStorage {
   
   getDashboardStats(): Promise<DashboardStats>;
   getDisplaysWithGroups(): Promise<DisplayWithGroup[]>;
+  
+  // Organization methods
+  getOrganization(id: string): Promise<Organization | undefined>;
+  getOrganizationBySlug(slug: string): Promise<Organization | undefined>;
+  getAllOrganizations(): Promise<Organization[]>;
+  createOrganization(org: InsertOrganization): Promise<Organization>;
+  updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | undefined>;
+  deleteOrganization(id: string): Promise<boolean>;
+  
+  // User methods
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserWithOrganizations(id: string): Promise<UserWithOrganizations | undefined>;
+  getAllUsers(): Promise<User[]>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  
+  // Organization Member methods
+  getOrganizationMember(id: string): Promise<OrganizationMember | undefined>;
+  getOrganizationMembersByUser(userId: string): Promise<OrganizationMember[]>;
+  getOrganizationMembersByOrganization(organizationId: string): Promise<OrganizationMember[]>;
+  getUserRole(userId: string, organizationId: string): Promise<string | undefined>;
+  createOrganizationMember(member: InsertOrganizationMember): Promise<OrganizationMember>;
+  updateOrganizationMember(id: string, updates: Partial<OrganizationMember>): Promise<OrganizationMember | undefined>;
+  deleteOrganizationMember(id: string): Promise<boolean>;
+  
+  // Session methods
+  getSession(id: string): Promise<Session | undefined>;
+  getSessionByToken(token: string): Promise<Session | undefined>;
+  getSessionsByUser(userId: string): Promise<Session[]>;
+  createSession(session: InsertSession): Promise<Session>;
+  deleteSession(id: string): Promise<boolean>;
+  deleteSessionsByUser(userId: string): Promise<number>;
+  cleanupExpiredSessions(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -999,6 +1047,255 @@ export class DatabaseStorage implements IStorage {
       .delete(syncSessions)
       .where(eq(syncSessions.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Organization methods
+  async getOrganization(id: string): Promise<Organization | undefined> {
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, id));
+    return org || undefined;
+  }
+
+  async getOrganizationBySlug(slug: string): Promise<Organization | undefined> {
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.slug, slug));
+    return org || undefined;
+  }
+
+  async getAllOrganizations(): Promise<Organization[]> {
+    return await db.select().from(organizations);
+  }
+
+  async createOrganization(insertOrg: InsertOrganization): Promise<Organization> {
+    const [org] = await db
+      .insert(organizations)
+      .values(insertOrg)
+      .returning();
+    return org;
+  }
+
+  async updateOrganization(
+    id: string,
+    updates: Partial<Organization>
+  ): Promise<Organization | undefined> {
+    const [updated] = await db
+      .update(organizations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(organizations.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteOrganization(id: string): Promise<boolean> {
+    const result = await db
+      .delete(organizations)
+      .where(eq(organizations.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserWithOrganizations(id: string): Promise<UserWithOrganizations | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+
+    const members = await db
+      .select({
+        id: organizationMembers.id,
+        userId: organizationMembers.userId,
+        organizationId: organizationMembers.organizationId,
+        role: organizationMembers.role,
+        joinedAt: organizationMembers.joinedAt,
+        invitedBy: organizationMembers.invitedBy,
+        organizationName: organizations.name,
+      })
+      .from(organizationMembers)
+      .leftJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+      .where(eq(organizationMembers.userId, id));
+
+    return {
+      ...user,
+      organizations: members.map(m => ({
+        id: m.id,
+        userId: m.userId,
+        organizationId: m.organizationId,
+        role: m.role,
+        joinedAt: m.joinedAt,
+        invitedBy: m.invitedBy,
+        organizationName: m.organizationName || "Unknown",
+      })),
+    };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(
+    id: string,
+    updates: Partial<User>
+  ): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Organization Member methods
+  async getOrganizationMember(id: string): Promise<OrganizationMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.id, id));
+    return member || undefined;
+  }
+
+  async getOrganizationMembersByUser(userId: string): Promise<OrganizationMember[]> {
+    return await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, userId));
+  }
+
+  async getOrganizationMembersByOrganization(organizationId: string): Promise<OrganizationMember[]> {
+    return await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.organizationId, organizationId));
+  }
+
+  async getUserRole(userId: string, organizationId: string): Promise<string | undefined> {
+    const [member] = await db
+      .select({ role: organizationMembers.role })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.organizationId, organizationId)
+        )
+      );
+    return member?.role;
+  }
+
+  async createOrganizationMember(insertMember: InsertOrganizationMember): Promise<OrganizationMember> {
+    const [member] = await db
+      .insert(organizationMembers)
+      .values(insertMember)
+      .returning();
+    return member;
+  }
+
+  async updateOrganizationMember(
+    id: string,
+    updates: Partial<OrganizationMember>
+  ): Promise<OrganizationMember | undefined> {
+    const [updated] = await db
+      .update(organizationMembers)
+      .set(updates)
+      .where(eq(organizationMembers.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteOrganizationMember(id: string): Promise<boolean> {
+    const result = await db
+      .delete(organizationMembers)
+      .where(eq(organizationMembers.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Session methods
+  async getSession(id: string): Promise<Session | undefined> {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, id));
+    return session || undefined;
+  }
+
+  async getSessionByToken(token: string): Promise<Session | undefined> {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.token, token),
+          gt(sessions.expiresAt, new Date())
+        )
+      );
+    return session || undefined;
+  }
+
+  async getSessionsByUser(userId: string): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.userId, userId));
+  }
+
+  async createSession(insertSession: InsertSession): Promise<Session> {
+    const [session] = await db
+      .insert(sessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async deleteSession(id: string): Promise<boolean> {
+    const result = await db
+      .delete(sessions)
+      .where(eq(sessions.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async deleteSessionsByUser(userId: string): Promise<number> {
+    const result = await db
+      .delete(sessions)
+      .where(eq(sessions.userId, userId));
+    return result.rowCount || 0;
+  }
+
+  async cleanupExpiredSessions(): Promise<number> {
+    const result = await db
+      .delete(sessions)
+      .where(sql`${sessions.expiresAt} < NOW()`);
+    return result.rowCount || 0;
   }
 }
 
