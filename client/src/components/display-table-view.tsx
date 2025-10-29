@@ -17,6 +17,7 @@ import {
 import { MoreVertical, MapPin, Monitor } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import { it, enUS } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-provider";
 
 interface DisplayTableViewProps {
@@ -32,7 +33,8 @@ export function DisplayTableView({
   onEdit,
   onDelete,
 }: DisplayTableViewProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'it' ? it : enUS;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,7 +63,7 @@ export function DisplayTableView({
   };
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -132,6 +134,7 @@ export function DisplayTableView({
                   {display.lastSeen
                     ? formatDistanceToNow(new Date(display.lastSeen), {
                         addSuffix: true,
+                        locale: dateLocale,
                       })
                     : "—"}
                 </TableCell>
@@ -141,7 +144,6 @@ export function DisplayTableView({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
                         data-testid={`button-menu-${display.id}`}
                       >
                         <MoreVertical className="h-4 w-4" />

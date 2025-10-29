@@ -10,6 +10,7 @@ import {
 import { MoreVertical, Monitor, MapPin, Calendar } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import { it, enUS } from "date-fns/locale";
 import { useLanguage } from "@/lib/language-provider";
 
 interface DisplayCardProps {
@@ -27,7 +28,8 @@ export function DisplayCard({
   onEdit,
   onDelete,
 }: DisplayCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'it' ? it : enUS;
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,7 +98,6 @@ export function DisplayCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
                 data-testid={`button-menu-${display.id}`}
               >
                 <MoreVertical className="h-4 w-4" />
@@ -145,6 +146,7 @@ export function DisplayCard({
             <span>
               {formatDistanceToNow(new Date(display.lastSeen), {
                 addSuffix: true,
+                locale: dateLocale,
               })}
             </span>
           </div>
