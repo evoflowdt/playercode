@@ -11,6 +11,7 @@ import {
   insertScheduleSchema,
   insertPlaylistSchema,
   insertPlaylistItemSchema,
+  insertRadioStreamSchema,
   insertPairingTokenSchema,
   insertPlayerSessionSchema,
   insertPlayerCapabilitiesSchema,
@@ -480,6 +481,60 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Reorder items error:", error);
       res.status(500).json({ error: "Failed to reorder items" });
+    }
+  });
+
+  // Radio Stream Routes
+  app.get("/api/radio-streams", async (_req, res) => {
+    try {
+      const streams = await storage.getAllRadioStreams();
+      res.json(streams);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch radio streams" });
+    }
+  });
+
+  app.get("/api/radio-streams/playlist/:playlistId", async (req, res) => {
+    try {
+      const streams = await storage.getRadioStreamsByPlaylist(req.params.playlistId);
+      res.json(streams);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch radio streams" });
+    }
+  });
+
+  app.post("/api/radio-streams", async (req, res) => {
+    try {
+      const validatedData = insertRadioStreamSchema.parse(req.body);
+      const stream = await storage.createRadioStream(validatedData);
+      res.status(201).json(stream);
+    } catch (error) {
+      console.error("Create radio stream error:", error);
+      res.status(400).json({ error: "Invalid radio stream data" });
+    }
+  });
+
+  app.patch("/api/radio-streams/:id", async (req, res) => {
+    try {
+      const updated = await storage.updateRadioStream(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ error: "Radio stream not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update radio stream" });
+    }
+  });
+
+  app.delete("/api/radio-streams/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteRadioStream(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Radio stream not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete radio stream" });
     }
   });
 
