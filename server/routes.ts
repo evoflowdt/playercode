@@ -2683,6 +2683,38 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
+  app.post("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const userId = (req as AuthRequest).user!.id;
+      const parsed = insertNotificationSchema.parse(req.body);
+
+      // Enforce organizationId and userId from authenticated user (prevent forgery)
+      if (parsed.organizationId !== organizationId) {
+        return res.status(403).json({ error: "Cannot create notifications for other organizations" });
+      }
+      if (parsed.userId !== userId) {
+        return res.status(403).json({ error: "Cannot create notifications for other users" });
+      }
+
+      const notification = await storage.createNotification(parsed);
+
+      // Broadcast generic notification event (no payload for security)
+      // Each client will invalidate queries and fetch only their own notifications
+      broadcast({
+        type: 'notification_created'
+      });
+
+      res.status(201).json(notification);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid notification data", details: error.errors });
+      }
+      console.error("Create notification error:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
   app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
     try {
       const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/lib/language-provider";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { wsClient } from "@/lib/websocket";
 
 interface Notification {
   id: string;
@@ -74,6 +75,21 @@ export function NotificationBell() {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },
   });
+
+  // WebSocket real-time notification listener
+  useEffect(() => {
+    const handleNotificationCreated = () => {
+      // Invalidate queries to refresh notifications in real-time
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+    };
+
+    wsClient.on('notification_created', handleNotificationCreated);
+
+    return () => {
+      wsClient.off('notification_created', handleNotificationCreated);
+    };
+  }, []);
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
