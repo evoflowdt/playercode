@@ -78,11 +78,30 @@ export default function Content() {
     if (result.successful && result.successful.length > 0) {
       for (const file of result.successful) {
         // Extract the file path from the upload URL
-        // The upload URL is like: https://.../objects/uploads/<uuid>?signature=...
-        // We need to extract: /objects/uploads/<uuid>
+        // The upload URL is like: https://.../bucket-name/.private/uploads/<uuid>?signature=...
+        // We need to convert: /.private/uploads/<uuid> -> /public-objects/uploads/<uuid>
         const uploadURL = (file.response?.uploadURL || file.uploadURL) as string;
         const url = new URL(uploadURL);
-        const filePath = url.pathname; // This gives us /objects/uploads/<uuid>
+        let filePath = url.pathname;
+        
+        // Convert private path to public path
+        // /.private/uploads/<uuid> -> /public-objects/uploads/<uuid>
+        if (filePath.includes('/.private/')) {
+          filePath = filePath.replace('/.private/', '/public-objects/');
+        } else if (filePath.includes('/objects/')) {
+          // If it's already /objects/, convert to /public-objects/
+          filePath = filePath.replace('/objects/', '/public-objects/');
+        }
+        
+        // Remove bucket name from path if present (e.g., /bucket-name/public-objects/... -> /public-objects/...)
+        const pathParts = filePath.split('/').filter(p => p);
+        if (pathParts.length > 2 && pathParts[0].startsWith('repl-')) {
+          // Remove bucket name (first part)
+          filePath = '/' + pathParts.slice(1).join('/');
+        }
+        
+        console.log('[Content] Original URL:', uploadURL);
+        console.log('[Content] Processed path:', filePath);
         
         await uploadMutation.mutateAsync({
           url: filePath,

@@ -3,7 +3,7 @@ import { type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
 import {
   insertDisplaySchema,
   insertContentItemSchema,
@@ -347,6 +347,30 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Error searching for public object:", error);
       return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Serve private uploads publicly (for player content display)
+  app.get("/.private/uploads/:fileId", async (req, res) => {
+    const fileId = req.params.fileId;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const fullPath = `${privateDir}/uploads/${fileId}`;
+      
+      const { bucketName, objectName } = parseObjectPath(fullPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      await objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error serving private upload:", error);
+      res.status(500).json({ error: "Failed to serve file" });
     }
   });
 
