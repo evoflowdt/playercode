@@ -179,6 +179,48 @@ export const syncSessions = pgTable("sync_sessions", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Feature Set 4: Multi-Tenant Authentication & User Management
+export const organizations = pgTable("organizations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(), // URL-friendly identifier
+  settings: text("settings"), // JSON string: { branding, features, limits }
+  plan: text("plan").notNull().default("free"), // free, pro, enterprise
+  maxDisplays: integer("max_displays").notNull().default(5),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  defaultOrganizationId: varchar("default_organization_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastLoginAt: timestamp("last_login_at"),
+});
+
+export const organizationMembers = pgTable("organization_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  role: text("role").notNull().default("viewer"), // owner, admin, editor, viewer
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  invitedBy: varchar("invited_by"),
+});
+
+export const sessions = pgTable("sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertDisplaySchema = createInsertSchema(displays).pick({
   name: true,
   hashCode: true,
@@ -319,6 +361,37 @@ export const insertSyncSessionSchema = createInsertSchema(syncSessions).pick({
   startedAt: true,
 });
 
+export const insertOrganizationSchema = createInsertSchema(organizations).pick({
+  name: true,
+  slug: true,
+  settings: true,
+  plan: true,
+  maxDisplays: true,
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  email: true,
+  passwordHash: true,
+  firstName: true,
+  lastName: true,
+  defaultOrganizationId: true,
+});
+
+export const insertOrganizationMemberSchema = createInsertSchema(organizationMembers).pick({
+  userId: true,
+  organizationId: true,
+  role: true,
+  invitedBy: true,
+});
+
+export const insertSessionSchema = createInsertSchema(sessions).pick({
+  userId: true,
+  token: true,
+  expiresAt: true,
+  ipAddress: true,
+  userAgent: true,
+});
+
 export type InsertDisplay = z.infer<typeof insertDisplaySchema>;
 export type Display = typeof displays.$inferSelect;
 
@@ -366,6 +439,22 @@ export type SyncGroupMember = typeof syncGroupMembers.$inferSelect;
 
 export type InsertSyncSession = z.infer<typeof insertSyncSessionSchema>;
 export type SyncSession = typeof syncSessions.$inferSelect;
+
+export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+export type Organization = typeof organizations.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertOrganizationMember = z.infer<typeof insertOrganizationMemberSchema>;
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type Session = typeof sessions.$inferSelect;
+
+export interface UserWithOrganizations extends User {
+  organizations: Array<OrganizationMember & { organizationName: string }>;
+}
 
 export interface DashboardStats {
   totalDisplays: number;
