@@ -49,13 +49,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       try {
         const message = JSON.parse(data.toString());
         
-        if (message.type === 'display_register') {
-          const display = await storage.createDisplay(message.data, message.organizationId);
-          broadcast({
-            type: 'display_added',
-            data: display
-          });
-        } else if (message.type === 'display_status') {
+        // Display registration is handled via secure pairing flow (POST /api/player/pair)
+        // NOT via WebSocket to prevent tenant spoofing
+        if (message.type === 'display_status') {
           const display = await storage.getDisplayById(message.displayId);
           if (display) {
             const updated = await storage.updateDisplay(message.displayId, {
