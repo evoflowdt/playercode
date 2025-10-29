@@ -475,6 +475,7 @@ export default function Player() {
         return (
           <div className="h-screen w-screen bg-black">
             <iframe
+              key={currentContent.id}
               src={currentContent.url}
               className="w-full h-full border-0"
               title={currentContent.name}
@@ -487,6 +488,7 @@ export default function Player() {
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <img
+            key={currentContent.id}
             src={currentContent.url}
             alt={currentContent.name}
             className="max-w-full max-h-full object-contain"
@@ -504,6 +506,7 @@ export default function Player() {
       return (
         <div className="flex items-center justify-center h-screen bg-black">
           <video
+            key={currentContent.id}
             ref={videoRef}
             src={currentContent.url}
             autoPlay={!syncState.isActive || syncState.status === "playing"}
@@ -512,6 +515,9 @@ export default function Player() {
             className="max-w-full max-h-full"
             data-testid="player-video-content"
             onError={() => console.error('Failed to load video:', currentContent.url)}
+            onEnded={() => {
+              console.log('[Player] Video ended, content will rotate');
+            }}
           />
         </div>
       );
@@ -532,6 +538,7 @@ export default function Player() {
       return (
         <div className="h-screen w-screen bg-black">
           <iframe
+            key={currentContent.id}
             src={currentContent.url}
             className="w-full h-full border-0"
             title={currentContent.name}
