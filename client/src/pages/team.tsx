@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Mail, Clock, X } from "lucide-react";
 import type { TeamMember, InvitationWithDetails } from "@shared/schema";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-provider";
 
 
 const roleColors: Record<string, string> = {

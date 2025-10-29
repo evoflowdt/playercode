@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-provider";
 
 export default function AcceptInvitationPage() {
   const { t } = useLanguage();

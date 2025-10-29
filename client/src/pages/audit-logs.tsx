@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/language-provider";
 
 
 const actionColors: Record<string, string> = {
