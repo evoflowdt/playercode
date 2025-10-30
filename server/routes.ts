@@ -1941,10 +1941,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
   
-  // Get all player sessions
-  app.get("/api/player/sessions", async (_req, res) => {
+  // Get all player sessions (filtered by organization)
+  app.get("/api/player/sessions", requireAuth, async (req, res) => {
     try {
-      const sessions = await storage.getAllPlayerSessions();
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const sessions = await storage.getPlayerSessionsByOrganization(organizationId);
       
       // Enrich sessions with display information
       const enrichedSessions = await Promise.all(

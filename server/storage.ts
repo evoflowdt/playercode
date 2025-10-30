@@ -161,6 +161,7 @@ export interface IStorage {
   
   getPlayerSession(displayId: string): Promise<PlayerSession | undefined>;
   getAllPlayerSessions(): Promise<PlayerSession[]>;
+  getPlayerSessionsByOrganization(organizationId: string): Promise<PlayerSession[]>;
   createPlayerSession(session: InsertPlayerSession): Promise<PlayerSession>;
   updatePlayerSession(displayId: string, updates: Partial<PlayerSession>): Promise<PlayerSession | undefined>;
   deletePlayerSession(displayId: string): Promise<boolean>;
@@ -770,6 +771,24 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPlayerSessions(): Promise<PlayerSession[]> {
     return await db.select().from(playerSessions);
+  }
+
+  async getPlayerSessionsByOrganization(organizationId: string): Promise<PlayerSession[]> {
+    return await db
+      .select({
+        id: playerSessions.id,
+        displayId: playerSessions.displayId,
+        playerVersion: playerSessions.playerVersion,
+        ipAddress: playerSessions.ipAddress,
+        userAgent: playerSessions.userAgent,
+        connectedAt: playerSessions.connectedAt,
+        lastHeartbeat: playerSessions.lastHeartbeat,
+        currentContentId: playerSessions.currentContentId,
+        playbackStatus: playerSessions.playbackStatus,
+      })
+      .from(playerSessions)
+      .innerJoin(displays, eq(playerSessions.displayId, displays.id))
+      .where(eq(displays.organizationId, organizationId));
   }
 
   async createPlayerSession(insertSession: InsertPlayerSession): Promise<PlayerSession> {
