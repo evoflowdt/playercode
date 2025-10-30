@@ -18,6 +18,7 @@ import {
   ScrollText,
   Code,
   LayoutTemplate,
+  Smartphone,
 } from "lucide-react";
 import {
   Sidebar,
@@ -104,6 +105,12 @@ const menuItemsConfig = [
     url: "/downloads",
     icon: Download,
     testId: "link-downloads",
+  },
+  {
+    titleKey: "installApp" as const,
+    url: "/install",
+    icon: Smartphone,
+    testId: "link-install",
   },
   {
     titleKey: "settings" as const,
