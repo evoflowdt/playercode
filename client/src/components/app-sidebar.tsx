@@ -41,6 +41,12 @@ const menuItemsConfig = [
     testId: "link-dashboard",
   },
   {
+    titleKey: "playerSetup" as const,
+    url: "/settings",
+    icon: Settings,
+    testId: "link-settings",
+  },
+  {
     titleKey: "displays" as const,
     url: "/displays",
     icon: Monitor,
@@ -111,12 +117,6 @@ const menuItemsConfig = [
     url: "/install",
     icon: Smartphone,
     testId: "link-install",
-  },
-  {
-    titleKey: "settings" as const,
-    url: "/settings",
-    icon: Settings,
-    testId: "link-settings",
   },
   {
     titleKey: "team" as const,
