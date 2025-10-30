@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageProvider } from "@/lib/language-provider";
 import { LanguageToggle } from "@/components/language-toggle";
 import { NotificationBell } from "@/components/notification-bell";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -191,6 +192,7 @@ export default function App() {
                   </SidebarProvider>
                 </Route>
               </Switch>
+              <PWAInstallPrompt />
               <Toaster />
             </TooltipProvider>
           </AuthProvider>
