@@ -31,11 +31,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Monitor, Plus, Search, LayoutGrid, List } from "lucide-react";
+import { Monitor, Plus, Search, LayoutGrid, List, Trash2, CheckSquare, Square } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-provider";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ViewMode = "grid" | "list";
 
@@ -48,6 +50,11 @@ export default function Displays() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editDisplay, setEditDisplay] = useState<Display | null>(null);
   const [deleteDisplay, setDeleteDisplay] = useState<Display | null>(null);
+  const [selectedDisplayIds, setSelectedDisplayIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
+  const [bulkUpdateName, setBulkUpdateName] = useState("");
+  const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   const { toast } = useToast();
   
   const getStatusText = (status: string) => {
