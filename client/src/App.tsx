@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
 import { wsClient } from "@/lib/websocket";
+import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
 import Content from "@/pages/content";
@@ -101,7 +102,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 function ProtectedRouter() {
   return (
     <Switch>
-      <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/displays" component={() => <ProtectedRoute component={Displays} />} />
       <Route path="/content" component={() => <ProtectedRoute component={Content} />} />
       <Route path="/schedules" component={() => <ProtectedRoute component={Schedules} />} />
@@ -159,8 +160,9 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <TooltipProvider>
-              {/* Routes without sidebar: Player, Login, Register */}
+              {/* Routes without sidebar: Landing, Player, Login, Register */}
               <Switch>
+                <Route path="/" component={Landing} />
                 <Route path="/player" component={Player} />
                 <Route path="/login" component={Login} />
                 <Route path="/register" component={Register} />
