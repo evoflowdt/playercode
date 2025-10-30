@@ -45,15 +45,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('dashboardTitle')}</h1>
-        <p className="text-muted-foreground text-base">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t('dashboardTitle')}</h1>
+        <p className="text-muted-foreground text-sm md:text-base">
           {t('dashboardSubtitle')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {statsLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
@@ -98,9 +98,9 @@ export default function Dashboard() {
         )}
       </div>
 
-      <Card className="p-6 shadow-sm">
-        <h2 className="text-xl font-bold tracking-tight mb-4">{t('displayLocations')}</h2>
-        <div className="h-96 rounded-lg overflow-hidden border">
+      <Card className="p-4 md:p-6 shadow-sm">
+        <h2 className="text-lg md:text-xl font-bold tracking-tight mb-4">{t('displayLocations')}</h2>
+        <div className="h-64 md:h-96 rounded-lg overflow-hidden border">
           {displaysWithLocation.length > 0 ? (
             <MapContainer
               center={[
@@ -151,16 +151,16 @@ export default function Dashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold tracking-tight">{t('recentDisplays')}</h2>
+          <h2 className="text-lg md:text-xl font-bold tracking-tight">{t('recentDisplays')}</h2>
         </div>
         {displaysLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="h-64 animate-pulse bg-muted" />
             ))}
           </div>
         ) : recentDisplays.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {recentDisplays.map((display) => (
               <DisplayCard key={display.id} display={display} />
             ))}

@@ -174,9 +174,9 @@ export default function App() {
                     <div className="flex h-screen w-full">
                       <AppSidebar />
                       <div className="flex flex-col flex-1 overflow-hidden">
-                        <header className="flex items-center justify-between p-4 border-b bg-background">
+                        <header className="flex items-center justify-between p-3 md:p-4 border-b bg-background">
                           <SidebarTrigger data-testid="button-sidebar-toggle" />
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 md:gap-2">
                             <UserMenu />
                             <NotificationBell />
                             <LanguageToggle />

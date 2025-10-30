@@ -187,17 +187,18 @@ export default function Displays() {
   });
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('displaysTitle')}</h1>
-          <p className="text-muted-foreground text-base">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t('displaysTitle')}</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             {t('displaysSubtitle')}
           </p>
         </div>
         <Button
           onClick={() => setShowAddDialog(true)}
           data-testid="button-add-display"
+          className="w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t('addDisplay')}
@@ -206,8 +207,8 @@ export default function Displays() {
 
       {selectedDisplayIds.size > 0 && (
         <Card className="p-4 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Badge variant="secondary" className="px-3 py-1">
                 {selectedDisplayIds.size} {t('selected')}
               </Badge>
@@ -230,12 +231,13 @@ export default function Displays() {
                 )}
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowBulkUpdateDialog(true)}
                 data-testid="button-bulk-update"
+                className="flex-1 sm:flex-none"
               >
                 {t('bulkUpdate')}
               </Button>
@@ -244,6 +246,7 @@ export default function Displays() {
                 size="sm"
                 onClick={() => setShowBulkDeleteDialog(true)}
                 data-testid="button-bulk-delete"
+                className="flex-1 sm:flex-none"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 {t('delete')}
@@ -299,7 +302,7 @@ export default function Displays() {
 
       {isLoading ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="h-72 animate-pulse bg-muted" />
             ))}
@@ -309,7 +312,7 @@ export default function Displays() {
         )
       ) : filteredDisplays && filteredDisplays.length > 0 ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredDisplays.map((display) => (
               <div key={display.id} className="relative">
                 <div className="absolute top-3 left-3 z-10">

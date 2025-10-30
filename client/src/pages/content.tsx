@@ -122,18 +122,19 @@ export default function Content() {
   );
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('contentTitle')}</h1>
-          <p className="text-muted-foreground text-base">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t('contentTitle')}</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             {t('contentSubtitle')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button
             onClick={() => setShowAddDialog(true)}
             data-testid="button-add-content"
+            className="w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />
             {t('addContent')}
@@ -145,6 +146,7 @@ export default function Content() {
             onComplete={handleUploadComplete}
             variant="outline"
             testId="button-upload-content"
+            className="w-full sm:w-auto"
           >
             <Upload className="h-4 w-4 mr-2" />
             {t('quickUpload')}
@@ -191,7 +193,7 @@ export default function Content() {
 
       {isLoading ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="h-72 animate-pulse bg-muted" />
             ))}
@@ -201,7 +203,7 @@ export default function Content() {
         )
       ) : filteredContent && filteredContent.length > 0 ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredContent.map((item) => (
               <ContentItemCard
                 key={item.id}
