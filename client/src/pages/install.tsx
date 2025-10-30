@@ -17,6 +17,7 @@ export default function Install() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('✓ beforeinstallprompt event fired!', e);
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
@@ -26,6 +27,8 @@ export default function Install() {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
+
+    console.log('Install page loaded, waiting for beforeinstallprompt...');
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
