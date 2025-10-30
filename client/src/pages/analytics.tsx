@@ -195,10 +195,10 @@ export default function Analytics() {
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{t("analyticsTitle")}</h1>
-        <p className="text-muted-foreground text-base">{t("analyticsSubtitle")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t("analyticsTitle")}</h1>
+        <p className="text-muted-foreground text-sm md:text-base">{t("analyticsSubtitle")}</p>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">

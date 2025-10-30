@@ -51,17 +51,18 @@ export default function Groups() {
   });
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('groups')}</h1>
-          <p className="text-muted-foreground text-base">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t('groups')}</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             {t('groupsSubtitle')}
           </p>
         </div>
         <Button
           onClick={() => setShowAddDialog(true)}
           data-testid="button-add-group"
+          className="w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t('newGroup')}
@@ -69,13 +70,13 @@ export default function Groups() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="h-40 animate-pulse bg-muted" />
           ))}
         </div>
       ) : groups && groups.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {groups.map((group) => (
             <Card
               key={group.id}
@@ -144,9 +145,9 @@ export default function Groups() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteGroup')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('delete')} {t('groups')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('deleteGroupConfirm', { name: deleteGroup?.name || '' })}
+              Are you sure you want to delete "{deleteGroup?.name}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

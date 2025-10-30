@@ -86,11 +86,11 @@ export default function PlaylistsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('playlists')}</h1>
-          <p className="text-muted-foreground text-base">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">{t('playlists')}</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             {t('playlistsSubtitle')}
           </p>
         </div>
@@ -154,7 +154,7 @@ export default function PlaylistsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {playlists.map((playlist) => (
             <Card key={playlist.id} data-testid={`card-playlist-${playlist.id}`}>
               <CardHeader>
