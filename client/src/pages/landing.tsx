@@ -91,16 +91,16 @@ export default function Landing() {
             <div className="flex items-center gap-2">
               <LanguageToggle />
               <ThemeToggle />
-              <Link href="/login">
-                <Button variant="ghost" data-testid="button-signin">
+              <Button variant="ghost" asChild data-testid="button-signin">
+                <Link href="/login">
                   {t('landingSignIn')}
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button data-testid="button-getstarted">
+                </Link>
+              </Button>
+              <Button asChild data-testid="button-getstarted">
+                <Link href="/register">
                   {t('landingGetStarted')}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -118,16 +118,16 @@ export default function Landing() {
               {t('landingHeroSubtitle')}
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link href="/register">
-                <Button size="lg" className="px-8" data-testid="button-hero-getstarted">
+              <Button size="lg" className="px-8" asChild data-testid="button-hero-getstarted">
+                <Link href="/register">
                   {t('landingGetStarted')}
-                </Button>
-              </Link>
-              <Link href="#features">
-                <Button size="lg" variant="outline" className="px-8" data-testid="button-hero-learnmore">
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="px-8" asChild data-testid="button-hero-learnmore">
+                <Link href="#features">
                   {t('landingLearnMore')}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -194,11 +194,11 @@ export default function Landing() {
               {t('landingCtaSubtitle')}
             </p>
             <div className="mt-10">
-              <Link href="/register">
-                <Button size="lg" className="px-8" data-testid="button-cta-trial">
+              <Button size="lg" className="px-8" asChild data-testid="button-cta-trial">
+                <Link href="/register">
                   {t('landingCtaButton')}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -223,13 +223,13 @@ export default function Landing() {
               <h5 className="font-semibold mb-4">{t('landingFooterAbout')}</h5>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="#features">
-                    <a className="hover:text-foreground transition-colors">{t('landingFeaturesTitle')}</a>
+                  <Link href="#features" className="hover:text-foreground transition-colors">
+                    {t('landingFeaturesTitle')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/documentation">
-                    <a className="hover:text-foreground transition-colors">{t('documentation')}</a>
+                  <Link href="/documentation" className="hover:text-foreground transition-colors">
+                    {t('documentation')}
                   </Link>
                 </li>
               </ul>
@@ -238,13 +238,13 @@ export default function Landing() {
               <h5 className="font-semibold mb-4">{t('landingGetStarted')}</h5>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/login">
-                    <a className="hover:text-foreground transition-colors">{t('landingSignIn')}</a>
+                  <Link href="/login" className="hover:text-foreground transition-colors">
+                    {t('landingSignIn')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/register">
-                    <a className="hover:text-foreground transition-colors">{t('register')}</a>
+                  <Link href="/register" className="hover:text-foreground transition-colors">
+                    {t('register')}
                   </Link>
                 </li>
               </ul>
