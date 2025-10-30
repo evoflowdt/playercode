@@ -199,6 +199,72 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     };
   }
 
+  // Granular Permissions Middleware (Sprint 4 Feature 5)
+  // This middleware checks both role-based AND resource-level permissions
+  // Access is granted if EITHER the user's role has the permission OR they have granular permission on the resource
+  function requireResourcePermission(resourceType: string, action: string, resourceIdParam: string = 'id') {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const organizationId = authReq.user?.defaultOrganizationId;
+      const userRole = authReq.userRole || 'viewer';
+      const resourceId = req.params[resourceIdParam];
+
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      if (!resourceId) {
+        return res.status(400).json({ error: `Missing resource ID parameter: ${resourceIdParam}` });
+      }
+
+      try {
+        // Map actions to RBAC permissions
+        const actionToPermission: Record<string, Permission> = {
+          'view': 'read',
+          'edit': 'update',
+          'delete': 'delete',
+          'manage': 'update',
+        };
+
+        const requiredRbacPermission = actionToPermission[action];
+        const userPermissions = rolePermissions[userRole] || [];
+
+        // Check 1: Does the user's role have the required permission?
+        const hasRolePermission = requiredRbacPermission && userPermissions.includes(requiredRbacPermission);
+
+        if (hasRolePermission) {
+          // Role-based permission is sufficient
+          return next();
+        }
+
+        // Check 2: Does the user have granular permission on this specific resource?
+        const hasGranularPermission = await storage.checkResourcePermission(
+          userId,
+          organizationId,
+          resourceType,
+          resourceId,
+          action
+        );
+
+        if (hasGranularPermission) {
+          // Granular permission granted
+          return next();
+        }
+
+        // Neither role nor granular permissions - deny access
+        return res.status(403).json({
+          error: "Forbidden - Insufficient permissions",
+          required: { resourceType, resourceId, action },
+          role: userRole
+        });
+      } catch (error) {
+        console.error("Resource permission check error:", error);
+        return res.status(500).json({ error: "Permission check failed" });
+      }
+    };
+  }
+
   // Authentication Routes
   const registerSchema = z.object({
     email: z.string().email(),
