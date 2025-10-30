@@ -55,19 +55,21 @@ function UserMenu() {
 
   if (!user) return null;
 
+  const userName = `${user.firstName} ${user.lastName}`.trim() || user.email;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" data-testid="button-user-menu">
           <User className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">{user.name || user.email}</span>
+          <span className="hidden sm:inline">{userName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col">
-            <span className="font-medium">{user.name || user.email}</span>
-            {user.name && <span className="text-xs text-muted-foreground">{user.email}</span>}
+            <span className="font-medium">{userName}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
