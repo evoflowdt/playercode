@@ -810,12 +810,11 @@ export const insertContentTemplateSchema = createInsertSchema(contentTemplates).
   id: true,
   createdAt: true,
   updatedAt: true,
-});
-
-export const updateContentTemplateSchema = insertContentTemplateSchema.partial().omit({
   organizationId: true,
   createdBy: true,
 });
+
+export const updateContentTemplateSchema = insertContentTemplateSchema.partial();
 
 export const insertTemplateApplicationSchema = createInsertSchema(templateApplications).omit({
   id: true,
