@@ -29,6 +29,8 @@ import {
   insertApiKeySchema,
   insertWebhookSchema,
   insertNotificationSchema,
+  insertResourcePermissionSchema,
+  updateResourcePermissionSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -2833,6 +2835,103 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete notification" });
+    }
+  });
+
+  // Granular Permissions routes (Sprint 4 Feature 5)
+  app.post("/api/permissions", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const currentUserId = (req as AuthRequest).userId!;
+      const parsed = insertResourcePermissionSchema.parse(req.body);
+
+      // Enforce organizationId from authenticated user
+      if (parsed.organizationId !== organizationId) {
+        return res.status(403).json({ error: "Cannot create permissions for other organizations" });
+      }
+
+      // Set createdBy to current user
+      const permission = await storage.createResourcePermission({
+        ...parsed,
+        createdBy: currentUserId,
+      });
+
+      res.status(201).json(permission);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid permission data", details: error.errors });
+      }
+      console.error("Create permission error:", error);
+      res.status(500).json({ error: "Failed to create permission" });
+    }
+  });
+
+  app.get("/api/permissions", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const filters = {
+        userId: req.query.userId as string | undefined,
+        resourceType: req.query.resourceType as string | undefined,
+        resourceId: req.query.resourceId as string | undefined,
+      };
+
+      const permissions = await storage.listResourcePermissions(organizationId, filters);
+      res.json(permissions);
+    } catch (error) {
+      console.error("List permissions error:", error);
+      res.status(500).json({ error: "Failed to fetch permissions" });
+    }
+  });
+
+  app.get("/api/permissions/user/:userId", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const targetUserId = req.params.userId;
+      const resourceType = req.query.resourceType as string | undefined;
+
+      const permissions = await storage.getUserResourcePermissions(targetUserId, organizationId, resourceType);
+      res.json(permissions);
+    } catch (error) {
+      console.error("Get user permissions error:", error);
+      res.status(500).json({ error: "Failed to fetch user permissions" });
+    }
+  });
+
+  app.patch("/api/permissions/:id", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const parsed = updateResourcePermissionSchema.parse(req.body);
+
+      const updated = await storage.updateResourcePermission(req.params.id, organizationId, parsed);
+
+      if (!updated) {
+        return res.status(404).json({ error: "Permission not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid permission data", details: error.errors });
+      }
+      console.error("Update permission error:", error);
+      res.status(500).json({ error: "Failed to update permission" });
+    }
+  });
+
+  app.delete("/api/permissions/:id", requireAuth, requirePermission('manage_users'), async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+
+      const deleted = await storage.deleteResourcePermission(req.params.id, organizationId);
+
+      if (!deleted) {
+        return res.status(404).json({ error: "Permission not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete permission error:", error);
+      res.status(500).json({ error: "Failed to delete permission" });
     }
   });
 }
