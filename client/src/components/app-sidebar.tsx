@@ -34,7 +34,7 @@ import { useLanguage } from "@/lib/language-provider";
 const menuItemsConfig = [
   {
     titleKey: "dashboard" as const,
-    url: "/",
+    url: "/dashboard",
     icon: LayoutDashboard,
     testId: "link-dashboard",
   },

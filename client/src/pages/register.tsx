@@ -23,7 +23,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
 
   if (isAuthenticated) {
-    setLocation("/");
+    setLocation("/dashboard");
     return null;
   }
 
@@ -69,7 +69,7 @@ export default function Register() {
         title: "Registration successful",
         description: "Welcome to EvoFlow!",
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "Registration failed",

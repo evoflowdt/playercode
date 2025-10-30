@@ -17,7 +17,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   if (isAuthenticated) {
-    setLocation("/");
+    setLocation("/dashboard");
     return null;
   }
 
@@ -31,7 +31,7 @@ export default function Login() {
         title: "Login successful",
         description: "Welcome back to EvoFlow!",
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "Login failed",
