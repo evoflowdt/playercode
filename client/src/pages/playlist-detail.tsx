@@ -39,14 +39,9 @@ export default function PlaylistDetailPage() {
     },
   });
 
-  const { data: allContent = [], isLoading: isLoadingContent, isError: isContentError } = useQuery<ContentItem[]>({
+  const { data: allContent = [] } = useQuery<ContentItem[]>({
     queryKey: ["/api/content"],
   });
-
-  // Log for debugging
-  console.log("All content:", allContent);
-  console.log("Is loading content:", isLoadingContent);
-  console.log("Is content error:", isContentError);
 
   const { data: radioStreams = [] } = useQuery<RadioStream[]>({
     queryKey: ["/api/radio-streams/playlist", id],
@@ -246,10 +241,6 @@ export default function PlaylistDetailPage() {
   const availableContent = allContent.filter(
     content => !playlist.items.some(item => item.contentId === content.id)
   );
-
-  // Log for debugging
-  console.log("Available content after filter:", availableContent);
-  console.log("Playlist items:", playlist?.items);
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
