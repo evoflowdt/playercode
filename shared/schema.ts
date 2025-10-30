@@ -728,13 +728,7 @@ export const bulkUpdateDisplaysSchema = z.object({
   updates: z.object({
     name: z.string().optional(),
     status: z.enum(["online", "offline", "error"]).optional(),
-    tags: z.array(z.string()).optional(),
   }).refine(obj => Object.keys(obj).length > 0, "At least one field to update is required"),
-});
-
-export const bulkAssignScheduleSchema = z.object({
-  displayIds: z.array(z.string()).min(1, "At least one display ID is required"),
-  scheduleId: z.string().min(1, "Schedule ID is required"),
 });
 
 export const bulkApplyTemplateSchema = z.object({
@@ -744,11 +738,6 @@ export const bulkApplyTemplateSchema = z.object({
 
 export const bulkDeleteContentSchema = z.object({
   contentIds: z.array(z.string()).min(1, "At least one content ID is required"),
-});
-
-export const bulkUpdateContentTagsSchema = z.object({
-  contentIds: z.array(z.string()).min(1, "At least one content ID is required"),
-  tags: z.array(z.string()).min(0),
 });
 
 // Sprint 4: Advanced Analytics Types

@@ -36,13 +36,12 @@ import {
   insertTemplateApplicationSchema,
   bulkDeleteDisplaysSchema,
   bulkUpdateDisplaysSchema,
-  bulkAssignScheduleSchema,
   bulkApplyTemplateSchema,
   bulkDeleteContentSchema,
-  bulkUpdateContentTagsSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
 export async function registerRoutes(app: Express, httpServer: Server): Promise<void> {
   // Setup WebSocket server (non-blocking)
@@ -3134,27 +3133,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.post("/api/displays/bulk/assign-schedule", requireAuth, async (req, res) => {
-    try {
-      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
-      
-      const result = bulkAssignScheduleSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ error: fromZodError(result.error).message });
-      }
-
-      const { displayIds, scheduleId } = result.data;
-      const count = await storage.bulkAssignSchedule(displayIds, scheduleId, organizationId);
-      res.json({ success: true, count });
-    } catch (error: any) {
-      console.error("Bulk assign schedule error:", error);
-      if (error.message === "Schedule not found or access denied") {
-        return res.status(404).json({ error: error.message });
-      }
-      res.status(500).json({ error: "Failed to assign schedule" });
-    }
-  });
-
   app.post("/api/displays/bulk/apply-template", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthRequest).user!;
@@ -3196,21 +3174,4 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.post("/api/content/bulk/update-tags", requireAuth, async (req, res) => {
-    try {
-      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
-      
-      const result = bulkUpdateContentTagsSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ error: fromZodError(result.error).message });
-      }
-
-      const { contentIds, tags } = result.data;
-      const count = await storage.bulkUpdateContentTags(contentIds, tags, organizationId);
-      res.json({ success: true, count });
-    } catch (error) {
-      console.error("Bulk update content tags error:", error);
-      res.status(500).json({ error: "Failed to update content tags" });
-    }
-  });
 }

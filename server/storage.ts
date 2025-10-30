@@ -105,7 +105,7 @@ import {
   templateApplications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, and, gt, lt, gte, lte, desc } from "drizzle-orm";
+import { eq, sql, and, gt, lt, gte, lte, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getDisplay(id: string, organizationId: string): Promise<Display | undefined>;
@@ -298,11 +298,9 @@ export interface IStorage {
 
   // Bulk Operations methods (Sprint 5.2)
   bulkDeleteDisplays(displayIds: string[], organizationId: string): Promise<number>;
-  bulkUpdateDisplays(displayIds: string[], updates: Partial<InsertDisplay>, organizationId: string): Promise<number>;
-  bulkAssignSchedule(displayIds: string[], scheduleId: string, organizationId: string): Promise<number>;
+  bulkUpdateDisplays(displayIds: string[], updates: { name?: string; status?: "online" | "offline" | "error" }, organizationId: string): Promise<number>;
   bulkApplyTemplate(displayIds: string[], templateId: string, userId: string, organizationId: string): Promise<number>;
   bulkDeleteContent(contentIds: string[], organizationId: string): Promise<number>;
-  bulkUpdateContentTags(contentIds: string[], tags: string[], organizationId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2440,32 +2438,23 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount ?? 0;
   }
 
-  async bulkUpdateDisplays(displayIds: string[], updates: Partial<InsertDisplay>, organizationId: string): Promise<number> {
+  async bulkUpdateDisplays(
+    displayIds: string[], 
+    updates: { name?: string; status?: "online" | "offline" | "error" }, 
+    organizationId: string
+  ): Promise<number> {
     if (displayIds.length === 0) return 0;
     
-    const result = await db.update(displays)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(and(
-        eq(displays.organizationId, organizationId),
-        inArray(displays.id, displayIds)
-      ));
-    return result.rowCount ?? 0;
-  }
-
-  async bulkAssignSchedule(displayIds: string[], scheduleId: string, organizationId: string): Promise<number> {
-    if (displayIds.length === 0) return 0;
+    // Whitelist only safe fields - never allow organizationId, id, or other sensitive fields
+    const safeUpdates: any = {};
+    if (updates.name !== undefined) safeUpdates.name = updates.name;
+    if (updates.status !== undefined) safeUpdates.status = updates.status;
     
-    // Verify schedule belongs to organization
-    const schedule = await db.select().from(schedules).where(
-      and(eq(schedules.id, scheduleId), eq(schedules.organizationId, organizationId))
-    ).limit(1);
+    // Only update if there are fields to update
+    if (Object.keys(safeUpdates).length === 0) return 0;
     
-    if (schedule.length === 0) {
-      throw new Error("Schedule not found or access denied");
-    }
-
     const result = await db.update(displays)
-      .set({ currentScheduleId: scheduleId, updatedAt: new Date() })
+      .set(safeUpdates)
       .where(and(
         eq(displays.organizationId, organizationId),
         inArray(displays.id, displayIds)
@@ -2514,22 +2503,11 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(contentItems)
       .where(and(
         eq(contentItems.organizationId, organizationId),
-        inArray(contentIds.id, contentIds)
-      ));
-    return result.rowCount ?? 0;
-  }
-
-  async bulkUpdateContentTags(contentIds: string[], tags: string[], organizationId: string): Promise<number> {
-    if (contentIds.length === 0) return 0;
-    
-    const result = await db.update(contentItems)
-      .set({ tags })
-      .where(and(
-        eq(contentItems.organizationId, organizationId),
         inArray(contentItems.id, contentIds)
       ));
     return result.rowCount ?? 0;
   }
+
 }
 
 export const storage = new DatabaseStorage();
