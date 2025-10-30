@@ -429,18 +429,30 @@ export default function Player() {
 
   // Handle radio stream playback
   useEffect(() => {
-    if (!radioAudioRef.current) return;
+    console.log("[Player] Radio stream effect triggered");
+    console.log("[Player] radioStreamUrl:", radioStreamUrl);
+    console.log("[Player] content.length:", content.length);
+    console.log("[Player] radioAudioRef.current:", radioAudioRef.current);
+    
+    if (!radioAudioRef.current) {
+      console.log("[Player] No radioAudioRef, skipping");
+      return;
+    }
 
     if (radioStreamUrl && content.length > 0) {
       // Start playing radio stream
       console.log("[Player] Starting radio stream:", radioStreamUrl);
       radioAudioRef.current.src = radioStreamUrl;
-      radioAudioRef.current.play().catch(err => {
+      radioAudioRef.current.volume = 0.5; // Set volume to 50%
+      radioAudioRef.current.play().then(() => {
+        console.log("[Player] Radio stream started successfully");
+      }).catch(err => {
         console.error("[Player] Failed to play radio stream:", err);
+        console.error("[Player] Error details:", err.message);
       });
     } else {
       // Stop radio stream
-      console.log("[Player] Stopping radio stream");
+      console.log("[Player] Stopping radio stream - radioStreamUrl:", radioStreamUrl, "content.length:", content.length);
       radioAudioRef.current.pause();
       radioAudioRef.current.src = "";
     }
@@ -696,8 +708,13 @@ export default function Player() {
       <audio
         ref={radioAudioRef}
         loop
+        autoPlay
+        muted={false}
         style={{ display: 'none' }}
         data-testid="radio-audio-player"
+        onPlay={() => console.log("[Player] Radio audio element started playing")}
+        onPause={() => console.log("[Player] Radio audio element paused")}
+        onError={(e) => console.error("[Player] Radio audio element error:", e)}
       />
 
       {/* Reset button (hidden, accessible via double-tap) */}
