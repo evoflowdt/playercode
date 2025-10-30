@@ -690,6 +690,34 @@ export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
+// Sprint 4 Feature 5: Granular Permissions
+export const resourcePermissions = pgTable("resource_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  organizationId: varchar("organization_id").notNull(),
+  resourceType: text("resource_type").notNull(), // 'display', 'content_item', 'playlist', 'schedule', 'display_group'
+  resourceId: varchar("resource_id").notNull(), // ID of the specific resource
+  actions: text("actions").array().notNull(), // ['view', 'edit', 'delete', 'manage']
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: varchar("created_by").notNull(), // userId who created this permission
+});
+
+export const insertResourcePermissionSchema = createInsertSchema(resourcePermissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const updateResourcePermissionSchema = insertResourcePermissionSchema.partial().omit({
+  userId: true,
+  organizationId: true,
+  resourceType: true,
+  resourceId: true,
+});
+
+export type ResourcePermission = typeof resourcePermissions.$inferSelect;
+export type InsertResourcePermission = z.infer<typeof insertResourcePermissionSchema>;
+export type UpdateResourcePermission = z.infer<typeof updateResourcePermissionSchema>;
+
 // Sprint 4: Advanced Analytics Types
 export type DisplayMetric = typeof displayMetrics.$inferSelect;
 export type ContentView = typeof contentViews.$inferSelect;
