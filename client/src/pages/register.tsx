@@ -7,11 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Monitor } from "lucide-react";
+import { useLanguage } from "@/lib/language-provider";
+import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Register() {
   const [, setLocation] = useLocation();
   const { register, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -39,8 +43,8 @@ export default function Register() {
     
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
+        title: t('passwordsDontMatchTitle'),
+        description: t('passwordsDontMatchMessage'),
         variant: "destructive",
       });
       return;
@@ -48,8 +52,8 @@ export default function Register() {
 
     if (formData.password.length < 8) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters",
+        title: t('passwordTooShortTitle'),
+        description: t('passwordTooShortMessage'),
         variant: "destructive",
       });
       return;
@@ -66,14 +70,14 @@ export default function Register() {
         organizationName: formData.organizationName,
       });
       toast({
-        title: "Registration successful",
-        description: "Welcome to EvoFlow!",
+        title: t('registrationSuccessTitle'),
+        description: t('registrationSuccessMessage'),
       });
       setLocation("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error.message || "Failed to create account",
+        title: t('registrationFailedTitle'),
+        description: error.message || t('registrationFailedMessage'),
         variant: "destructive",
       });
     } finally {
@@ -83,6 +87,10 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <div className="fixed top-4 right-4 flex gap-2">
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -91,21 +99,21 @@ export default function Register() {
               <span className="text-2xl font-bold">EvoFlow</span>
             </div>
           </div>
-          <CardTitle data-testid="text-register-title">Create your account</CardTitle>
+          <CardTitle data-testid="text-register-title">{t('registerTitle')}</CardTitle>
           <CardDescription data-testid="text-register-description">
-            Get started with EvoFlow digital signage management
+            {t('registerDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">{t('firstNameLabel')}</Label>
                 <Input
                   id="firstName"
                   name="firstName"
                   type="text"
-                  placeholder="John"
+                  placeholder={t('firstNamePlaceholder')}
                   value={formData.firstName}
                   onChange={handleChange}
                   required
@@ -114,12 +122,12 @@ export default function Register() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">{t('lastNameLabel')}</Label>
                 <Input
                   id="lastName"
                   name="lastName"
                   type="text"
-                  placeholder="Doe"
+                  placeholder={t('lastNamePlaceholder')}
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -129,12 +137,12 @@ export default function Register() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -143,12 +151,12 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="organizationName">Organization Name</Label>
+              <Label htmlFor="organizationName">{t('organizationNameLabel')}</Label>
               <Input
                 id="organizationName"
                 name="organizationName"
                 type="text"
-                placeholder="My Company"
+                placeholder={t('organizationNamePlaceholder')}
                 value={formData.organizationName}
                 onChange={handleChange}
                 required
@@ -157,12 +165,12 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('passwordLabel')}</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -171,12 +179,12 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t('confirmPasswordLabel')}</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
@@ -190,18 +198,18 @@ export default function Register() {
               disabled={isLoading}
               data-testid="button-register"
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? t('creatingAccountButton') : t('createAccountButton')}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
+            <span className="text-muted-foreground">{t('alreadyHaveAccount')} </span>
             <button
               type="button"
               onClick={() => setLocation("/login")}
               className="text-primary hover:underline font-medium"
               data-testid="link-login"
             >
-              Sign in
+              {t('signIn')}
             </button>
           </div>
         </CardContent>

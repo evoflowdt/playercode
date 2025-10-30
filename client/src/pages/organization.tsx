@@ -112,7 +112,7 @@ export default function OrganizationPage() {
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={t("organizationNamePlaceholder")}
+                placeholder={t("orgSettingsNamePlaceholder")}
                 data-testid="input-organization-name"
               />
             </div>

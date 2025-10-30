@@ -7,11 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Monitor } from "lucide-react";
+import { useLanguage } from "@/lib/language-provider";
+import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,14 +32,14 @@ export default function Login() {
     try {
       await login(email, password);
       toast({
-        title: "Login successful",
-        description: "Welcome back to EvoFlow!",
+        title: t('loginSuccessTitle'),
+        description: t('loginSuccessMessage'),
       });
       setLocation("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
+        title: t('loginFailedTitle'),
+        description: error.message || t('loginFailedMessage'),
         variant: "destructive",
       });
     } finally {
@@ -45,6 +49,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <div className="fixed top-4 right-4 flex gap-2">
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -53,19 +61,19 @@ export default function Login() {
               <span className="text-2xl font-bold">EvoFlow</span>
             </div>
           </div>
-          <CardTitle data-testid="text-login-title">Sign in to your account</CardTitle>
+          <CardTitle data-testid="text-login-title">{t('loginTitle')}</CardTitle>
           <CardDescription data-testid="text-login-description">
-            Enter your credentials to access your digital signage dashboard
+            {t('loginDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -74,11 +82,11 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('passwordLabel')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -92,18 +100,18 @@ export default function Login() {
               disabled={isLoading}
               data-testid="button-login"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? t('signingInButton') : t('signInButton')}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
+            <span className="text-muted-foreground">{t('noAccountYet')} </span>
             <button
               type="button"
               onClick={() => setLocation("/register")}
               className="text-primary hover:underline font-medium"
               data-testid="link-register"
             >
-              Create one
+              {t('createAccount')}
             </button>
           </div>
         </CardContent>
