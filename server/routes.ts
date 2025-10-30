@@ -34,6 +34,12 @@ import {
   insertContentTemplateSchema,
   updateContentTemplateSchema,
   insertTemplateApplicationSchema,
+  bulkDeleteDisplaysSchema,
+  bulkUpdateDisplaysSchema,
+  bulkAssignScheduleSchema,
+  bulkApplyTemplateSchema,
+  bulkDeleteContentSchema,
+  bulkUpdateContentTagsSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -3088,6 +3094,123 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("List template applications error:", error);
       res.status(500).json({ error: "Failed to fetch template applications" });
+    }
+  });
+
+  // Sprint 5.2: Bulk Operations endpoints
+  app.post("/api/displays/bulk/delete", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const result = bulkDeleteDisplaysSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { displayIds } = result.data;
+      const count = await storage.bulkDeleteDisplays(displayIds, organizationId);
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error("Bulk delete displays error:", error);
+      res.status(500).json({ error: "Failed to delete displays" });
+    }
+  });
+
+  app.post("/api/displays/bulk/update", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const result = bulkUpdateDisplaysSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { displayIds, updates } = result.data;
+      const count = await storage.bulkUpdateDisplays(displayIds, updates, organizationId);
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error("Bulk update displays error:", error);
+      res.status(500).json({ error: "Failed to update displays" });
+    }
+  });
+
+  app.post("/api/displays/bulk/assign-schedule", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const result = bulkAssignScheduleSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { displayIds, scheduleId } = result.data;
+      const count = await storage.bulkAssignSchedule(displayIds, scheduleId, organizationId);
+      res.json({ success: true, count });
+    } catch (error: any) {
+      console.error("Bulk assign schedule error:", error);
+      if (error.message === "Schedule not found or access denied") {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Failed to assign schedule" });
+    }
+  });
+
+  app.post("/api/displays/bulk/apply-template", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const organizationId = user.defaultOrganizationId!;
+      const userId = user.id;
+      
+      const result = bulkApplyTemplateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { displayIds, templateId } = result.data;
+      const count = await storage.bulkApplyTemplate(displayIds, templateId, userId, organizationId);
+      res.json({ success: true, count });
+    } catch (error: any) {
+      console.error("Bulk apply template error:", error);
+      if (error.message === "Template not found or access denied") {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: "Failed to apply template" });
+    }
+  });
+
+  app.post("/api/content/bulk/delete", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const result = bulkDeleteContentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { contentIds } = result.data;
+      const count = await storage.bulkDeleteContent(contentIds, organizationId);
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error("Bulk delete content error:", error);
+      res.status(500).json({ error: "Failed to delete content" });
+    }
+  });
+
+  app.post("/api/content/bulk/update-tags", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      
+      const result = bulkUpdateContentTagsSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const { contentIds, tags } = result.data;
+      const count = await storage.bulkUpdateContentTags(contentIds, tags, organizationId);
+      res.json({ success: true, count });
+    } catch (error) {
+      console.error("Bulk update content tags error:", error);
+      res.status(500).json({ error: "Failed to update content tags" });
     }
   });
 }

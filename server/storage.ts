@@ -295,6 +295,14 @@ export interface IStorage {
   deleteContentTemplate(id: string, organizationId: string): Promise<boolean>;
   applyTemplateToDisplay(insertApplication: InsertTemplateApplication): Promise<TemplateApplication>;
   getTemplateApplications(organizationId: string, filters?: { templateId?: string; displayId?: string }): Promise<TemplateApplication[]>;
+
+  // Bulk Operations methods (Sprint 5.2)
+  bulkDeleteDisplays(displayIds: string[], organizationId: string): Promise<number>;
+  bulkUpdateDisplays(displayIds: string[], updates: Partial<InsertDisplay>, organizationId: string): Promise<number>;
+  bulkAssignSchedule(displayIds: string[], scheduleId: string, organizationId: string): Promise<number>;
+  bulkApplyTemplate(displayIds: string[], templateId: string, userId: string, organizationId: string): Promise<number>;
+  bulkDeleteContent(contentIds: string[], organizationId: string): Promise<number>;
+  bulkUpdateContentTags(contentIds: string[], tags: string[], organizationId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2418,6 +2426,109 @@ export class DatabaseStorage implements IStorage {
       .from(templateApplications)
       .where(and(...conditions))
       .orderBy(desc(templateApplications.appliedAt));
+  }
+
+  // Sprint 5.2: Bulk Operations
+  async bulkDeleteDisplays(displayIds: string[], organizationId: string): Promise<number> {
+    if (displayIds.length === 0) return 0;
+    
+    const result = await db.delete(displays)
+      .where(and(
+        eq(displays.organizationId, organizationId),
+        inArray(displays.id, displayIds)
+      ));
+    return result.rowCount ?? 0;
+  }
+
+  async bulkUpdateDisplays(displayIds: string[], updates: Partial<InsertDisplay>, organizationId: string): Promise<number> {
+    if (displayIds.length === 0) return 0;
+    
+    const result = await db.update(displays)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(displays.organizationId, organizationId),
+        inArray(displays.id, displayIds)
+      ));
+    return result.rowCount ?? 0;
+  }
+
+  async bulkAssignSchedule(displayIds: string[], scheduleId: string, organizationId: string): Promise<number> {
+    if (displayIds.length === 0) return 0;
+    
+    // Verify schedule belongs to organization
+    const schedule = await db.select().from(schedules).where(
+      and(eq(schedules.id, scheduleId), eq(schedules.organizationId, organizationId))
+    ).limit(1);
+    
+    if (schedule.length === 0) {
+      throw new Error("Schedule not found or access denied");
+    }
+
+    const result = await db.update(displays)
+      .set({ currentScheduleId: scheduleId, updatedAt: new Date() })
+      .where(and(
+        eq(displays.organizationId, organizationId),
+        inArray(displays.id, displayIds)
+      ));
+    return result.rowCount ?? 0;
+  }
+
+  async bulkApplyTemplate(displayIds: string[], templateId: string, userId: string, organizationId: string): Promise<number> {
+    if (displayIds.length === 0) return 0;
+    
+    // Verify template belongs to organization
+    const template = await db.select().from(contentTemplates).where(
+      and(eq(contentTemplates.id, templateId), eq(contentTemplates.organizationId, organizationId))
+    ).limit(1);
+    
+    if (template.length === 0) {
+      throw new Error("Template not found or access denied");
+    }
+
+    // Verify all displays belong to organization
+    const validDisplays = await db.select({ id: displays.id }).from(displays).where(
+      and(
+        eq(displays.organizationId, organizationId),
+        inArray(displays.id, displayIds)
+      )
+    );
+
+    // Insert template applications for all valid displays
+    const applications = validDisplays.map(display => ({
+      templateId,
+      displayId: display.id,
+      appliedBy: userId,
+      organizationId,
+    }));
+
+    if (applications.length > 0) {
+      await db.insert(templateApplications).values(applications);
+    }
+
+    return applications.length;
+  }
+
+  async bulkDeleteContent(contentIds: string[], organizationId: string): Promise<number> {
+    if (contentIds.length === 0) return 0;
+    
+    const result = await db.delete(contentItems)
+      .where(and(
+        eq(contentItems.organizationId, organizationId),
+        inArray(contentIds.id, contentIds)
+      ));
+    return result.rowCount ?? 0;
+  }
+
+  async bulkUpdateContentTags(contentIds: string[], tags: string[], organizationId: string): Promise<number> {
+    if (contentIds.length === 0) return 0;
+    
+    const result = await db.update(contentItems)
+      .set({ tags })
+      .where(and(
+        eq(contentItems.organizationId, organizationId),
+        inArray(contentItems.id, contentIds)
+      ));
+    return result.rowCount ?? 0;
   }
 }
 
