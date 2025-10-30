@@ -52,6 +52,18 @@ export default function Templates() {
 
   const { data: templates = [], isLoading } = useQuery<ContentTemplate[]>({
     queryKey: ["/api/templates", selectedType],
+    queryFn: async () => {
+      const url = selectedType === "all" 
+        ? "/api/templates" 
+        : `/api/templates?type=${selectedType}`;
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(url, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
+    },
   });
 
   const { data: displays = [] } = useQuery<any[]>({
