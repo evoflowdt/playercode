@@ -117,9 +117,10 @@ export class SchedulingEngine {
   async getActiveSchedules(
     targetType: "display" | "group",
     targetId: string,
+    organizationId: string,
     currentDate: Date = new Date()
   ): Promise<Schedule[]> {
-    const allSchedules = await storage.getAllSchedules();
+    const allSchedules = await storage.getAllSchedules(organizationId);
     
     // Filter schedules by target and active status
     const targetSchedules = allSchedules.filter(
@@ -186,7 +187,7 @@ export class SchedulingEngine {
     console.log(`[SchedulingEngine] getContentForDisplay called for display ${displayId} at ${currentDate.toISOString()}`);
     
     // Get display to find group
-    const display = await storage.getDisplay(displayId);
+    const display = await storage.getDisplayById(displayId);
     if (!display) {
       console.log(`[SchedulingEngine] Display ${displayId} not found`);
       return null;
@@ -195,13 +196,13 @@ export class SchedulingEngine {
     console.log(`[SchedulingEngine] Found display: ${display.name}, groupId: ${display.groupId}`);
     
     // Get schedules for this specific display
-    const displaySchedules = await this.getActiveSchedules("display", displayId, currentDate);
+    const displaySchedules = await this.getActiveSchedules("display", displayId, display.organizationId, currentDate);
     console.log(`[SchedulingEngine] Found ${displaySchedules.length} active display schedules`);
     
     // Get schedules for display's group (if any)
     let groupSchedules: Schedule[] = [];
     if (display.groupId) {
-      groupSchedules = await this.getActiveSchedules("group", display.groupId, currentDate);
+      groupSchedules = await this.getActiveSchedules("group", display.groupId, display.organizationId, currentDate);
       console.log(`[SchedulingEngine] Found ${groupSchedules.length} active group schedules`);
     }
     
@@ -259,9 +260,10 @@ export class SchedulingEngine {
    */
   async getContentForGroup(
     groupId: string,
+    organizationId: string,
     currentDate: Date = new Date()
   ): Promise<ScheduledContent | null> {
-    const groupSchedules = await this.getActiveSchedules("group", groupId, currentDate);
+    const groupSchedules = await this.getActiveSchedules("group", groupId, organizationId, currentDate);
     
     if (groupSchedules.length === 0) {
       return null;
@@ -313,9 +315,10 @@ export class SchedulingEngine {
   async detectConflicts(
     targetType: "display" | "group",
     targetId: string,
+    organizationId: string,
     currentDate: Date = new Date()
   ): Promise<Array<{ schedule1: Schedule; schedule2: Schedule; reason: string }>> {
-    const activeSchedules = await this.getActiveSchedules(targetType, targetId, currentDate);
+    const activeSchedules = await this.getActiveSchedules(targetType, targetId, organizationId, currentDate);
     const conflicts: Array<{ schedule1: Schedule; schedule2: Schedule; reason: string }> = [];
     
     // Check for overlapping schedules
@@ -353,6 +356,7 @@ export class SchedulingEngine {
   async getTimelinePreview(
     targetType: "display" | "group",
     targetId: string,
+    organizationId: string,
     startDate: Date,
     endDate: Date,
     intervalMinutes: number = 60
@@ -366,7 +370,7 @@ export class SchedulingEngine {
       if (targetType === "display") {
         content = await this.getContentForDisplay(targetId, current);
       } else {
-        content = await this.getContentForGroup(targetId, current);
+        content = await this.getContentForGroup(targetId, organizationId, current);
       }
       
       timeline.push({

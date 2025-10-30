@@ -2089,6 +2089,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   // Conflict detection endpoint
   app.post("/api/scheduling/conflicts", async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const { targetType, targetId, currentDate } = req.body;
       
       if (!targetType || !targetId) {
@@ -2099,6 +2103,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const conflicts = await schedulingEngine.detectConflicts(
         targetType,
         targetId,
+        req.user.organizationId,
         currentDate ? new Date(currentDate) : new Date()
       );
       
@@ -2112,6 +2117,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   // Timeline preview endpoint
   app.post("/api/scheduling/timeline", async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const { targetType, targetId, startDate, endDate, intervalMinutes } = req.body;
       
       if (!targetType || !targetId || !startDate || !endDate) {
@@ -2124,6 +2133,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const timeline = await schedulingEngine.getTimelinePreview(
         targetType,
         targetId,
+        req.user.organizationId,
         new Date(startDate),
         new Date(endDate),
         intervalMinutes || 60
