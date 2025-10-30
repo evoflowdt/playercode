@@ -32,11 +32,6 @@ export default function PlaylistDetailPage() {
 
   const { data: playlist, isLoading } = useQuery<PlaylistWithItems>({
     queryKey: ["/api/playlists", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/playlists/${id}`);
-      if (!response.ok) throw new Error("Failed to fetch playlist");
-      return response.json();
-    },
   });
 
   const { data: allContent = [] } = useQuery<ContentItem[]>({
@@ -45,11 +40,6 @@ export default function PlaylistDetailPage() {
 
   const { data: radioStreams = [] } = useQuery<RadioStream[]>({
     queryKey: ["/api/radio-streams/playlist", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/radio-streams/playlist/${id}`);
-      if (!response.ok) throw new Error("Failed to fetch radio streams");
-      return response.json();
-    },
   });
 
   const addItemMutation = useMutation({
