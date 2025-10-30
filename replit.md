@@ -17,8 +17,9 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Shared**: Contains TypeScript schemas, Zod validation, and Drizzle ORM definitions for data consistency. Includes database schemas for multi-tenant architecture (users, organizations, roles, sessions).
 
 ### Feature Specifications
+-   **Landing Page**: Modern, responsive marketing page at root path (/) with hero section, features showcase (6 cards), services overview (4 cards), CTA sections, and footer. Full bilingual support (EN/IT) with language/theme toggles. Navigation to Sign In (/login) and Sign Up (/register) pages.
 -   **Multi-Tenant Authentication System**: Session-based authentication with role-based access control (RBAC) supporting user registration, secure login, session management, and protected routes.
--   **Dashboard**: Real-time statistics, geographic display map, and recent displays grid.
+-   **Dashboard**: Real-time statistics, geographic display map, and recent displays grid. Accessible at /dashboard for authenticated users.
 -   **Display Management**: View, search, filter, monitor displays, edit information (name, location, coordinates, resolution), and integrate geocoding. Supports dual view modes (grid/table) and WebSocket notifications.
 -   **Content Library**: Upload images/videos to object storage with drag-and-drop, search, filtering, and metadata display.
 -   **Scheduling**: Create, edit, and manage time-based, recurring content schedules for displays or groups, with content/playlist assignment, conditional rules, and transition effects.
