@@ -751,3 +751,72 @@ export interface AdvancedAnalytics {
     totalViews: number;
   }>;
 }
+
+// ============================================================
+// Sprint 5: Advanced Features
+// ============================================================
+
+// Sprint 5.1: Content Templates
+export const contentTemplates = pgTable("content_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // 'welcome', 'menu', 'emergency', 'promo', 'custom'
+  thumbnailUrl: text("thumbnail_url"),
+  config: text("config").notNull(), // JSON: { playlistId?, contentId?, layoutType, settings }
+  isPublic: boolean("is_public").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+});
+
+export const templateApplications = pgTable("template_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => contentTemplates.id),
+  displayId: varchar("display_id").notNull().references(() => displays.id),
+  appliedAt: timestamp("applied_at").notNull().defaultNow(),
+  appliedBy: varchar("applied_by").notNull().references(() => users.id),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+});
+
+export const insertContentTemplateSchema = createInsertSchema(contentTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateContentTemplateSchema = insertContentTemplateSchema.partial().omit({
+  organizationId: true,
+  createdBy: true,
+});
+
+export const insertTemplateApplicationSchema = createInsertSchema(templateApplications).omit({
+  id: true,
+  appliedAt: true,
+});
+
+export type ContentTemplate = typeof contentTemplates.$inferSelect;
+export type InsertContentTemplate = z.infer<typeof insertContentTemplateSchema>;
+export type UpdateContentTemplate = z.infer<typeof updateContentTemplateSchema>;
+
+export type TemplateApplication = typeof templateApplications.$inferSelect;
+export type InsertTemplateApplication = z.infer<typeof insertTemplateApplicationSchema>;
+
+// Template config type for type-safe JSON parsing
+export interface TemplateConfig {
+  playlistId?: string;
+  contentId?: string;
+  layoutType: 'fullscreen' | 'split-horizontal' | 'split-vertical' | 'grid-2x2' | 'grid-3x3';
+  settings: {
+    transitionEffect?: 'fade' | 'slide' | 'none';
+    defaultDuration?: number; // seconds
+    backgroundColor?: string;
+    customCss?: string;
+  };
+  schedule?: {
+    startTime?: string;
+    endTime?: string;
+    repeat?: string;
+  };
+}

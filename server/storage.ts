@@ -66,6 +66,11 @@ import {
   type ResourcePermission,
   type InsertResourcePermission,
   type UpdateResourcePermission,
+  type ContentTemplate,
+  type InsertContentTemplate,
+  type UpdateContentTemplate,
+  type TemplateApplication,
+  type InsertTemplateApplication,
   displays,
   contentItems,
   displayGroups,
@@ -96,6 +101,8 @@ import {
   webhookEvents,
   notifications,
   resourcePermissions,
+  contentTemplates,
+  templateApplications,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt, lt, gte, lte, desc } from "drizzle-orm";
@@ -279,6 +286,15 @@ export interface IStorage {
   checkResourcePermission(userId: string, organizationId: string, resourceType: string, resourceId: string, action: string): Promise<boolean>;
   updateResourcePermission(id: string, organizationId: string, updates: UpdateResourcePermission): Promise<ResourcePermission | undefined>;
   deleteResourcePermission(id: string, organizationId: string): Promise<boolean>;
+
+  // Content Templates methods (Sprint 5.1)
+  createContentTemplate(insertTemplate: InsertContentTemplate): Promise<ContentTemplate>;
+  listContentTemplates(organizationId: string, filters?: { type?: string; isPublic?: boolean }): Promise<ContentTemplate[]>;
+  getContentTemplate(id: string, organizationId: string): Promise<ContentTemplate | undefined>;
+  updateContentTemplate(id: string, organizationId: string, updates: UpdateContentTemplate): Promise<ContentTemplate | undefined>;
+  deleteContentTemplate(id: string, organizationId: string): Promise<boolean>;
+  applyTemplateToDisplay(insertApplication: InsertTemplateApplication): Promise<TemplateApplication>;
+  getTemplateApplications(organizationId: string, filters?: { templateId?: string; displayId?: string }): Promise<TemplateApplication[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2294,6 +2310,114 @@ export class DatabaseStorage implements IStorage {
       )
       .returning();
     return result.length > 0;
+  }
+
+  // Content Templates methods (Sprint 5.1)
+  async createContentTemplate(insertTemplate: InsertContentTemplate): Promise<ContentTemplate> {
+    const [template] = await db
+      .insert(contentTemplates)
+      .values({
+        ...insertTemplate,
+        updatedAt: new Date(),
+      })
+      .returning();
+    return template;
+  }
+
+  async listContentTemplates(
+    organizationId: string,
+    filters?: { type?: string; isPublic?: boolean }
+  ): Promise<ContentTemplate[]> {
+    const conditions = [eq(contentTemplates.organizationId, organizationId)];
+    
+    if (filters?.type) {
+      conditions.push(eq(contentTemplates.type, filters.type));
+    }
+    
+    if (filters?.isPublic !== undefined) {
+      conditions.push(eq(contentTemplates.isPublic, filters.isPublic));
+    }
+
+    return await db
+      .select()
+      .from(contentTemplates)
+      .where(and(...conditions))
+      .orderBy(desc(contentTemplates.createdAt));
+  }
+
+  async getContentTemplate(id: string, organizationId: string): Promise<ContentTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(contentTemplates)
+      .where(
+        and(
+          eq(contentTemplates.id, id),
+          eq(contentTemplates.organizationId, organizationId)
+        )
+      );
+    return template || undefined;
+  }
+
+  async updateContentTemplate(
+    id: string,
+    organizationId: string,
+    updates: UpdateContentTemplate
+  ): Promise<ContentTemplate | undefined> {
+    const [updated] = await db
+      .update(contentTemplates)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(contentTemplates.id, id),
+          eq(contentTemplates.organizationId, organizationId)
+        )
+      )
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteContentTemplate(id: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .delete(contentTemplates)
+      .where(
+        and(
+          eq(contentTemplates.id, id),
+          eq(contentTemplates.organizationId, organizationId)
+        )
+      );
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async applyTemplateToDisplay(insertApplication: InsertTemplateApplication): Promise<TemplateApplication> {
+    const [application] = await db
+      .insert(templateApplications)
+      .values(insertApplication)
+      .returning();
+    return application;
+  }
+
+  async getTemplateApplications(
+    organizationId: string,
+    filters?: { templateId?: string; displayId?: string }
+  ): Promise<TemplateApplication[]> {
+    const conditions = [eq(templateApplications.organizationId, organizationId)];
+    
+    if (filters?.templateId) {
+      conditions.push(eq(templateApplications.templateId, filters.templateId));
+    }
+    
+    if (filters?.displayId) {
+      conditions.push(eq(templateApplications.displayId, filters.displayId));
+    }
+
+    return await db
+      .select()
+      .from(templateApplications)
+      .where(and(...conditions))
+      .orderBy(desc(templateApplications.appliedAt));
   }
 }
 

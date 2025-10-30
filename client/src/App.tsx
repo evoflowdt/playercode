@@ -27,6 +27,7 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
 import Content from "@/pages/content";
+import Templates from "@/pages/templates";
 import Schedules from "@/pages/schedules";
 import AdvancedScheduling from "@/pages/advanced-scheduling";
 import Groups from "@/pages/groups";
@@ -105,6 +106,7 @@ function ProtectedRouter() {
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/displays" component={() => <ProtectedRoute component={Displays} />} />
       <Route path="/content" component={() => <ProtectedRoute component={Content} />} />
+      <Route path="/templates" component={() => <ProtectedRoute component={Templates} />} />
       <Route path="/schedules" component={() => <ProtectedRoute component={Schedules} />} />
       <Route path="/advanced-scheduling" component={() => <ProtectedRoute component={AdvancedScheduling} />} />
       <Route path="/groups" component={() => <ProtectedRoute component={Groups} />} />

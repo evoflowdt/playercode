@@ -17,6 +17,7 @@ import {
   Building2,
   ScrollText,
   Code,
+  LayoutTemplate,
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +50,12 @@ const menuItemsConfig = [
     url: "/content",
     icon: FolderOpen,
     testId: "link-content",
+  },
+  {
+    titleKey: "templates" as const,
+    url: "/templates",
+    icon: LayoutTemplate,
+    testId: "link-templates",
   },
   {
     titleKey: "scheduling" as const,

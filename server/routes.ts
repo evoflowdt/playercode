@@ -31,6 +31,9 @@ import {
   insertNotificationSchema,
   insertResourcePermissionSchema,
   updateResourcePermissionSchema,
+  insertContentTemplateSchema,
+  updateContentTemplateSchema,
+  insertTemplateApplicationSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -2932,6 +2935,159 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Delete permission error:", error);
       res.status(500).json({ error: "Failed to delete permission" });
+    }
+  });
+
+  // ============================================================
+  // Sprint 5.1: Content Templates Routes
+  // ============================================================
+
+  app.post("/api/templates", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const organizationId = user.defaultOrganizationId!;
+      const userId = user.id;
+
+      const parsed = insertContentTemplateSchema.parse(req.body);
+      
+      const template = await storage.createContentTemplate({
+        ...parsed,
+        organizationId,
+        createdBy: userId,
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid template data", details: error.errors });
+      }
+      console.error("Create template error:", error);
+      res.status(500).json({ error: "Failed to create template" });
+    }
+  });
+
+  app.get("/api/templates", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const type = req.query.type as string | undefined;
+      const isPublic = req.query.isPublic ? req.query.isPublic === 'true' : undefined;
+
+      const templates = await storage.listContentTemplates(organizationId, { type, isPublic });
+      res.json(templates);
+    } catch (error) {
+      console.error("List templates error:", error);
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  app.get("/api/templates/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const template = await storage.getContentTemplate(req.params.id, organizationId);
+
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Get template error:", error);
+      res.status(500).json({ error: "Failed to fetch template" });
+    }
+  });
+
+  app.patch("/api/templates/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const parsed = updateContentTemplateSchema.parse(req.body);
+
+      const updated = await storage.updateContentTemplate(req.params.id, organizationId, parsed);
+
+      if (!updated) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid template data", details: error.errors });
+      }
+      console.error("Update template error:", error);
+      res.status(500).json({ error: "Failed to update template" });
+    }
+  });
+
+  app.delete("/api/templates/:id", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const deleted = await storage.deleteContentTemplate(req.params.id, organizationId);
+
+      if (!deleted) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete template error:", error);
+      res.status(500).json({ error: "Failed to delete template" });
+    }
+  });
+
+  app.post("/api/templates/:id/apply", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const organizationId = user.defaultOrganizationId!;
+      const userId = user.id;
+      const templateId = req.params.id;
+
+      const { displayId } = req.body;
+      
+      if (!displayId) {
+        return res.status(400).json({ error: "displayId is required" });
+      }
+
+      // Validate template belongs to organization
+      const template = await storage.getContentTemplate(templateId, organizationId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found or access denied" });
+      }
+
+      // Validate display belongs to same organization
+      const display = await storage.getDisplay(displayId, organizationId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found or access denied" });
+      }
+
+      // Ensure display belongs to the same organization as the template
+      if (display.organizationId !== organizationId) {
+        return res.status(403).json({ error: "Cannot apply template to display from different organization" });
+      }
+
+      const application = await storage.applyTemplateToDisplay({
+        templateId,
+        displayId,
+        appliedBy: userId,
+        organizationId,
+      });
+
+      res.status(201).json(application);
+    } catch (error) {
+      console.error("Apply template error:", error);
+      res.status(500).json({ error: "Failed to apply template" });
+    }
+  });
+
+  app.get("/api/templates/applications", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const templateId = req.query.templateId as string | undefined;
+      const displayId = req.query.displayId as string | undefined;
+
+      const applications = await storage.getTemplateApplications(organizationId, { templateId, displayId });
+      res.json(applications);
+    } catch (error) {
+      console.error("List template applications error:", error);
+      res.status(500).json({ error: "Failed to fetch template applications" });
     }
   });
 }
