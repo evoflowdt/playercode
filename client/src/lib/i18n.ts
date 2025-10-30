@@ -5,6 +5,56 @@ export const translations = {
     // App
     appName: 'EvoFlow',
     
+    // Landing Page
+    landingHeroTitle: 'Professional Digital Signage Management',
+    landingHeroSubtitle: 'Take control of your displays with EvoFlow - the cloud-based platform for managing digital signage across multiple locations and devices',
+    landingGetStarted: 'Get Started',
+    landingSignIn: 'Sign In',
+    landingLearnMore: 'Learn More',
+    
+    landingFeaturesTitle: 'Everything You Need',
+    landingFeaturesSubtitle: 'Comprehensive tools for managing your digital signage network',
+    
+    landingFeature1Title: 'Multi-Device Support',
+    landingFeature1Desc: 'Compatible with LG webOS, Samsung Tizen, Android, and Raspberry Pi displays',
+    
+    landingFeature2Title: 'Content Management',
+    landingFeature2Desc: 'Upload, organize, and schedule images, videos, and playlists with ease',
+    
+    landingFeature3Title: 'Real-Time Monitoring',
+    landingFeature3Desc: 'Monitor display status, performance metrics, and content playback in real-time',
+    
+    landingFeature4Title: 'Advanced Scheduling',
+    landingFeature4Desc: 'Create time-based and conditional schedules with transition effects',
+    
+    landingFeature5Title: 'Display Groups',
+    landingFeature5Desc: 'Organize displays into groups for efficient bulk content deployment',
+    
+    landingFeature6Title: 'Analytics Dashboard',
+    landingFeature6Desc: 'Track display uptime, content popularity, and system performance',
+    
+    landingServicesTitle: 'Built for Scale',
+    landingServicesSubtitle: 'Enterprise-ready features for organizations of all sizes',
+    
+    landingService1Title: 'Multi-Tenant Architecture',
+    landingService1Desc: 'Complete data isolation between organizations with role-based access control',
+    
+    landingService2Title: 'Team Collaboration',
+    landingService2Desc: 'Invite team members with customizable roles and granular permissions',
+    
+    landingService3Title: 'Developer API',
+    landingService3Desc: 'Integrate with your systems using our comprehensive REST API and webhooks',
+    
+    landingService4Title: 'Audit Logging',
+    landingService4Desc: 'Complete audit trail of all actions for compliance and security',
+    
+    landingCtaTitle: 'Ready to Transform Your Digital Signage?',
+    landingCtaSubtitle: 'Join organizations worldwide using EvoFlow to manage their displays',
+    landingCtaButton: 'Start Free Trial',
+    
+    landingFooterAbout: 'About EvoFlow',
+    landingFooterAboutText: 'EvoFlow is a comprehensive cloud-based digital signage management platform designed for businesses of all sizes.',
+    
     // Navigation
     dashboard: 'Dashboard',
     displays: 'Displays',
@@ -857,6 +907,56 @@ export const translations = {
   it: {
     // App
     appName: 'EvoFlow',
+    
+    // Landing Page
+    landingHeroTitle: 'Gestione Professionale Digital Signage',
+    landingHeroSubtitle: 'Prendi il controllo dei tuoi display con EvoFlow - la piattaforma cloud per gestire digital signage in più sedi e dispositivi',
+    landingGetStarted: 'Inizia Ora',
+    landingSignIn: 'Accedi',
+    landingLearnMore: 'Scopri di Più',
+    
+    landingFeaturesTitle: 'Tutto Ciò di Cui Hai Bisogno',
+    landingFeaturesSubtitle: 'Strumenti completi per gestire la tua rete di digital signage',
+    
+    landingFeature1Title: 'Supporto Multi-Dispositivo',
+    landingFeature1Desc: 'Compatibile con display LG webOS, Samsung Tizen, Android e Raspberry Pi',
+    
+    landingFeature2Title: 'Gestione Contenuti',
+    landingFeature2Desc: 'Carica, organizza e pianifica immagini, video e playlist con facilità',
+    
+    landingFeature3Title: 'Monitoraggio in Tempo Reale',
+    landingFeature3Desc: 'Monitora lo stato dei display, metriche di performance e riproduzione contenuti in tempo reale',
+    
+    landingFeature4Title: 'Pianificazione Avanzata',
+    landingFeature4Desc: 'Crea pianificazioni temporali e condizionali con effetti di transizione',
+    
+    landingFeature5Title: 'Gruppi Display',
+    landingFeature5Desc: 'Organizza i display in gruppi per distribuire contenuti in modo efficiente',
+    
+    landingFeature6Title: 'Dashboard Analitica',
+    landingFeature6Desc: 'Monitora uptime dei display, popolarità dei contenuti e performance del sistema',
+    
+    landingServicesTitle: 'Progettato per la Scalabilità',
+    landingServicesSubtitle: 'Funzionalità enterprise per organizzazioni di ogni dimensione',
+    
+    landingService1Title: 'Architettura Multi-Tenant',
+    landingService1Desc: 'Isolamento completo dei dati tra organizzazioni con controllo accessi basato sui ruoli',
+    
+    landingService2Title: 'Collaborazione Team',
+    landingService2Desc: 'Invita membri del team con ruoli personalizzabili e permessi granulari',
+    
+    landingService3Title: 'API per Sviluppatori',
+    landingService3Desc: 'Integra con i tuoi sistemi utilizzando le nostre API REST complete e webhook',
+    
+    landingService4Title: 'Registro Audit',
+    landingService4Desc: 'Tracciamento completo di tutte le azioni per conformità e sicurezza',
+    
+    landingCtaTitle: 'Pronto a Trasformare il Tuo Digital Signage?',
+    landingCtaSubtitle: 'Unisciti alle organizzazioni in tutto il mondo che usano EvoFlow per gestire i loro display',
+    landingCtaButton: 'Inizia la Prova Gratuita',
+    
+    landingFooterAbout: 'Informazioni su EvoFlow',
+    landingFooterAboutText: 'EvoFlow è una piattaforma completa cloud per la gestione di digital signage, progettata per aziende di tutte le dimensioni.',
     
     // Navigation
     dashboard: 'Cruscotto',
