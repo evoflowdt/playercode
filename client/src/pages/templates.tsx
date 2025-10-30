@@ -313,12 +313,11 @@ export default function Templates() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="playlist">Default Playlist (Optional)</Label>
-                  <Select value={formData.playlistId} onValueChange={(value) => setFormData({ ...formData, playlistId: value })}>
+                  <Select value={formData.playlistId || undefined} onValueChange={(value) => setFormData({ ...formData, playlistId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select playlist" />
+                      <SelectValue placeholder="None - Select playlist" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       {playlists.map((playlist: any) => (
                         <SelectItem key={playlist.id} value={playlist.id}>
                           {playlist.name}
@@ -329,12 +328,11 @@ export default function Templates() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="content">Default Content (Optional)</Label>
-                  <Select value={formData.contentId} onValueChange={(value) => setFormData({ ...formData, contentId: value })}>
+                  <Select value={formData.contentId || undefined} onValueChange={(value) => setFormData({ ...formData, contentId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select content" />
+                      <SelectValue placeholder="None - Select content" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       {contentItems.map((item: any) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name}
