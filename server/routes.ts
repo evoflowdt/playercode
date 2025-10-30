@@ -1790,6 +1790,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         });
       }
       
+      // Notify connected clients about the new display
+      broadcast({
+        type: 'display_added',
+        data: display
+      });
+      
       res.status(201).json({ display, message: "Player paired successfully" });
     } catch (error) {
       console.error("Pairing error:", error);
