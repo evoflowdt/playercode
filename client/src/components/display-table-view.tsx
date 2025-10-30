@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MoreVertical, MapPin, Monitor } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
@@ -22,6 +23,8 @@ import { useLanguage } from "@/lib/language-provider";
 
 interface DisplayTableViewProps {
   displays: Display[];
+  selectedDisplayIds?: Set<string>;
+  onToggleSelection?: (id: string) => void;
   onViewDetails?: (display: Display) => void;
   onEdit?: (display: Display) => void;
   onDelete?: (display: Display) => void;
@@ -29,6 +32,8 @@ interface DisplayTableViewProps {
 
 export function DisplayTableView({
   displays,
+  selectedDisplayIds,
+  onToggleSelection,
   onViewDetails,
   onEdit,
   onDelete,
@@ -67,6 +72,11 @@ export function DisplayTableView({
       <Table>
         <TableHeader>
           <TableRow>
+            {selectedDisplayIds && onToggleSelection && (
+              <TableHead className="w-12">
+                <span className="sr-only">Select</span>
+              </TableHead>
+            )}
             <TableHead className="w-12"></TableHead>
             <TableHead>{t('name')}</TableHead>
             <TableHead>{t('status')}</TableHead>
@@ -80,7 +90,7 @@ export function DisplayTableView({
         <TableBody>
           {displays.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={selectedDisplayIds && onToggleSelection ? 9 : 8} className="text-center py-8 text-muted-foreground">
                 {t('noDisplaysFound')}
               </TableCell>
             </TableRow>
@@ -92,6 +102,16 @@ export function DisplayTableView({
                 onClick={() => onViewDetails?.(display)}
                 data-testid={`row-display-${display.id}`}
               >
+                {selectedDisplayIds && onToggleSelection && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedDisplayIds.has(display.id)}
+                      onCheckedChange={() => onToggleSelection(display.id)}
+                      data-testid={`checkbox-display-${display.id}`}
+                      aria-label={`Select ${display.name}`}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                   {display.screenshot ? (
                     <img

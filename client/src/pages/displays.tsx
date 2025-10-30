@@ -94,6 +94,89 @@ export default function Displays() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (displayIds: string[]) => 
+      apiRequest("POST", "/api/displays/bulk/delete", { displayIds }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/displays"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        title: t('success'),
+        description: `${data.count} ${t('displaysDeleted')}`,
+      });
+      setSelectedDisplayIds(new Set());
+      setShowBulkDeleteDialog(false);
+    },
+    onError: () => {
+      toast({
+        title: t('error'),
+        description: t('failedBulkDelete'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: ({ displayIds, updates }: { displayIds: string[], updates: any }) =>
+      apiRequest("POST", "/api/displays/bulk/update", { displayIds, updates }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/displays"] });
+      toast({
+        title: t('success'),
+        description: `${data.count} ${t('displaysUpdated')}`,
+      });
+      setSelectedDisplayIds(new Set());
+      setShowBulkUpdateDialog(false);
+      setBulkUpdateName("");
+      setBulkUpdateStatus("");
+    },
+    onError: () => {
+      toast({
+        title: t('error'),
+        description: t('failedBulkUpdate'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleDisplaySelection = (displayId: string) => {
+    const newSelection = new Set(selectedDisplayIds);
+    if (newSelection.has(displayId)) {
+      newSelection.delete(displayId);
+    } else {
+      newSelection.add(displayId);
+    }
+    setSelectedDisplayIds(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedDisplayIds.size === filteredDisplays?.length) {
+      setSelectedDisplayIds(new Set());
+    } else {
+      setSelectedDisplayIds(new Set(filteredDisplays?.map(d => d.id) || []));
+    }
+  };
+
+  const handleBulkUpdate = () => {
+    const updates: any = {};
+    if (bulkUpdateName.trim()) updates.name = bulkUpdateName.trim();
+    if (bulkUpdateStatus) updates.status = bulkUpdateStatus;
+    
+    if (Object.keys(updates).length === 0) {
+      toast({
+        title: t('error'),
+        description: t('noFieldsToUpdate'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    bulkUpdateMutation.mutate({
+      displayIds: Array.from(selectedDisplayIds),
+      updates,
+    });
+  };
+
   const filteredDisplays = displays?.filter((display) => {
     const matchesSearch =
       display.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -120,6 +203,55 @@ export default function Displays() {
           {t('addDisplay')}
         </Button>
       </div>
+
+      {selectedDisplayIds.size > 0 && (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="px-3 py-1">
+                {selectedDisplayIds.size} {t('selected')}
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                data-testid="button-toggle-select-all"
+              >
+                {selectedDisplayIds.size === filteredDisplays?.length ? (
+                  <>
+                    <Square className="h-4 w-4 mr-2" />
+                    {t('deselectAll')}
+                  </>
+                ) : (
+                  <>
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    {t('selectAll')}
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkUpdateDialog(true)}
+                data-testid="button-bulk-update"
+              >
+                {t('bulkUpdate')}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowBulkDeleteDialog(true)}
+                data-testid="button-bulk-delete"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {t('delete')}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -179,18 +311,29 @@ export default function Displays() {
         viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredDisplays.map((display) => (
-              <DisplayCard
-                key={display.id}
-                display={display}
-                onViewDetails={setSelectedDisplay}
-                onEdit={setEditDisplay}
-                onDelete={setDeleteDisplay}
-              />
+              <div key={display.id} className="relative">
+                <div className="absolute top-3 left-3 z-10">
+                  <Checkbox
+                    checked={selectedDisplayIds.has(display.id)}
+                    onCheckedChange={() => toggleDisplaySelection(display.id)}
+                    data-testid={`checkbox-display-${display.id}`}
+                    aria-label={`Select ${display.name}`}
+                  />
+                </div>
+                <DisplayCard
+                  display={display}
+                  onViewDetails={setSelectedDisplay}
+                  onEdit={setEditDisplay}
+                  onDelete={setDeleteDisplay}
+                />
+              </div>
             ))}
           </div>
         ) : (
           <DisplayTableView
             displays={filteredDisplays}
+            selectedDisplayIds={selectedDisplayIds}
+            onToggleSelection={toggleDisplaySelection}
             onViewDetails={setSelectedDisplay}
             onEdit={setEditDisplay}
             onDelete={setDeleteDisplay}
@@ -302,6 +445,73 @@ export default function Displays() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedDisplayIds.size} Displays</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete these displays? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedDisplayIds))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={bulkDeleteMutation.isPending}
+              data-testid="button-confirm-bulk-delete"
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showBulkUpdateDialog} onOpenChange={setShowBulkUpdateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update {selectedDisplayIds.size} Displays</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name (optional)</label>
+              <Input
+                placeholder="Leave empty to keep current names"
+                value={bulkUpdateName}
+                onChange={(e) => setBulkUpdateName(e.target.value)}
+                data-testid="input-bulk-update-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status (optional)</label>
+              <Select value={bulkUpdateStatus} onValueChange={setBulkUpdateStatus}>
+                <SelectTrigger data-testid="select-bulk-update-status">
+                  <SelectValue placeholder="Leave empty to keep current status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No change</SelectItem>
+                  <SelectItem value="online">{t('online')}</SelectItem>
+                  <SelectItem value="offline">{t('offline')}</SelectItem>
+                  <SelectItem value="error">{t('error')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowBulkUpdateDialog(false)}>
+              {t('cancel')}
+            </Button>
+            <Button
+              onClick={handleBulkUpdate}
+              disabled={bulkUpdateMutation.isPending}
+              data-testid="button-confirm-bulk-update"
+            >
+              {bulkUpdateMutation.isPending ? "Updating..." : "Update"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

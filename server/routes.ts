@@ -1092,15 +1092,20 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   app.post("/api/displays", requireAuth, async (req, res) => {
     try {
       const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
-      const validatedData = insertDisplaySchema.parse(req.body);
-      const display = await storage.createDisplay(validatedData, organizationId);
+      const result = insertDisplaySchema.safeParse(req.body);
+      if (!result.success) {
+        console.error("Display validation error:", fromZodError(result.error).message);
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+      const display = await storage.createDisplay(result.data, organizationId);
       broadcast({
         type: 'display_added',
         data: display
       });
       res.status(201).json(display);
     } catch (error) {
-      res.status(400).json({ error: "Invalid display data" });
+      console.error("Create display error:", error);
+      res.status(500).json({ error: "Failed to create display" });
     }
   });
 
