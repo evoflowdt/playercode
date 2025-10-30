@@ -51,6 +51,7 @@ export const schedules = pgTable("schedules", {
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
   repeat: text("repeat"),
+  priority: integer("priority").notNull().default(0), // Higher number = higher priority
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   organizationId: varchar("organization_id").notNull(),
@@ -127,10 +128,11 @@ export const schedulingRules = pgTable("scheduling_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   scheduleId: varchar("schedule_id").notNull(),
   name: text("name").notNull(),
-  ruleType: text("rule_type").notNull(), // 'day_of_week', 'time_range', 'date_range', 'condition'
+  ruleType: text("rule_type").notNull(), // 'daypart', 'day_of_week', 'time_range', 'date_range'
   ruleConfig: text("rule_config").notNull(), // JSON string with rule configuration
   priority: integer("priority").notNull().default(0),
   enabled: boolean("enabled").notNull().default(true),
+  organizationId: varchar("organization_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -323,6 +325,7 @@ export const insertScheduleSchema = createInsertSchema(schedules).pick({
   startTime: true,
   endTime: true,
   repeat: true,
+  priority: true,
   active: true,
 }).refine(
   (data) => data.contentId || data.playlistId,
@@ -387,6 +390,7 @@ export const insertSchedulingRuleSchema = createInsertSchema(schedulingRules).pi
   ruleConfig: true,
   priority: true,
   enabled: true,
+  organizationId: true,
 });
 
 export const insertContentPrioritySchema = createInsertSchema(contentPriority).pick({

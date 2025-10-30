@@ -16,13 +16,19 @@ interface DateRangeRule {
   endDate: string; // ISO date
 }
 
+interface DaypartRule {
+  daypart: "morning" | "afternoon" | "evening" | "night" | "custom";
+  customStartTime?: string; // HH:MM format (for custom daypart)
+  customEndTime?: string; // HH:MM format (for custom daypart)
+}
+
 interface ConditionRule {
   type: "weather" | "custom";
   condition: string;
   value: any;
 }
 
-type RuleConfig = DayOfWeekRule | TimeRangeRule | DateRangeRule | ConditionRule;
+type RuleConfig = DayOfWeekRule | TimeRangeRule | DateRangeRule | DaypartRule | ConditionRule;
 
 export interface ScheduledContent {
   contentId?: string; // Present if schedule has single content
@@ -51,6 +57,8 @@ export class SchedulingEngine {
           return this.evaluateTimeRangeRule(config as TimeRangeRule, currentDate);
         case "date_range":
           return this.evaluateDateRangeRule(config as DateRangeRule, currentDate);
+        case "daypart":
+          return this.evaluateDaypartRule(config as DaypartRule, currentDate);
         case "condition":
           return this.evaluateConditionRule(config as ConditionRule, currentDate);
         default:
@@ -100,6 +108,57 @@ export class SchedulingEngine {
     const end = new Date(config.endDate).getTime();
     
     return current >= start && current <= end;
+  }
+
+  /**
+   * Evaluate daypart rule (time-of-day segments)
+   */
+  private evaluateDaypartRule(config: DaypartRule, currentDate: Date): boolean {
+    const currentTime = currentDate.getHours() * 60 + currentDate.getMinutes();
+    
+    let startTime: number;
+    let endTime: number;
+    
+    // Predefined dayparts
+    switch (config.daypart) {
+      case "morning": // 06:00 - 12:00
+        startTime = 6 * 60;
+        endTime = 12 * 60;
+        break;
+      case "afternoon": // 12:00 - 18:00
+        startTime = 12 * 60;
+        endTime = 18 * 60;
+        break;
+      case "evening": // 18:00 - 22:00
+        startTime = 18 * 60;
+        endTime = 22 * 60;
+        break;
+      case "night": // 22:00 - 06:00
+        startTime = 22 * 60;
+        endTime = 6 * 60;
+        break;
+      case "custom":
+        // Custom daypart with user-defined times
+        if (!config.customStartTime || !config.customEndTime) {
+          console.warn("Custom daypart missing start/end times");
+          return false;
+        }
+        const [startHours, startMinutes] = config.customStartTime.split(":").map(Number);
+        startTime = startHours * 60 + startMinutes;
+        const [endHours, endMinutes] = config.customEndTime.split(":").map(Number);
+        endTime = endHours * 60 + endMinutes;
+        break;
+      default:
+        console.warn(`Unknown daypart: ${config.daypart}`);
+        return false;
+    }
+    
+    // Handle overnight ranges (e.g., night: 22:00 - 06:00)
+    if (startTime > endTime) {
+      return currentTime >= startTime || currentTime <= endTime;
+    }
+    
+    return currentTime >= startTime && currentTime < endTime;
   }
 
   /**
@@ -155,7 +214,7 @@ export class SchedulingEngine {
     const schedulesWithRules: Schedule[] = [];
     
     for (const schedule of activeSchedules) {
-      const rules = await storage.getSchedulingRulesBySchedule(schedule.id);
+      const rules = await storage.getSchedulingRulesBySchedule(schedule.id, organizationId);
       
       // If no rules, include schedule
       if (rules.length === 0) {
@@ -234,22 +293,37 @@ export class SchedulingEngine {
     
     // Build list of scheduled content with priorities
     const scheduledContent: ScheduledContent[] = allSchedules.map((schedule) => {
-      // Find priority for this content (use contentId if available)
-      const priority = schedule.contentId 
+      // Use schedule priority (from schedules table)
+      // Also check contentPriority table for additional priority boost
+      const contentPriorityBoost = schedule.contentId 
         ? activePriorities.find((p) => p.contentId === schedule.contentId)
         : undefined;
+      
+      // Combined priority: schedule priority + content priority boost
+      const totalPriority = (schedule.priority || 0) + (contentPriorityBoost?.priority || 0);
       
       return {
         contentId: schedule.contentId || undefined,
         playlistId: schedule.playlistId || undefined,
         scheduleId: schedule.id,
-        priority: priority?.priority || 0,
+        priority: totalPriority,
         source: "schedule" as const,
       };
     });
     
-    // Sort by priority (highest first)
-    scheduledContent.sort((a, b) => b.priority - a.priority);
+    // Sort by priority (highest first), then by creation date (newest first)
+    scheduledContent.sort((a, b) => {
+      if (b.priority !== a.priority) {
+        return b.priority - a.priority;
+      }
+      // If same priority, prefer newer schedules
+      const scheduleA = allSchedules.find(s => s.id === a.scheduleId);
+      const scheduleB = allSchedules.find(s => s.id === b.scheduleId);
+      if (scheduleA && scheduleB) {
+        return new Date(scheduleB.createdAt).getTime() - new Date(scheduleA.createdAt).getTime();
+      }
+      return 0;
+    });
     
     // Return highest priority content
     return scheduledContent[0] || null;

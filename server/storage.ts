@@ -170,12 +170,12 @@ export interface IStorage {
   createPlayerCapabilities(capabilities: InsertPlayerCapabilities): Promise<PlayerCapabilities>;
   updatePlayerCapabilities(displayId: string, updates: Partial<PlayerCapabilities>): Promise<PlayerCapabilities | undefined>;
   
-  getSchedulingRule(id: string): Promise<SchedulingRule | undefined>;
-  getAllSchedulingRules(): Promise<SchedulingRule[]>;
-  getSchedulingRulesBySchedule(scheduleId: string): Promise<SchedulingRule[]>;
+  getSchedulingRule(id: string, organizationId: string): Promise<SchedulingRule | undefined>;
+  getAllSchedulingRules(organizationId: string): Promise<SchedulingRule[]>;
+  getSchedulingRulesBySchedule(scheduleId: string, organizationId: string): Promise<SchedulingRule[]>;
   createSchedulingRule(rule: InsertSchedulingRule): Promise<SchedulingRule>;
-  updateSchedulingRule(id: string, updates: Partial<SchedulingRule>): Promise<SchedulingRule | undefined>;
-  deleteSchedulingRule(id: string): Promise<boolean>;
+  updateSchedulingRule(id: string, updates: Partial<SchedulingRule>, organizationId: string): Promise<SchedulingRule | undefined>;
+  deleteSchedulingRule(id: string, organizationId: string): Promise<boolean>;
   
   getContentPriority(id: string): Promise<ContentPriority | undefined>;
   getAllContentPriorities(): Promise<ContentPriority[]>;
@@ -840,23 +840,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Scheduling Rule methods
-  async getSchedulingRule(id: string): Promise<SchedulingRule | undefined> {
+  async getSchedulingRule(id: string, organizationId: string): Promise<SchedulingRule | undefined> {
     const [rule] = await db
       .select()
       .from(schedulingRules)
-      .where(eq(schedulingRules.id, id));
+      .where(and(
+        eq(schedulingRules.id, id),
+        eq(schedulingRules.organizationId, organizationId)
+      ));
     return rule || undefined;
   }
 
-  async getAllSchedulingRules(): Promise<SchedulingRule[]> {
-    return await db.select().from(schedulingRules);
-  }
-
-  async getSchedulingRulesBySchedule(scheduleId: string): Promise<SchedulingRule[]> {
+  async getAllSchedulingRules(organizationId: string): Promise<SchedulingRule[]> {
     return await db
       .select()
       .from(schedulingRules)
-      .where(eq(schedulingRules.scheduleId, scheduleId));
+      .where(eq(schedulingRules.organizationId, organizationId));
+  }
+
+  async getSchedulingRulesBySchedule(scheduleId: string, organizationId: string): Promise<SchedulingRule[]> {
+    return await db
+      .select()
+      .from(schedulingRules)
+      .where(and(
+        eq(schedulingRules.scheduleId, scheduleId),
+        eq(schedulingRules.organizationId, organizationId)
+      ));
   }
 
   async createSchedulingRule(insertRule: InsertSchedulingRule): Promise<SchedulingRule> {
@@ -869,20 +878,27 @@ export class DatabaseStorage implements IStorage {
 
   async updateSchedulingRule(
     id: string,
-    updates: Partial<SchedulingRule>
+    updates: Partial<SchedulingRule>,
+    organizationId: string
   ): Promise<SchedulingRule | undefined> {
     const [updated] = await db
       .update(schedulingRules)
       .set(updates)
-      .where(eq(schedulingRules.id, id))
+      .where(and(
+        eq(schedulingRules.id, id),
+        eq(schedulingRules.organizationId, organizationId)
+      ))
       .returning();
     return updated || undefined;
   }
 
-  async deleteSchedulingRule(id: string): Promise<boolean> {
+  async deleteSchedulingRule(id: string, organizationId: string): Promise<boolean> {
     const result = await db
       .delete(schedulingRules)
-      .where(eq(schedulingRules.id, id));
+      .where(and(
+        eq(schedulingRules.id, id),
+        eq(schedulingRules.organizationId, organizationId)
+      ));
     return result.rowCount !== null && result.rowCount > 0;
   }
 

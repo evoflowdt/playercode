@@ -2031,7 +2031,14 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   // Scheduling Rules endpoints
   app.post("/api/scheduling/rules", async (req, res) => {
     try {
-      const validatedData = insertSchedulingRuleSchema.parse(req.body);
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const validatedData = insertSchedulingRuleSchema.parse({
+        ...req.body,
+        organizationId: req.user.organizationId,
+      });
       const rule = await storage.createSchedulingRule(validatedData);
       res.status(201).json(rule);
     } catch (error) {
@@ -2040,9 +2047,13 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  app.get("/api/scheduling/rules", async (_req, res) => {
+  app.get("/api/scheduling/rules", async (req, res) => {
     try {
-      const rules = await storage.getAllSchedulingRules();
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const rules = await storage.getAllSchedulingRules(req.user.organizationId);
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch rules" });
@@ -2051,7 +2062,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   app.get("/api/scheduling/rules/:id", async (req, res) => {
     try {
-      const rule = await storage.getSchedulingRule(req.params.id);
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const rule = await storage.getSchedulingRule(req.params.id, req.user.organizationId);
       if (!rule) {
         return res.status(404).json({ error: "Rule not found" });
       }
@@ -2063,7 +2078,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   app.get("/api/scheduling/rules/schedule/:scheduleId", async (req, res) => {
     try {
-      const rules = await storage.getSchedulingRulesBySchedule(req.params.scheduleId);
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const rules = await storage.getSchedulingRulesBySchedule(req.params.scheduleId, req.user.organizationId);
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch rules" });
@@ -2072,8 +2091,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   app.put("/api/scheduling/rules/:id", async (req, res) => {
     try {
-      const validatedData = insertSchedulingRuleSchema.partial().parse(req.body);
-      const updated = await storage.updateSchedulingRule(req.params.id, validatedData);
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const validatedData = insertSchedulingRuleSchema.omit({ organizationId: true }).partial().parse(req.body);
+      const updated = await storage.updateSchedulingRule(req.params.id, validatedData, req.user.organizationId);
       if (!updated) {
         return res.status(404).json({ error: "Rule not found" });
       }
@@ -2086,7 +2109,11 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   app.delete("/api/scheduling/rules/:id", async (req, res) => {
     try {
-      const deleted = await storage.deleteSchedulingRule(req.params.id);
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const deleted = await storage.deleteSchedulingRule(req.params.id, req.user.organizationId);
       if (!deleted) {
         return res.status(404).json({ error: "Rule not found" });
       }

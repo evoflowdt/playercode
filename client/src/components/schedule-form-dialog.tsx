@@ -40,6 +40,7 @@ const scheduleFormSchema = z.object({
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   repeat: z.string().optional(),
+  priority: z.number().int().min(0).max(100).default(0),
 }).refine(
   (data) => (data.sourceType === "content" && data.contentId) || (data.sourceType === "playlist" && data.playlistId),
   { message: "Either content or playlist must be selected", path: ["contentId"] }
@@ -89,6 +90,7 @@ export function ScheduleFormDialog({
       startTime: new Date(schedule.startTime).toISOString().slice(0, 16),
       endTime: new Date(schedule.endTime).toISOString().slice(0, 16),
       repeat: schedule.repeat || "",
+      priority: schedule.priority ?? 0,
     } : {
       name: "",
       sourceType: "content",
@@ -99,6 +101,7 @@ export function ScheduleFormDialog({
       startTime: "",
       endTime: "",
       repeat: "",
+      priority: 0,
     },
   });
 
@@ -116,6 +119,7 @@ export function ScheduleFormDialog({
         startTime: new Date(schedule.startTime).toISOString().slice(0, 16),
         endTime: new Date(schedule.endTime).toISOString().slice(0, 16),
         repeat: schedule.repeat || "",
+        priority: schedule.priority ?? 0,
       });
     } else if (open && !schedule) {
       // Create mode - reset to empty
@@ -129,6 +133,7 @@ export function ScheduleFormDialog({
         startTime: "",
         endTime: "",
         repeat: "",
+        priority: 0,
       });
     } else if (!open) {
       // Dialog closed - reset to avoid stale data
@@ -144,6 +149,7 @@ export function ScheduleFormDialog({
         targetId: data.targetId,
         startTime: new Date(data.startTime).toISOString(),
         endTime: new Date(data.endTime).toISOString(),
+        priority: data.priority,
       };
       
       // Add either contentId or playlistId based on sourceType
@@ -184,6 +190,7 @@ export function ScheduleFormDialog({
         targetId: data.targetId,
         startTime: new Date(data.startTime).toISOString(),
         endTime: new Date(data.endTime).toISOString(),
+        priority: data.priority,
       };
       
       // Clear both contentId and playlistId first, then set the correct one
@@ -491,6 +498,30 @@ export function ScheduleFormDialog({
                       <SelectItem value="monthly">Monthly</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority (0-100)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      max="100"
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      data-testid="input-priority"
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Higher values take precedence when multiple schedules overlap. Default is 0.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
