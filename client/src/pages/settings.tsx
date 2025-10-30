@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Monitor, RefreshCw, Clock, Copy, Check, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-provider";
@@ -103,14 +103,7 @@ export default function Settings() {
   // Generate pairing token mutation
   const generateTokenMutation = useMutation({
     mutationFn: async (data: { displayName?: string; os?: string }): Promise<PairingToken> => {
-      const response = await fetch("/api/player/pairing-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to generate token");
-      }
+      const response = await apiRequest("POST", "/api/player/pairing-token", data);
       return response.json();
     },
     onSuccess: (data: PairingToken) => {
