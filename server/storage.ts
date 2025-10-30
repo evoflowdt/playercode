@@ -62,6 +62,10 @@ import {
   type Webhook,
   type WebhookEvent,
   type Notification,
+  type InsertNotification,
+  type ResourcePermission,
+  type InsertResourcePermission,
+  type UpdateResourcePermission,
   displays,
   contentItems,
   displayGroups,
@@ -91,6 +95,7 @@ import {
   webhooks,
   webhookEvents,
   notifications,
+  resourcePermissions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt, lt, gte, lte, desc } from "drizzle-orm";
@@ -266,6 +271,14 @@ export interface IStorage {
   markNotificationAsRead(id: string, organizationId: string, userId: string): Promise<Notification | undefined>;
   markAllAsRead(organizationId: string, userId: string): Promise<number>;
   deleteNotification(id: string, organizationId: string, userId: string): Promise<boolean>;
+  
+  // Granular Permissions methods (Sprint 4)
+  createResourcePermission(insertPermission: InsertResourcePermission): Promise<ResourcePermission>;
+  listResourcePermissions(organizationId: string, filters?: { userId?: string; resourceType?: string; resourceId?: string }): Promise<ResourcePermission[]>;
+  getUserResourcePermissions(userId: string, organizationId: string, resourceType?: string): Promise<ResourcePermission[]>;
+  checkResourcePermission(userId: string, organizationId: string, resourceType: string, resourceId: string, action: string): Promise<boolean>;
+  updateResourcePermission(id: string, organizationId: string, updates: UpdateResourcePermission): Promise<ResourcePermission | undefined>;
+  deleteResourcePermission(id: string, organizationId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2164,6 +2177,119 @@ export class DatabaseStorage implements IStorage {
           eq(notifications.id, id),
           eq(notifications.organizationId, organizationId),
           eq(notifications.userId, userId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  // Granular Permissions methods (Sprint 4 Feature 5)
+  async createResourcePermission(
+    insertPermission: InsertResourcePermission
+  ): Promise<ResourcePermission> {
+    const [permission] = await db
+      .insert(resourcePermissions)
+      .values(insertPermission)
+      .returning();
+    return permission;
+  }
+
+  async listResourcePermissions(
+    organizationId: string,
+    filters?: { userId?: string; resourceType?: string; resourceId?: string }
+  ): Promise<ResourcePermission[]> {
+    const conditions = [eq(resourcePermissions.organizationId, organizationId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(resourcePermissions.userId, filters.userId));
+    }
+    if (filters?.resourceType) {
+      conditions.push(eq(resourcePermissions.resourceType, filters.resourceType));
+    }
+    if (filters?.resourceId) {
+      conditions.push(eq(resourcePermissions.resourceId, filters.resourceId));
+    }
+
+    return await db
+      .select()
+      .from(resourcePermissions)
+      .where(and(...conditions));
+  }
+
+  async getUserResourcePermissions(
+    userId: string,
+    organizationId: string,
+    resourceType?: string
+  ): Promise<ResourcePermission[]> {
+    const conditions = [
+      eq(resourcePermissions.userId, userId),
+      eq(resourcePermissions.organizationId, organizationId),
+    ];
+
+    if (resourceType) {
+      conditions.push(eq(resourcePermissions.resourceType, resourceType));
+    }
+
+    return await db
+      .select()
+      .from(resourcePermissions)
+      .where(and(...conditions));
+  }
+
+  async checkResourcePermission(
+    userId: string,
+    organizationId: string,
+    resourceType: string,
+    resourceId: string,
+    action: string
+  ): Promise<boolean> {
+    const permissions = await db
+      .select()
+      .from(resourcePermissions)
+      .where(
+        and(
+          eq(resourcePermissions.userId, userId),
+          eq(resourcePermissions.organizationId, organizationId),
+          eq(resourcePermissions.resourceType, resourceType),
+          eq(resourcePermissions.resourceId, resourceId)
+        )
+      );
+
+    if (permissions.length === 0) {
+      return false;
+    }
+
+    return permissions.some(p => p.actions.includes(action));
+  }
+
+  async updateResourcePermission(
+    id: string,
+    organizationId: string,
+    updates: UpdateResourcePermission
+  ): Promise<ResourcePermission | undefined> {
+    const [updated] = await db
+      .update(resourcePermissions)
+      .set(updates)
+      .where(
+        and(
+          eq(resourcePermissions.id, id),
+          eq(resourcePermissions.organizationId, organizationId)
+        )
+      )
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteResourcePermission(
+    id: string,
+    organizationId: string
+  ): Promise<boolean> {
+    const result = await db
+      .delete(resourcePermissions)
+      .where(
+        and(
+          eq(resourcePermissions.id, id),
+          eq(resourcePermissions.organizationId, organizationId)
         )
       )
       .returning();
