@@ -96,6 +96,7 @@ export const translations = {
     
     // Navigation
     dashboard: 'Dashboard',
+    playerSetup: 'Player Setup',
     displays: 'Displays',
     contentLibrary: 'Content Library',
     templates: 'Templates',
@@ -1088,6 +1089,7 @@ export const translations = {
     
     // Navigation
     dashboard: 'Cruscotto',
+    playerSetup: 'Setup Player',
     displays: 'Display',
     contentLibrary: 'Libreria Contenuti',
     templates: 'Template',
