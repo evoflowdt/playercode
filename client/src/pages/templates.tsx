@@ -257,7 +257,7 @@ export default function Templates() {
                   <Label htmlFor="type">Template Type</Label>
                   <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                     <SelectTrigger data-testid="select-template-type">
-                      <SelectValue />
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       {templateTypes.map((type) => (
@@ -285,7 +285,7 @@ export default function Templates() {
                   <Label htmlFor="layoutType">Layout Type</Label>
                   <Select value={formData.layoutType} onValueChange={(value) => setFormData({ ...formData, layoutType: value })}>
                     <SelectTrigger data-testid="select-layout-type">
-                      <SelectValue />
+                      <SelectValue placeholder="Select layout" />
                     </SelectTrigger>
                     <SelectContent>
                       {layoutTypes.map((layout) => (
@@ -300,7 +300,7 @@ export default function Templates() {
                   <Label htmlFor="transitionEffect">Transition Effect</Label>
                   <Select value={formData.transitionEffect} onValueChange={(value) => setFormData({ ...formData, transitionEffect: value })}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select effect" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="fade">Fade</SelectItem>
