@@ -37,6 +37,7 @@ import Documentation from "@/pages/documentation";
 import Downloads from "@/pages/downloads";
 import Settings from "@/pages/settings";
 import Team from "@/pages/team";
+import Permissions from "@/pages/permissions";
 import Organization from "@/pages/organization";
 import AuditLogs from "@/pages/audit-logs";
 import Developer from "@/pages/developer";
@@ -114,6 +115,7 @@ function ProtectedRouter() {
       <Route path="/downloads" component={() => <ProtectedRoute component={Downloads} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/team" component={() => <ProtectedRoute component={Team} />} />
+      <Route path="/permissions" component={() => <ProtectedRoute component={Permissions} />} />
       <Route path="/organization" component={() => <ProtectedRoute component={Organization} />} />
       <Route path="/audit-logs" component={() => <ProtectedRoute component={AuditLogs} />} />
       <Route path="/developer" component={() => <ProtectedRoute component={Developer} />} />

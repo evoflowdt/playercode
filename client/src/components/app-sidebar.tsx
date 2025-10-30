@@ -13,6 +13,7 @@ import {
   BookOpen,
   Download,
   UserCog,
+  Shield,
   Building2,
   ScrollText,
   Code,
@@ -108,6 +109,12 @@ const menuItemsConfig = [
     url: "/team",
     icon: UserCog,
     testId: "link-team",
+  },
+  {
+    titleKey: "permissions" as const,
+    url: "/permissions",
+    icon: Shield,
+    testId: "link-permissions",
   },
   {
     titleKey: "organization" as const,
