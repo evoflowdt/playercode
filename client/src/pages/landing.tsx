@@ -16,6 +16,7 @@ import {
   Code,
   ScrollText,
 } from "lucide-react";
+import timesSquareHero from "@assets/stock_images/times_square_new_yor_e6db3ef6.jpg";
 
 export default function Landing() {
   const { t } = useLanguage();
@@ -108,22 +109,32 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 sm:py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-background to-background"></div>
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={timesSquareHero} 
+            alt="Digital signage displays in Times Square" 
+            className="h-full w-full object-cover"
+          />
+        </div>
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
+        
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
+            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
               {t('landingHeroTitle')}
             </h2>
-            <p className="mt-6 text-lg text-muted-foreground sm:text-xl" data-testid="text-hero-subtitle">
+            <p className="mt-6 text-lg text-white/90 sm:text-xl" data-testid="text-hero-subtitle">
               {t('landingHeroSubtitle')}
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Button size="lg" className="px-8" asChild data-testid="button-hero-getstarted">
+              <Button size="lg" className="px-8 bg-accent text-accent-foreground hover-elevate active-elevate-2" asChild data-testid="button-hero-getstarted">
                 <Link href="/register">
                   {t('landingGetStarted')}
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="px-8" asChild data-testid="button-hero-learnmore">
+              <Button size="lg" variant="outline" className="px-8 border-white/30 bg-white/10 text-white backdrop-blur-sm hover-elevate active-elevate-2" asChild data-testid="button-hero-learnmore">
                 <Link href="#features">
                   {t('landingLearnMore')}
                 </Link>
