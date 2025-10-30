@@ -11,7 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function Install() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -45,49 +45,32 @@ export default function Install() {
     setDeferredPrompt(null);
   };
 
-  const instructions = {
-    chrome: {
-      title: "Chrome / Edge (Windows, Android)",
+  const instructions = [
+    {
+      titleKey: 'chromeEdgeTitle' as const,
       icon: Chrome,
-      steps: [
-        t === ((x: string) => x) ? "Visit EvoFlow from Chrome or Edge browser" : "Visita EvoFlow da Chrome o Edge",
-        t === ((x: string) => x) ? "Look for the install icon (⊕) in the address bar" : "Cerca l'icona di installazione (⊕) nella barra degli indirizzi",
-        t === ((x: string) => x) ? "Click 'Install' and confirm" : "Clicca 'Installa' e conferma",
-        t === ((x: string) => x) ? "The app will be added to your desktop/home screen" : "L'app verrà aggiunta al desktop/home screen"
-      ]
+      stepKeys: ['chromeStep1', 'chromeStep2', 'chromeStep3', 'chromeStep4'] as const
     },
-    safari: {
-      title: "Safari (iPhone / iPad)",
+    {
+      titleKey: 'safariTitle' as const,
       icon: Apple,
-      steps: [
-        t === ((x: string) => x) ? "Visit EvoFlow from Safari browser" : "Visita EvoFlow da Safari",
-        t === ((x: string) => x) ? "Tap the Share button (square with arrow)" : "Tocca il pulsante Condividi (quadrato con freccia)",
-        t === ((x: string) => x) ? "Scroll and select 'Add to Home Screen'" : "Scorri e seleziona 'Aggiungi alla schermata Home'",
-        t === ((x: string) => x) ? "Confirm - the icon will appear on your home screen" : "Conferma - l'icona apparirà nella home screen"
-      ]
+      stepKeys: ['safariStep1', 'safariStep2', 'safariStep3', 'safariStep4'] as const
     },
-    edge: {
-      title: "Microsoft Edge (Windows)",
+    {
+      titleKey: 'edgeTitle' as const,
       icon: Globe,
-      steps: [
-        t === ((x: string) => x) ? "Visit EvoFlow from Edge browser" : "Visita EvoFlow da Edge",
-        t === ((x: string) => x) ? "Click menu (⋯) → 'Apps' → 'Install EvoFlow'" : "Clicca menu (⋯) → 'App' → 'Installa EvoFlow'",
-        t === ((x: string) => x) ? "Confirm installation" : "Conferma l'installazione",
-        t === ((x: string) => x) ? "Access from Start Menu or Desktop" : "Accedi dal Menu Start o Desktop"
-      ]
+      stepKeys: ['edgeStep1', 'edgeStep2', 'edgeStep3', 'edgeStep4'] as const
     }
-  };
+  ];
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
-          {t === ((x: string) => x) ? "Install EvoFlow App" : "Installa l'App EvoFlow"}
+          {t('installTitle')}
         </h1>
         <p className="text-muted-foreground text-sm md:text-base">
-          {t === ((x: string) => x) 
-            ? "Install EvoFlow as a native app on your device for quick access and offline support"
-            : "Installa EvoFlow come app nativa sul tuo dispositivo per accesso rapido e supporto offline"}
+          {t('installSubtitle')}
         </p>
       </div>
 
@@ -100,12 +83,10 @@ export default function Install() {
               </div>
               <div>
                 <h3 className="font-semibold">
-                  {t === ((x: string) => x) ? "App Already Installed" : "App Già Installata"}
+                  {t('appAlreadyInstalled')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {t === ((x: string) => x)
-                    ? "You're using EvoFlow as an installed app!"
-                    : "Stai usando EvoFlow come app installata!"}
+                  {t('appAlreadyInstalledDesc')}
                 </p>
               </div>
             </div>
@@ -120,57 +101,58 @@ export default function Install() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold mb-1">
-                  {t === ((x: string) => x) ? "Quick Install Available" : "Installazione Rapida Disponibile"}
+                  {t('quickInstallAvailable')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {t === ((x: string) => x)
-                    ? "Install EvoFlow with one click for the best experience"
-                    : "Installa EvoFlow con un click per la migliore esperienza"}
+                  {t('quickInstallDesc')}
                 </p>
               </div>
-              <Button
+              <Button 
                 onClick={handleInstallClick}
-                size="lg"
-                data-testid="button-quick-install"
-                className="min-h-11 w-full sm:w-auto"
+                className="w-full sm:w-auto flex items-center justify-center"
+                size="default"
+                data-testid="button-install-app"
               >
                 <Download className="h-4 w-4 mr-2" />
-                {t === ((x: string) => x) ? "Install Now" : "Installa Ora"}
+                {t('installNow')}
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : null}
 
+      <Separator />
+
       <div>
         <h2 className="text-xl font-semibold mb-4">
-          {t === ((x: string) => x) ? "Installation Instructions" : "Istruzioni di Installazione"}
+          {t('installInstructions')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {Object.entries(instructions).map(([key, { title, icon: Icon, steps }]) => (
-            <Card key={key} className="hover-elevate">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          {instructions.map((instruction, idx) => {
+            const Icon = instruction.icon;
+            return (
+              <Card key={idx}>
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">
                     <Icon className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-base">{t(instruction.titleKey)}</CardTitle>
                   </div>
-                  <CardTitle className="text-base">{title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ol className="space-y-3">
-                  {steps.map((step, index) => (
-                    <li key={index} className="flex gap-3 text-sm">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">
-                        {index + 1}
-                      </span>
-                      <span className="text-muted-foreground">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent>
+                  <ol className="space-y-2 text-sm">
+                    {instruction.stepKeys.map((stepKey, stepIdx) => (
+                      <li key={stepIdx} className="flex gap-2">
+                        <span className="font-semibold text-primary flex-shrink-0">
+                          {stepIdx + 1}.
+                        </span>
+                        <span className="text-muted-foreground">{t(stepKey)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
@@ -178,94 +160,82 @@ export default function Install() {
 
       <div>
         <h2 className="text-xl font-semibold mb-4">
-          {t === ((x: string) => x) ? "Why Install?" : "Perché Installare?"}
+          {t('whyInstall')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Smartphone className="h-5 w-5 text-primary" />
                 <CardTitle className="text-base">
-                  {t === ((x: string) => x) ? "Quick Access" : "Accesso Rapido"}
+                  {t('quickAccess')}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {t === ((x: string) => x)
-                  ? "Launch EvoFlow directly from your desktop or home screen like a native app"
-                  : "Lancia EvoFlow direttamente dal desktop o home screen come un'app nativa"}
+                {t('quickAccessDesc')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Monitor className="h-5 w-5 text-primary" />
                 <CardTitle className="text-base">
-                  {t === ((x: string) => x) ? "Offline Support" : "Supporto Offline"}
+                  {t('offlineSupport')}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {t === ((x: string) => x)
-                  ? "Continue working even without an internet connection with smart caching"
-                  : "Continua a lavorare anche senza connessione internet con cache intelligente"}
+                {t('offlineSupportDesc')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Download className="h-5 w-5 text-primary" />
                 <CardTitle className="text-base">
-                  {t === ((x: string) => x) ? "No App Store" : "Nessun App Store"}
+                  {t('noAppStore')}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {t === ((x: string) => x)
-                  ? "Install directly from your browser - no external downloads required"
-                  : "Installa direttamente dal browser - nessun download esterno richiesto"}
+                {t('noAppStoreDesc')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Chrome className="h-5 w-5 text-primary" />
                 <CardTitle className="text-base">
-                  {t === ((x: string) => x) ? "Auto Updates" : "Aggiornamenti Automatici"}
+                  {t('autoUpdates')}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {t === ((x: string) => x)
-                  ? "Always get the latest features automatically without manual updates"
-                  : "Ricevi sempre le ultime funzionalità automaticamente senza aggiornamenti manuali"}
+                {t('autoUpdatesDesc')}
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {!isInstalled && !deferredPrompt && (
-        <Card className="bg-muted/50">
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground text-center">
-              {t === ((x: string) => x)
-                ? "Note: The install button will appear automatically when you visit EvoFlow from a supported browser. Follow the instructions above for your specific platform."
-                : "Nota: Il pulsante di installazione apparirà automaticamente quando visiti EvoFlow da un browser supportato. Segui le istruzioni sopra per la tua piattaforma specifica."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="bg-muted/50">
+        <CardContent className="p-6">
+          <p className="text-sm text-muted-foreground text-center">
+            {t('installNote')}
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
