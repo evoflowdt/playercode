@@ -114,6 +114,14 @@ export const translations = {
     auditLogs: 'Audit Logs',
     developer: 'Developer',
     
+    // Navigation Groups
+    displaysMenu: 'Displays',
+    contentMenu: 'Content',
+    schedulingMenu: 'Scheduling',
+    playerMenu: 'Player',
+    organizationMenu: 'Organization',
+    developerMenu: 'Developer',
+    
     // Dashboard
     dashboardTitle: 'Dashboard',
     dashboardSubtitle: 'Monitor and manage your digital signage network',
@@ -1155,7 +1163,14 @@ export const translations = {
     organization: 'Organizzazione',
     auditLogs: 'Log di Audit',
     developer: 'Sviluppatore',
-    documentation: 'Documentazione',
+    
+    // Navigation Groups
+    displaysMenu: 'Display',
+    contentMenu: 'Contenuti',
+    schedulingMenu: 'Pianificazione',
+    playerMenu: 'Player',
+    organizationMenu: 'Organizzazione',
+    developerMenu: 'Sviluppatori',
     
     // Dashboard
     dashboardTitle: 'Cruscotto',
