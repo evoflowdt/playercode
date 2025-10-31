@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvoFlow Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #player-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #content-display {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #content-display.cover {
+      object-fit: cover;
+    }
+
+    #loading-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 1000;
+    }
+
+    #loading-screen.hidden {
+      display: none;
+    }
+
+    .logo {
+      font-size: 4rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-text {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    #settings-dialog {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      min-width: 400px;
+      display: none;
+    }
+
+    #settings-dialog.visible {
+      display: block;
+    }
+
+    #settings-dialog h2 {
+      margin-bottom: 1.5rem;
+      color: #0f766e;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .btn-primary {
+      background: #0f766e;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #333;
+    }
+
+    #error-message {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(239, 68, 68, 0.95);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      display: none;
+      z-index: 1500;
+    }
+
+    #error-message.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="player-container">
+    <div id="loading-screen">
+      <div class="logo">EvoFlow</div>
+      <div class="spinner"></div>
+      <div class="status-text">Connecting to platform...</div>
+    </div>
+
+    <img id="content-display" style="display: none;" />
+    <video id="video-display" style="display: none;" autoplay loop muted></video>
+
+    <div id="error-message"></div>
+  </div>
+
+  <div id="settings-dialog">
+    <h2>Player Settings</h2>
+    <div class="form-group">
+      <label for="api-url">API URL</label>
+      <input type="text" id="api-url" placeholder="https://your-evoflow-instance.com" />
+    </div>
+    <div class="form-group">
+      <label for="display-name">Display Name</label>
+      <input type="text" id="display-name" placeholder="My Display" />
+    </div>
+    <div class="form-group">
+      <label for="device-id">Device ID</label>
+      <input type="text" id="device-id" readonly />
+    </div>
+    <div class="button-group">
+      <button class="btn-secondary" id="cancel-settings">Cancel</button>
+      <button class="btn-primary" id="save-settings">Save & Restart</button>
+    </div>
+  </div>
+
+  <script src="player.js"></script>
+</body>
+</html>
