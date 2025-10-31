@@ -1,10 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/language-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ExternalLink, Calendar, Package } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download, ExternalLink, Calendar, Package, Upload } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface PlayerRelease {
   id: string;
@@ -22,9 +31,69 @@ interface PlayerRelease {
 
 export default function Releases() {
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploadData, setUploadData] = useState({
+    version: '',
+    platform: 'windows',
+    changelog: '',
+    isPrerelease: false,
+    isLatest: true,
+    file: null as File | null,
+  });
 
   const { data: releases = [], isLoading } = useQuery<PlayerRelease[]>({
     queryKey: ['/api/player/releases'],
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (data: typeof uploadData) => {
+      if (!data.file) throw new Error('No file selected');
+      
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('version', data.version);
+      formData.append('platform', data.platform);
+      formData.append('changelog', data.changelog);
+      formData.append('isPrerelease', String(data.isPrerelease));
+      formData.append('isLatest', String(data.isLatest));
+
+      const response = await fetch('/api/player/releases/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/player/releases'] });
+      setIsUploadOpen(false);
+      setUploadData({
+        version: '',
+        platform: 'windows',
+        changelog: '',
+        isPrerelease: false,
+        isLatest: true,
+        file: null,
+      });
+      toast({
+        title: "Release uploaded successfully",
+        description: "The release has been published to GitHub and is now available for download.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -177,9 +246,123 @@ export default function Releases() {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2" data-testid="text-releases-title">{t('releasesTitle')}</h1>
-        <p className="text-muted-foreground">{t('releasesSubtitle')}</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2" data-testid="text-releases-title">{t('releasesTitle')}</h1>
+          <p className="text-muted-foreground">{t('releasesSubtitle')}</p>
+        </div>
+        
+        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-upload-release">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload New Release
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Upload Player Release</DialogTitle>
+              <DialogDescription>
+                Upload a compiled installer to GitHub Releases. Make sure you've built the player first.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="version">Version *</Label>
+                <Input
+                  id="version"
+                  placeholder="1.0.0"
+                  value={uploadData.version}
+                  onChange={(e) => setUploadData({ ...uploadData, version: e.target.value })}
+                  data-testid="input-version"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="platform">Platform *</Label>
+                <Select
+                  value={uploadData.platform}
+                  onValueChange={(value) => setUploadData({ ...uploadData, platform: value })}
+                >
+                  <SelectTrigger data-testid="select-platform">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="windows">Windows</SelectItem>
+                    <SelectItem value="macos">macOS</SelectItem>
+                    <SelectItem value="linux">Linux</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="file">Installer File *</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  accept=".exe,.dmg,.AppImage,.deb"
+                  onChange={(e) => setUploadData({ ...uploadData, file: e.target.files?.[0] || null })}
+                  data-testid="input-file"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {uploadData.platform === 'windows' && 'Upload .exe installer'}
+                  {uploadData.platform === 'macos' && 'Upload .dmg disk image'}
+                  {uploadData.platform === 'linux' && 'Upload .AppImage or .deb file'}
+                </p>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="changelog">Changelog</Label>
+                <Textarea
+                  id="changelog"
+                  placeholder="Release notes and changes..."
+                  value={uploadData.changelog}
+                  onChange={(e) => setUploadData({ ...uploadData, changelog: e.target.value })}
+                  rows={4}
+                  data-testid="textarea-changelog"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isLatest"
+                  checked={uploadData.isLatest}
+                  onCheckedChange={(checked) => setUploadData({ ...uploadData, isLatest: checked as boolean })}
+                  data-testid="checkbox-latest"
+                />
+                <Label htmlFor="isLatest">Mark as latest version</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isPrerelease"
+                  checked={uploadData.isPrerelease}
+                  onCheckedChange={(checked) => setUploadData({ ...uploadData, isPrerelease: checked as boolean })}
+                  data-testid="checkbox-prerelease"
+                />
+                <Label htmlFor="isPrerelease">Pre-release / Beta version</Label>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsUploadOpen(false)}
+                data-testid="button-cancel-upload"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => uploadMutation.mutate(uploadData)}
+                disabled={!uploadData.version || !uploadData.file || uploadMutation.isPending}
+                data-testid="button-submit-upload"
+              >
+                {uploadMutation.isPending ? 'Uploading...' : 'Upload Release'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="space-y-12">
