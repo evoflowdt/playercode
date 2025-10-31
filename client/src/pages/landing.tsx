@@ -16,7 +16,7 @@ import {
   Code,
   ScrollText,
 } from "lucide-react";
-import digitalSignageHero from "@assets/stock_images/digital_display_scre_da40f057.jpg";
+import timesSquareHero from "@assets/stock_images/times_square_new_yor_e6db3ef6.jpg";
 
 export default function Landing() {
   const { t } = useLanguage();
