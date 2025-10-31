@@ -29,13 +29,13 @@ export default function Downloads() {
   });
   
   return (
-    <div className="container mx-auto p-8 max-w-5xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-          <Download className="h-10 w-10" />
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-5xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 flex items-center gap-2 sm:gap-3">
+          <Download className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" />
           {t('downloadsTitle')}
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
           {t('downloadsSubtitle')}
         </p>
       </div>
@@ -110,12 +110,12 @@ export default function Downloads() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {releases.map(release => (
                 <Card key={release.id} className="border-primary/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {t(release.platform as any)}
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2 flex-wrap">
+                      <span>{t(release.platform as any)}</span>
                       <Badge className="ml-auto">{t('latestVersion')}</Badge>
                     </CardTitle>
                     <CardDescription>{release.version}</CardDescription>
@@ -147,22 +147,22 @@ export default function Downloads() {
       </Alert>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" data-testid="tab-overview">
-            <Monitor className="h-4 w-4 mr-2" />
-            {t('overview')}
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview" data-testid="tab-overview" className="text-xs sm:text-sm">
+            <Monitor className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('overview')}</span>
           </TabsTrigger>
-          <TabsTrigger value="windows" data-testid="tab-windows">
-            <SquareTerminal className="h-4 w-4 mr-2" />
-            {t('windows')}
+          <TabsTrigger value="windows" data-testid="tab-windows" className="text-xs sm:text-sm">
+            <SquareTerminal className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('windows')}</span>
           </TabsTrigger>
-          <TabsTrigger value="macos" data-testid="tab-macos">
-            <SiApple className="h-4 w-4 mr-2" />
-            {t('macos')}
+          <TabsTrigger value="macos" data-testid="tab-macos" className="text-xs sm:text-sm">
+            <SiApple className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('macos')}</span>
           </TabsTrigger>
-          <TabsTrigger value="linux" data-testid="tab-linux">
-            <SiLinux className="h-4 w-4 mr-2" />
-            {t('linux')}
+          <TabsTrigger value="linux" data-testid="tab-linux" className="text-xs sm:text-sm">
+            <SiLinux className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('linux')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -268,14 +268,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       cd C:\path\to\evoflow
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepInstallDeps')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
@@ -283,14 +283,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:build:win
                     </div>
                   </li>
@@ -300,14 +300,14 @@ export default function Downloads() {
               <div>
                 <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
                 <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
-                <ul className="space-y-2 text-muted-foreground">
+                <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-Setup-1.0.0.exe</code> - {t('nsisInstaller')}</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/EvoFlow-Setup-1.0.0.exe</code> - {t('nsisInstaller')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-1.0.0-win.zip</code> - {t('portableVersion')}</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/EvoFlow-1.0.0-win.zip</code> - {t('portableVersion')}</span>
                   </li>
                 </ul>
               </div>
@@ -349,7 +349,7 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('prereqXcode')}</strong>
                     <p className="mt-1 text-sm">{t('prereqXcodeDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       xcode-select --install
                     </div>
                   </li>
@@ -370,14 +370,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       cd /path/to/evoflow
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepInstallDeps')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
@@ -385,14 +385,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:build:mac
                     </div>
                   </li>
@@ -402,14 +402,14 @@ export default function Downloads() {
               <div>
                 <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
                 <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
-                <ul className="space-y-2 text-muted-foreground">
+                <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow Player-1.0.0.dmg</code> - DMG installer (recommended)</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/EvoFlow Player-1.0.0.dmg</code> - DMG installer (recommended)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow Player-1.0.0-mac.zip</code> - ZIP archive</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/EvoFlow Player-1.0.0-mac.zip</code> - ZIP archive</span>
                   </li>
                 </ul>
                 <p className="text-sm text-muted-foreground mt-3">
@@ -458,7 +458,7 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('prereqBuildDeps')}</strong>
                     <p className="mt-1 text-sm">{t('prereqBuildDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       sudo apt-get install -y libgtk-3-dev libnotify-dev \<br />
                       &nbsp;&nbsp;libgconf-2-4 libnss3 libxss1 libasound2
                     </div>
@@ -472,14 +472,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       cd /path/to/evoflow
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepInstallDeps')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
@@ -487,14 +487,14 @@ export default function Downloads() {
                   <li>
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
                       npm run electron:build:linux
                     </div>
                   </li>
@@ -504,18 +504,18 @@ export default function Downloads() {
               <div>
                 <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
                 <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
-                <ul className="space-y-2 text-muted-foreground">
+                <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-Player-1.0.0.AppImage</code> - {t('universalLinux')}</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/EvoFlow-Player-1.0.0.AppImage</code> - {t('universalLinux')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/evoflow-player_1.0.0_amd64.deb</code> - {t('debianPackage')}</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/evoflow-player_1.0.0_amd64.deb</code> - {t('debianPackage')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/evoflow-player-1.0.0.x86_64.rpm</code> - {t('rpmPackage')}</span>
+                    <span className="break-all"><code className="bg-muted px-1.5 py-0.5 rounded text-xs">dist/evoflow-player-1.0.0.x86_64.rpm</code> - {t('rpmPackage')}</span>
                   </li>
                 </ul>
               </div>
