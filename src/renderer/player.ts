@@ -95,9 +95,15 @@ class EvoFlowPlayer {
   }
 
   private connect() {
-    if (!this.config.apiUrl || !this.config.deviceToken) {
-      this.showError('Player not configured');
+    if (!this.config.apiUrl) {
+      this.showError('Player not configured - API URL missing');
       return;
+    }
+    
+    // Device token might not exist yet for new devices
+    if (!this.config.deviceToken) {
+      console.log('No device token - device needs to be paired in dashboard');
+      this.setStatus('Waiting for device pairing...');
     }
 
     const wsUrl = this.config.apiUrl.replace('http', 'ws') + '/ws';
@@ -109,20 +115,32 @@ class EvoFlowPlayer {
         console.log('Connected to EvoFlow platform');
         this.setStatus('Connected');
         
-        // Authenticate
-        this.send({
-          type: 'auth',
-          payload: {
-            deviceId: this.config.deviceId,
-            token: this.config.deviceToken,
-          },
-        });
+        // Authenticate if we have a token, otherwise just send device ID for pairing
+        if (this.config.deviceToken) {
+          this.send({
+            type: 'auth',
+            payload: {
+              deviceId: this.config.deviceId,
+              token: this.config.deviceToken,
+            },
+          });
 
-        // Request current content
-        this.send({
-          type: 'request_content',
-          payload: {},
-        });
+          // Request current content
+          this.send({
+            type: 'request_content',
+            payload: {},
+          });
+        } else {
+          // Send registration request
+          this.send({
+            type: 'register',
+            payload: {
+              deviceId: this.config.deviceId,
+              displayName: this.config.displayName,
+            },
+          });
+          this.setStatus('Device ID: ' + this.config.deviceId + ' - Please pair in dashboard');
+        }
       };
 
       this.ws.onmessage = (event) => {
@@ -228,8 +246,9 @@ class EvoFlowPlayer {
         this.elements.videoDisplay.play();
         break;
       case 'url':
-        // For URL content, you might want to use an iframe
-        window.location.href = item.url;
+        // For URL content, open in a new window or display error
+        console.log('URL content not yet supported in kiosk mode:', item.url);
+        this.showError('URL content type not supported');
         break;
     }
   }
