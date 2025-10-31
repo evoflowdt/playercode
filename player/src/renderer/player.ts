@@ -400,11 +400,47 @@ class EvoFlowPlayer {
         window.location.reload();
         break;
       case 'screenshot':
-        // Implement screenshot functionality
+        this.captureScreenshot();
         break;
       case 'update_content':
         this.send({ type: 'request_content', payload: {} });
         break;
+    }
+  }
+
+  private async captureScreenshot() {
+    try {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      // Capture current visible content
+      const activeElement = this.elements.imageDisplay.style.display !== 'none' ? this.elements.imageDisplay :
+                          this.elements.videoDisplay.style.display !== 'none' ? this.elements.videoDisplay :
+                          this.elements.webpageDisplay;
+      
+      if (activeElement && context) {
+        if (activeElement === this.elements.imageDisplay) {
+          context.drawImage(activeElement, 0, 0, canvas.width, canvas.height);
+        } else if (activeElement === this.elements.videoDisplay) {
+          context.drawImage(activeElement, 0, 0, canvas.width, canvas.height);
+        }
+        
+        const screenshot = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Send screenshot via WebSocket
+        this.send({
+          type: 'display_screenshot',
+          displayId: this.config.deviceId,
+          screenshot: screenshot
+        });
+        
+        console.log('Screenshot captured and sent');
+      }
+    } catch (error) {
+      console.error('Screenshot capture failed:', error);
     }
   }
 
