@@ -251,7 +251,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>© 2025 {t('appName')}. All rights reserved.</p>
+            <p>Copyright © 2025 Digital Town Srl | P.IVA 03802320139 | REA CO.333859</p>
           </div>
         </div>
       </footer>
