@@ -73,7 +73,7 @@ export default function Downloads() {
                   <CardTitle className="text-base">Download ZIP</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild className="w-full mb-3" variant="outline" data-testid="button-download-source">
+                  <Button asChild className="w-full mb-3" data-testid="button-download-source">
                     <a href="https://codeload.github.com/evoflowdt/playercode/zip/refs/heads/main" download>
                       <Download className="h-4 w-4 mr-2" />
                       Download ZIP
@@ -116,12 +116,12 @@ export default function Downloads() {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       {t(release.platform as any)}
-                      <Badge variant="default" className="ml-auto">{t('latestVersion')}</Badge>
+                      <Badge className="ml-auto">{t('latestVersion')}</Badge>
                     </CardTitle>
                     <CardDescription>{release.version}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button asChild className="w-full" data-testid={`button-download-${release.platform}`}>
+                    <Button asChild className="w-full" variant="default" data-testid={`button-download-${release.platform}`}>
                       <a href={release.downloadUrl} download>
                         <Download className="h-4 w-4 mr-2" />
                         {t('downloadNow')}
