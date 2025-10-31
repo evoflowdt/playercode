@@ -12,6 +12,7 @@ import {
   Activity,
   BookOpen,
   Download,
+  Package,
   UserCog,
   Shield,
   Building2,
@@ -111,6 +112,12 @@ const menuItemsConfig = [
     url: "/downloads",
     icon: Download,
     testId: "link-downloads",
+  },
+  {
+    titleKey: "releasesTitle" as const,
+    url: "/releases",
+    icon: Package,
+    testId: "link-releases",
   },
   {
     titleKey: "installApp" as const,

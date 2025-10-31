@@ -2,12 +2,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Download, Monitor, Info, CheckCircle2, AlertCircle, Terminal, Laptop, Apple, SquareTerminal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Download, Monitor, Info, CheckCircle2, AlertCircle, Terminal, Laptop, Apple, SquareTerminal, ExternalLink } from "lucide-react";
 import { SiLinux, SiApple } from "react-icons/si";
 import { useLanguage } from "@/lib/language-provider";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+
+interface PlayerRelease {
+  id: string;
+  version: string;
+  platform: string;
+  releaseDate: string;
+  downloadUrl: string;
+  fileName: string;
+  fileSize: number | null;
+  isLatest: boolean;
+}
 
 export default function Downloads() {
   const { t } = useLanguage();
+  
+  // Fetch latest releases for each platform
+  const { data: releases } = useQuery<PlayerRelease[]>({
+    queryKey: ['/api/player/releases', { latest: 'true' }],
+  });
   
   return (
     <div className="container mx-auto p-8 max-w-5xl">
@@ -20,6 +39,46 @@ export default function Downloads() {
           {t('downloadsSubtitle')}
         </p>
       </div>
+
+      {releases && releases.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              {t('downloadAvailable')}
+            </CardTitle>
+            <CardDescription>
+              Latest stable releases available for download
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              {releases.map(release => (
+                <Card key={release.id} className="border-primary/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {t(release.platform as any)}
+                      <Badge variant="default" className="ml-auto">{t('latestVersion')}</Badge>
+                    </CardTitle>
+                    <CardDescription>{release.version}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full" data-testid={`button-download-${release.platform}`}>
+                      <a href={release.downloadUrl} download>
+                        <Download className="h-4 w-4 mr-2" />
+                        {t('downloadNow')}
+                      </a>
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      {release.fileName}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Alert className="mb-6">
         <Info className="h-4 w-4" />

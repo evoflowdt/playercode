@@ -38,6 +38,7 @@ import SyncGroups from "@/pages/sync-groups";
 import Analytics from "@/pages/analytics";
 import Documentation from "@/pages/documentation";
 import Downloads from "@/pages/downloads";
+import Releases from "@/pages/releases";
 import Settings from "@/pages/settings";
 import Team from "@/pages/team";
 import Permissions from "@/pages/permissions";
@@ -119,6 +120,7 @@ function ProtectedRouter() {
       <Route path="/sync-groups" component={() => <ProtectedRoute component={SyncGroups} />} />
       <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
       <Route path="/documentation" component={() => <ProtectedRoute component={Documentation} />} />
+      <Route path="/releases" component={() => <ProtectedRoute component={Releases} />} />
       <Route path="/install" component={() => <ProtectedRoute component={Install} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/team" component={() => <ProtectedRoute component={Team} />} />
