@@ -16,7 +16,6 @@ import {
   Code,
   ScrollText,
 } from "lucide-react";
-import timesSquareHero from "@assets/stock_images/times_square_new_yor_e6db3ef6.jpg";
 
 export default function Landing() {
   const { t } = useLanguage();
@@ -109,17 +108,7 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 sm:py-32">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img 
-            src={digitalSignageHero} 
-            alt="Modern digital signage displays" 
-            className="h-full w-full object-cover"
-          />
-        </div>
-        {/* Teal-tinted Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/75 to-accent/30"></div>
-        
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-background to-background"></div>
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
@@ -134,7 +123,7 @@ export default function Landing() {
                   {t('landingGetStarted')}
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="px-8 hover-elevate active-elevate-2" asChild data-testid="button-hero-learnmore">
+              <Button size="lg" variant="outline" className="px-8" asChild data-testid="button-hero-learnmore">
                 <Link href="#features">
                   {t('landingLearnMore')}
                 </Link>
