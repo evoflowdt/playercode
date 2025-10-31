@@ -18,6 +18,18 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 
 ### Feature Specifications
 -   **Core Platform**: Includes a modern, bilingual (EN/IT) landing page, multi-tenant authentication with RBAC, a real-time dashboard, comprehensive display management (monitoring, editing, geocoding), content library (upload, search, filter), scheduling (time-based, recurring, conditional), display grouping, content playlists, and multi-monitor synchronization.
+-   **Advanced Features (Recently Implemented)**:
+    -   **Auto-Update System**: Custom HTTPS-based player update system with version checking, progress tracking, HTTP validation, file verification, and automatic cleanup
+    -   **URL/Web Content Support**: Full iframe rendering for webpage/URL content with auto-refresh capability (`refreshInterval` field)
+    -   **Remote Screenshot**: Player capture via HTML5 canvas API with WebSocket delivery to platform
+    -   **Multi-Zone Layouts**: Database schema for zone-based layouts (`layouts`, `displayLayouts` tables) supporting multiple content zones per display
+    -   **Proof of Play**: Playback tracking system (`playbackLogs` table) logging content display events for compliance reporting
+    -   **Smart Alerts**: Intelligent monitoring with configurable alert rules and notification channels (`alertRules`, `alertHistory` tables)
+    -   **Content Approval Workflow**: Multi-step content review system (`contentApprovals` table) with pending/approved/rejected states
+    -   **Dynamic Feeds**: RSS/Social feed integration (`dynamicFeeds` table) with template-based rendering
+    -   **Emergency Override**: Priority-based content override system (`emergencyOverrides` table) for urgent messaging
+    -   **Weather-Based Scheduling**: Conditional scheduling based on weather conditions (`weatherConditions` table)
+    -   **Two-Factor Authentication**: TOTP-based 2FA system (`userTwoFactor` table) with backup codes
 -   **Advanced Capabilities**: Features an analytics dashboard with real-time data, a Player API for device interaction, configurable display resolution with content adaptation, and player auto-reset functionality.
 -   **Management & Administration**: Encompasses team management with granular permissions (Owner/Admin/Editor/Viewer roles), organization settings (plan, display limits), audit logging, and a secure invitation workflow.
 -   **Developer Tools**: Provides a full developer API system with API key management, webhook management for event subscriptions, and a notification center for in-app alerts with real-time WebSocket delivery.

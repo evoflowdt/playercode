@@ -74,6 +74,95 @@ export const playbackLogs = pgTable("playback_logs", {
   organizationId: varchar("organization_id").notNull(),
 });
 
+// Feature 7: Smart Alerts - intelligent monitoring and notifications
+export const alertRules = pgTable("alert_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  alertType: text("alert_type").notNull(), // 'display_offline', 'content_failed', 'storage_low'
+  condition: text("condition").notNull(), // JSON: threshold, duration, etc.
+  targetType: text("target_type").notNull(), // 'display', 'group', 'all'
+  targetId: varchar("target_id"),
+  notificationChannels: text("notification_channels").array(), // ['email', 'webhook', 'in_app']
+  enabled: boolean("enabled").notNull().default(true),
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const alertHistory = pgTable("alert_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ruleId: varchar("rule_id").notNull(),
+  triggeredAt: timestamp("triggered_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  severity: text("severity").notNull(), // 'low', 'medium', 'high', 'critical'
+  message: text("message").notNull(),
+  metadata: text("metadata"), // JSON: additional context
+  organizationId: varchar("organization_id").notNull(),
+});
+
+// Feature 8: Content Approval Workflow
+export const contentApprovals = pgTable("content_approvals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentId: varchar("content_id").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'approved', 'rejected'
+  submittedBy: varchar("submitted_by").notNull(),
+  reviewedBy: varchar("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  comments: text("comments"),
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Feature 9: Dynamic Feeds (RSS/Social)
+export const dynamicFeeds = pgTable("dynamic_feeds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  feedType: text("feed_type").notNull(), // 'rss', 'twitter', 'instagram', 'weather'
+  feedUrl: text("feed_url").notNull(),
+  refreshInterval: integer("refresh_interval").notNull().default(300), // seconds
+  template: text("template"), // HTML template for rendering
+  lastFetched: timestamp("last_fetched"),
+  enabled: boolean("enabled").notNull().default(true),
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Feature 11: Emergency Override
+export const emergencyOverrides = pgTable("emergency_overrides", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentId: varchar("content_id").notNull(),
+  targetType: text("target_type").notNull(), // 'display', 'group', 'all'
+  targetId: varchar("target_id"),
+  priority: integer("priority").notNull().default(999), // Very high priority
+  activatedBy: varchar("activated_by").notNull(),
+  activatedAt: timestamp("activated_at").notNull().defaultNow(),
+  deactivatedAt: timestamp("deactivated_at"),
+  reason: text("reason"),
+  organizationId: varchar("organization_id").notNull(),
+});
+
+// Feature 12: Weather-Based Scheduling
+export const weatherConditions = pgTable("weather_conditions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scheduleId: varchar("schedule_id").notNull(),
+  conditionType: text("condition_type").notNull(), // 'temperature', 'precipitation', 'condition'
+  operator: text("operator").notNull(), // 'gt', 'lt', 'eq', 'contains'
+  value: text("value").notNull(),
+  location: text("location").notNull(), // City or coordinates
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Feature 13: Two-Factor Authentication
+export const userTwoFactor = pgTable("user_two_factor", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  totpSecret: text("totp_secret").notNull(),
+  backupCodes: text("backup_codes").array(),
+  enabled: boolean("enabled").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastUsed: timestamp("last_used"),
+});
+
 export const schedules = pgTable("schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
