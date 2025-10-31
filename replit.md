@@ -9,7 +9,7 @@ I prefer clear and direct communication. When suggesting changes, please explain
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a Material Design 3-inspired interface, rebranded as EvoFlow, with a dark teal, light gray, and orange color palette. Typography uses Inter/Roboto Mono, with generous spacing and adapted Shadcn UI components. A mobile-first, responsive design is prioritized for all interfaces.
+The platform features a Material Design 3-inspired interface, rebranded as EvoFlow, with a dark teal, light gray, and orange color palette. Typography uses Inter/Roboto Mono, with generous spacing and adapted Shadcn UI components. A mobile-first, responsive design is prioritized for all interfaces. The landing page features a clean Hero section with gradient background (`from-accent/20 via-background to-background`) without background images, and includes Digital Town Srl company information in the footer (Copyright © 2025 Digital Town Srl | P.IVA 03802320139 | REA CO.333859).
 
 ### Technical Implementations
 -   **Frontend**: A React single-page application (SPA) built with TypeScript, utilizing Wouter for routing, TanStack Query for data management, Shadcn UI with Tailwind CSS for UI components, Leaflet for mapping, Uppy for file uploads, WebSockets for real-time updates, and AuthContext for authentication.
@@ -30,6 +30,7 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Storage Layer**: PostgreSQL (Neon) for persistent data, managed by Drizzle ORM, supporting a multi-tenant architecture with bcrypt-hashed passwords and UUID-based session tokens.
 -   **Object Storage**: Replit Object Storage is used for media files, accessed via presigned URLs.
 -   **Authentication**: Session-based, with tokens stored in localStorage and validated via Bearer tokens in API requests, with sessions expiring after 30 days.
+-   **Routing Architecture**: Public routes (landing, login, register, player, accept-invitation) do not require authentication and have no sidebar. Protected routes (dashboard, displays, content, templates, schedules, install, etc.) require authentication and include the sidebar for consistent navigation.
 
 ## External Dependencies
 -   **PostgreSQL**: Primary database.
