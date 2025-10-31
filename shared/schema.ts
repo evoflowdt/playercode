@@ -845,3 +845,37 @@ export interface TemplateConfig {
     repeat?: string;
   };
 }
+
+// ============================================================
+// Sprint 6: Player Software Distribution
+// ============================================================
+
+// Player releases stored in GitHub
+export const playerReleases = pgTable("player_releases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  version: text("version").notNull().unique(), // e.g., "1.0.0", "1.2.3-beta"
+  platform: text("platform").notNull(), // 'windows', 'macos', 'linux'
+  releaseDate: timestamp("release_date").notNull().defaultNow(),
+  changelog: text("changelog"), // Release notes in markdown
+  githubReleaseId: text("github_release_id").notNull(), // GitHub release ID
+  githubReleaseUrl: text("github_release_url").notNull(), // URL to GitHub release page
+  downloadUrl: text("download_url").notNull(), // Direct download URL from GitHub
+  fileName: text("file_name").notNull(), // e.g., "EvoFlow-Player-1.0.0-Windows.exe"
+  fileSize: integer("file_size"), // Size in bytes
+  isPrerelease: boolean("is_prerelease").notNull().default(false),
+  isLatest: boolean("is_latest").notNull().default(false), // Only one per platform should be true
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+});
+
+export const insertPlayerReleaseSchema = createInsertSchema(playerReleases).omit({
+  id: true,
+  createdAt: true,
+  createdBy: true,
+});
+
+export const updatePlayerReleaseSchema = insertPlayerReleaseSchema.partial();
+
+export type PlayerRelease = typeof playerReleases.$inferSelect;
+export type InsertPlayerRelease = z.infer<typeof insertPlayerReleaseSchema>;
+export type UpdatePlayerRelease = z.infer<typeof updatePlayerReleaseSchema>;

@@ -71,6 +71,9 @@ import {
   type UpdateContentTemplate,
   type TemplateApplication,
   type InsertTemplateApplication,
+  type PlayerRelease,
+  type InsertPlayerRelease,
+  type UpdatePlayerRelease,
   displays,
   contentItems,
   displayGroups,
@@ -103,6 +106,7 @@ import {
   resourcePermissions,
   contentTemplates,
   templateApplications,
+  playerReleases,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt, lt, gte, lte, desc, inArray } from "drizzle-orm";
@@ -296,6 +300,16 @@ export interface IStorage {
   deleteContentTemplate(id: string, organizationId: string): Promise<boolean>;
   applyTemplateToDisplay(insertApplication: InsertTemplateApplication): Promise<TemplateApplication>;
   getTemplateApplications(organizationId: string, filters?: { templateId?: string; displayId?: string }): Promise<TemplateApplication[]>;
+
+  // Player Releases methods (Sprint 6)
+  createPlayerRelease(insertRelease: InsertPlayerRelease): Promise<PlayerRelease>;
+  listPlayerReleases(filters?: { platform?: string; isPrerelease?: boolean; isLatest?: boolean }): Promise<PlayerRelease[]>;
+  getPlayerRelease(id: string): Promise<PlayerRelease | undefined>;
+  getPlayerReleaseByVersion(version: string): Promise<PlayerRelease | undefined>;
+  getLatestPlayerRelease(platform: string): Promise<PlayerRelease | undefined>;
+  updatePlayerRelease(id: string, updates: UpdatePlayerRelease): Promise<PlayerRelease | undefined>;
+  deletePlayerRelease(id: string): Promise<boolean>;
+  setLatestRelease(id: string, platform: string): Promise<void>;
 
   // Bulk Operations methods (Sprint 5.2)
   bulkDeleteDisplays(displayIds: string[], organizationId: string): Promise<number>;
@@ -2357,10 +2371,7 @@ export class DatabaseStorage implements IStorage {
   async createContentTemplate(insertTemplate: InsertContentTemplate): Promise<ContentTemplate> {
     const [template] = await db
       .insert(contentTemplates)
-      .values({
-        ...insertTemplate,
-        updatedAt: new Date(),
-      })
+      .values(insertTemplate)
       .returning();
     return template;
   }
@@ -2541,6 +2552,105 @@ export class DatabaseStorage implements IStorage {
         inArray(contentItems.id, contentIds)
       ));
     return result.rowCount ?? 0;
+  }
+
+  // Player Releases methods (Sprint 6)
+  async createPlayerRelease(insertRelease: InsertPlayerRelease): Promise<PlayerRelease> {
+    const [release] = await db
+      .insert(playerReleases)
+      .values(insertRelease)
+      .returning();
+    return release;
+  }
+
+  async listPlayerReleases(filters?: { platform?: string; isPrerelease?: boolean; isLatest?: boolean }): Promise<PlayerRelease[]> {
+    const conditions = [];
+    
+    if (filters?.platform) {
+      conditions.push(eq(playerReleases.platform, filters.platform));
+    }
+    
+    if (filters?.isPrerelease !== undefined) {
+      conditions.push(eq(playerReleases.isPrerelease, filters.isPrerelease));
+    }
+
+    if (filters?.isLatest !== undefined) {
+      conditions.push(eq(playerReleases.isLatest, filters.isLatest));
+    }
+
+    if (conditions.length === 0) {
+      return await db
+        .select()
+        .from(playerReleases)
+        .orderBy(desc(playerReleases.releaseDate));
+    }
+
+    return await db
+      .select()
+      .from(playerReleases)
+      .where(and(...conditions))
+      .orderBy(desc(playerReleases.releaseDate));
+  }
+
+  async getPlayerRelease(id: string): Promise<PlayerRelease | undefined> {
+    const [release] = await db
+      .select()
+      .from(playerReleases)
+      .where(eq(playerReleases.id, id))
+      .limit(1);
+    return release;
+  }
+
+  async getPlayerReleaseByVersion(version: string): Promise<PlayerRelease | undefined> {
+    const [release] = await db
+      .select()
+      .from(playerReleases)
+      .where(eq(playerReleases.version, version))
+      .limit(1);
+    return release;
+  }
+
+  async getLatestPlayerRelease(platform: string): Promise<PlayerRelease | undefined> {
+    const [release] = await db
+      .select()
+      .from(playerReleases)
+      .where(and(
+        eq(playerReleases.platform, platform),
+        eq(playerReleases.isLatest, true)
+      ))
+      .limit(1);
+    return release;
+  }
+
+  async updatePlayerRelease(id: string, updates: UpdatePlayerRelease): Promise<PlayerRelease | undefined> {
+    const [updated] = await db
+      .update(playerReleases)
+      .set(updates)
+      .where(eq(playerReleases.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePlayerRelease(id: string): Promise<boolean> {
+    const result = await db
+      .delete(playerReleases)
+      .where(eq(playerReleases.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async setLatestRelease(id: string, platform: string): Promise<void> {
+    // First, unset all other releases for this platform
+    await db
+      .update(playerReleases)
+      .set({ isLatest: false })
+      .where(eq(playerReleases.platform, platform));
+    
+    // Then set this one as latest
+    await db
+      .update(playerReleases)
+      .set({ isLatest: true })
+      .where(eq(playerReleases.id, id));
   }
 
 }
