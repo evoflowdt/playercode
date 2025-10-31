@@ -43,23 +43,23 @@ export default function Downloads() {
       {/* Source Code Download - Always visible */}
       <Card className="mb-6 border-primary/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Download className="h-5 w-5" />
             Download Source Code
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             Get the EvoFlow Player source code to build it yourself
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Clone with Git</CardTitle>
+                  <CardTitle className="text-sm sm:text-base">Clone with Git</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <code className="block bg-muted p-3 rounded text-sm mb-3">
+                  <code className="block bg-muted p-2 sm:p-3 rounded text-xs sm:text-sm mb-3 overflow-x-auto break-all">
                     git clone https://github.com/evoflowdt/playercode.git
                   </code>
                   <p className="text-xs text-muted-foreground">
@@ -70,7 +70,7 @@ export default function Downloads() {
               
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Download ZIP</CardTitle>
+                  <CardTitle className="text-sm sm:text-base">Download ZIP</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Button asChild className="w-full mb-3" data-testid="button-download-source">
@@ -101,11 +101,11 @@ export default function Downloads() {
       {releases && releases.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Download className="h-5 w-5" />
               Pre-compiled Installers
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Ready-to-install packages (no build required)
             </CardDescription>
           </CardHeader>
@@ -169,21 +169,21 @@ export default function Downloads() {
         <TabsContent value="overview" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Laptop className="h-5 w-5" />
                 {t('desktopPlayer')}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {t('desktopPlayerDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <h3 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                   {t('featuresTitle')}
                 </h3>
-                <ul className="space-y-2 text-muted-foreground">
+                <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                     <span>{t('featureKiosk')}</span>
@@ -208,11 +208,11 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                <h3 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
                   {t('requirementsTitle')}
                 </h3>
-                <ul className="space-y-2 text-muted-foreground">
+                <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
                   <li>• {t('requirementNode')}</li>
                   <li>• Internet connection for initial pairing</li>
                   <li>• ~200MB disk space for the application</li>
@@ -235,17 +235,17 @@ export default function Downloads() {
         <TabsContent value="windows" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <SquareTerminal className="h-5 w-5" />
                 {t('windowsInstallation')}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {t('windowsInstallDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('prerequisites')}</h3>
                 <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
                   <li>
                     <strong className="text-foreground">{t('prereqInstallNode')}</strong>
@@ -263,8 +263,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
-                <ol className="list-decimal pl-5 space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-4 sm:pl-5 space-y-4 text-sm sm:text-base">
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
@@ -298,8 +298,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -313,8 +313,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
-                <p className="text-muted-foreground">{t('installInstructionsWin')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">{t('installInstructionsWin')}</p>
               </div>
 
               <Alert>
@@ -330,18 +330,18 @@ export default function Downloads() {
         <TabsContent value="macos" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Apple className="h-5 w-5" />
                 {t('macosInstallation')}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {t('macosInstallDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
-                <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <ol className="list-decimal pl-4 sm:pl-5 space-y-4 text-sm sm:text-base text-muted-foreground">
                   <li>
                     <strong className="text-foreground">{t('prereqInstallNode')}</strong>
                     <p className="mt-1 text-sm">{t('prereqInstallNodeDetail')}</p>
@@ -365,8 +365,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
-                <ol className="list-decimal pl-5 space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-4 sm:pl-5 space-y-4 text-sm sm:text-base">
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
@@ -400,8 +400,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -418,8 +418,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
-                <p className="text-muted-foreground">{t('installInstructionsMac')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">{t('installInstructionsMac')}</p>
               </div>
 
               <Alert>
@@ -435,18 +435,18 @@ export default function Downloads() {
         <TabsContent value="linux" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <SiLinux className="h-5 w-5" />
                 {t('linuxInstallation')}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 {t('linuxInstallDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
-                <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <ol className="list-decimal pl-4 sm:pl-5 space-y-4 text-sm sm:text-base text-muted-foreground">
                   <li>
                     <strong className="text-foreground">{t('prereqInstallNode')}</strong>
                     <p className="mt-1 text-sm">{t('prereqInstallNodeDetail')}</p>
@@ -467,8 +467,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
-                <ol className="list-decimal pl-5 space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-4 sm:pl-5 space-y-4 text-sm sm:text-base">
                   <li>
                     <strong className="text-foreground">{t('stepNavigate')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
@@ -502,8 +502,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground text-sm">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -521,8 +521,8 @@ export default function Downloads() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
-                <p className="text-muted-foreground">{t('installInstructionsLinux')}</p>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">{t('installInstructionsLinux')}</p>
               </div>
             </CardContent>
           </Card>
@@ -531,26 +531,26 @@ export default function Downloads() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>{t('additionalResources')}</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">{t('additionalResources')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="font-semibold mb-2">{t('documentationResources')}</h4>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>
-                • <code className="bg-muted px-1.5 py-0.5 rounded">README-ELECTRON.md</code> - {t('readmeElectron')}
+            <h4 className="text-sm sm:text-base font-semibold mb-2">{t('documentationResources')}</h4>
+            <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
+              <li className="break-all">
+                • <code className="bg-muted px-1.5 py-0.5 rounded text-xs">README-ELECTRON.md</code> - {t('readmeElectron')}
               </li>
-              <li>
-                • <code className="bg-muted px-1.5 py-0.5 rounded">electron-builder.json</code> - {t('builderConfig')}
+              <li className="break-all">
+                • <code className="bg-muted px-1.5 py-0.5 rounded text-xs">electron-builder.json</code> - {t('builderConfig')}
               </li>
-              <li>
-                • <code className="bg-muted px-1.5 py-0.5 rounded">electron/main.js</code> - {t('mainProcess')}
+              <li className="break-all">
+                • <code className="bg-muted px-1.5 py-0.5 rounded text-xs">electron/main.js</code> - {t('mainProcess')}
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-2">{t('support')}</h4>
-            <p className="text-muted-foreground">
+            <h4 className="text-sm sm:text-base font-semibold mb-2">{t('support')}</h4>
+            <p className="text-sm sm:text-base text-muted-foreground">
               For issues, questions, or feature requests, please refer to the README-ELECTRON.md file or contact support.
             </p>
           </div>
