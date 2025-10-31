@@ -40,15 +40,73 @@ export default function Downloads() {
         </p>
       </div>
 
+      {/* Source Code Download - Always visible */}
+      <Card className="mb-6 border-primary/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="h-5 w-5" />
+            Download Source Code
+          </CardTitle>
+          <CardDescription>
+            Get the EvoFlow Player source code to build it yourself
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Clone with Git</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <code className="block bg-muted p-3 rounded text-sm mb-3">
+                    git clone https://github.com/evoflowdt/playercode.git
+                  </code>
+                  <p className="text-xs text-muted-foreground">
+                    Recommended for developers. Allows easy updates with git pull.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Download ZIP</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full mb-3" variant="outline" data-testid="button-download-source">
+                    <a href="https://github.com/evoflowdt/playercode/archive/refs/heads/main.zip" download>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download ZIP
+                    </a>
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Quick download without Git required.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>What's Next?</AlertTitle>
+              <AlertDescription>
+                After downloading, follow the build instructions below for your operating system.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pre-compiled Releases - Only if available */}
       {releases && releases.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Download className="h-5 w-5" />
-              {t('downloadAvailable')}
+              Pre-compiled Installers
             </CardTitle>
             <CardDescription>
-              Latest stable releases available for download
+              Ready-to-install packages (no build required)
             </CardDescription>
           </CardHeader>
           <CardContent>
