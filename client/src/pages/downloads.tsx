@@ -25,7 +25,7 @@ export default function Downloads() {
   
   // Fetch latest releases for each platform
   const { data: releases } = useQuery<PlayerRelease[]>({
-    queryKey: ['/api/player/releases', { latest: 'true' }],
+    queryKey: ['/api/player/releases?latest=true'],
   });
   
   return (

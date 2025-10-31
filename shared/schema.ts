@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -853,7 +853,7 @@ export interface TemplateConfig {
 // Player releases stored in GitHub
 export const playerReleases = pgTable("player_releases", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  version: text("version").notNull().unique(), // e.g., "1.0.0", "1.2.3-beta"
+  version: text("version").notNull(), // e.g., "1.0.0", "1.2.3-beta"
   platform: text("platform").notNull(), // 'windows', 'macos', 'linux'
   releaseDate: timestamp("release_date").notNull().defaultNow(),
   changelog: text("changelog"), // Release notes in markdown
@@ -866,7 +866,10 @@ export const playerReleases = pgTable("player_releases", {
   isLatest: boolean("is_latest").notNull().default(false), // Only one per platform should be true
   createdAt: timestamp("created_at").notNull().defaultNow(),
   createdBy: varchar("created_by").notNull().references(() => users.id),
-});
+}, (table) => ({
+  // Composite unique constraint: same version can exist for different platforms
+  versionPlatformIdx: unique().on(table.version, table.platform),
+}));
 
 export const insertPlayerReleaseSchema = createInsertSchema(playerReleases).omit({
   id: true,
