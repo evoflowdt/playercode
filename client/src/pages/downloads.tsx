@@ -128,45 +128,76 @@ export default function Downloads() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('prerequisites')}</h3>
-                <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
-                  <li>{t('prereqInstallNode')}</li>
-                  <li>{t('prereqCloneProject')}</li>
-                  <li>{t('prereqOpenPowershell')}</li>
+                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">{t('prereqInstallNode')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqInstallNodeDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqCloneProject')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqCloneProjectDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqOpenPowershell')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqOpenPowershellDetail')}</p>
+                  </li>
                 </ol>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('buildSteps')}</h3>
-                <div className="bg-muted p-4 rounded-md font-mono text-sm space-y-2">
-                  <div className="text-muted-foreground"># {t('stepNavigate')}</div>
-                  <div>cd path\to\evoflow</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepInstallDeps')}</div>
-                  <div>npm install</div>
-                  <div>npm install --save-dev wait-on</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepTestDev')}</div>
-                  <div>npm run electron:dev</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepBuildProd')}</div>
-                  <div>npm run electron:build:win</div>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-5 space-y-4">
+                  <li>
+                    <strong className="text-foreground">{t('stepNavigate')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      cd C:\path\to\evoflow
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                      <div>npm install</div>
+                      <div>npm install --save-dev wait-on</div>
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepTestDev')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:dev
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepBuildProd')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:build:win
+                    </div>
+                  </li>
+                </ol>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('outputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('outputFilesDesc')}</p>
+                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('nsisInstaller')}</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-Setup-1.0.0.exe</code> - {t('nsisInstaller')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('portableVersion')}</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-1.0.0-win.zip</code> - {t('portableVersion')}</span>
                   </li>
                 </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-muted-foreground">{t('installInstructionsWin')}</p>
               </div>
 
               <Alert>
@@ -192,49 +223,86 @@ export default function Downloads() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('prerequisites')}</h3>
-                <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
-                  <li>{t('prereqInstallNode')}</li>
-                  <li>{t('prereqXcode')}</li>
-                  <li>{t('prereqCloneMac')}</li>
-                  <li>{t('prereqOpenTerminal')}</li>
+                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">{t('prereqInstallNode')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqInstallNodeDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqXcode')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqXcodeDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      xcode-select --install
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqCloneMac')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqCloneMacDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqOpenTerminal')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqOpenTerminalDetail')}</p>
+                  </li>
                 </ol>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('buildSteps')}</h3>
-                <div className="bg-muted p-4 rounded-md font-mono text-sm space-y-2">
-                  <div className="text-muted-foreground"># {t('stepNavigate')}</div>
-                  <div>cd /path/to/evoflow</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepInstallDeps')}</div>
-                  <div>npm install</div>
-                  <div>npm install --save-dev wait-on</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepTestDev')}</div>
-                  <div>npm run electron:dev</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepBuildProd')}</div>
-                  <div>npm run electron:build:mac</div>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-5 space-y-4">
+                  <li>
+                    <strong className="text-foreground">{t('stepNavigate')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      cd /path/to/evoflow
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                      <div>npm install</div>
+                      <div>npm install --save-dev wait-on</div>
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepTestDev')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:dev
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepBuildProd')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:build:mac
+                    </div>
+                  </li>
+                </ol>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('outputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('outputFilesDesc')}</p>
+                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><strong>EvoFlow Player-x.x.x.dmg</strong> - DMG installer (recommended)</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow Player-1.0.0.dmg</code> - DMG installer (recommended)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span><strong>EvoFlow Player-x.x.x-mac.zip</strong> - ZIP archive</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow Player-1.0.0-mac.zip</code> - ZIP archive</span>
                   </li>
                 </ul>
                 <p className="text-sm text-muted-foreground mt-3">
                   {t('supportsArchitecture')}
                 </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-muted-foreground">{t('installInstructionsMac')}</p>
               </div>
 
               <Alert>
@@ -260,77 +328,84 @@ export default function Downloads() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('prerequisites')}</h3>
-                <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
-                  <li>{t('prereqNodeLinux')}</li>
-                  <li>{t('prereqBuildDeps')}</li>
+                <h3 className="text-lg font-semibold mb-4">{t('prerequisites')}</h3>
+                <ol className="list-decimal pl-5 space-y-4 text-muted-foreground">
+                  <li>
+                    <strong className="text-foreground">{t('prereqInstallNode')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqInstallNodeDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqNodeLinux')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqNodeLinuxDetail')}</p>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('prereqBuildDeps')}</strong>
+                    <p className="mt-1 text-sm">{t('prereqBuildDepsDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      sudo apt-get install -y libgtk-3-dev libnotify-dev \<br />
+                      &nbsp;&nbsp;libgconf-2-4 libnss3 libxss1 libasound2
+                    </div>
+                  </li>
                 </ol>
-                <div className="bg-muted p-4 rounded-md font-mono text-sm mt-2">
-                  sudo apt-get install -y libgtk-3-dev libnotify-dev \<br />
-                  &nbsp;&nbsp;libgconf-2-4 libnss3 libxss1 libasound2
-                </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('buildSteps')}</h3>
-                <div className="bg-muted p-4 rounded-md font-mono text-sm space-y-2">
-                  <div className="text-muted-foreground"># {t('stepNavigate')}</div>
-                  <div>cd /path/to/evoflow</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepInstallDeps')}</div>
-                  <div>npm install</div>
-                  <div>npm install --save-dev wait-on</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepTestDev')}</div>
-                  <div>npm run electron:dev</div>
-                  <br />
-                  <div className="text-muted-foreground"># {t('stepBuildProd')}</div>
-                  <div>npm run electron:build:linux</div>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">{t('buildSteps')}</h3>
+                <ol className="list-decimal pl-5 space-y-4">
+                  <li>
+                    <strong className="text-foreground">{t('stepNavigate')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepNavigateDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      cd /path/to/evoflow
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2 space-y-1">
+                      <div>npm install</div>
+                      <div>npm install --save-dev wait-on</div>
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepTestDev')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:dev
+                    </div>
+                  </li>
+                  <li>
+                    <strong className="text-foreground">{t('stepBuildProd')}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
+                    <div className="bg-muted p-3 rounded-md font-mono text-sm mt-2">
+                      npm run electron:build:linux
+                    </div>
+                  </li>
+                </ol>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('outputFiles')}</h3>
-                <p className="text-muted-foreground mb-3">{t('outputFilesDesc')}</p>
+                <h3 className="text-lg font-semibold mb-3">{t('findOutputFiles')}</h3>
+                <p className="text-muted-foreground mb-3">{t('findOutputFilesDetail')}</p>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('universalLinux')}</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/EvoFlow-Player-1.0.0.AppImage</code> - {t('universalLinux')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('debianPackage')}</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/evoflow-player_1.0.0_amd64.deb</code> - {t('debianPackage')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Download className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>{t('rpmPackage')}</span>
+                    <span><code className="bg-muted px-1.5 py-0.5 rounded">dist/evoflow-player-1.0.0.x86_64.rpm</code> - {t('rpmPackage')}</span>
                   </li>
                 </ul>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-3">{t('installation')}</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium mb-2">AppImage (Universal):</p>
-                    <div className="bg-muted p-4 rounded-md font-mono text-sm space-y-1">
-                      <div>{t('appImageInstall').split('\n')[0]}</div>
-                      <div>{t('appImageInstall').split('\n')[1]}</div>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium mb-2">Debian/Ubuntu (.deb):</p>
-                    <div className="bg-muted p-4 rounded-md font-mono text-sm">
-                      {t('debInstall')}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium mb-2">Fedora/RedHat (.rpm):</p>
-                    <div className="bg-muted p-4 rounded-md font-mono text-sm">
-                      {t('rpmInstall')}
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-lg font-semibold mb-3">{t('playerInstallInstructions')}</h3>
+                <p className="text-muted-foreground">{t('installInstructionsLinux')}</p>
               </div>
             </CardContent>
           </Card>
