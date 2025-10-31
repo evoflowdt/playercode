@@ -42,6 +42,38 @@ export const displayGroups = pgTable("display_groups", {
   organizationId: varchar("organization_id").notNull(),
 });
 
+// Multi-zone layouts for displays
+export const layouts = pgTable("layouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  zones: text("zones").notNull(), // JSON string defining zones: [{id, x, y, width, height, contentId}]
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Zone assignments for displays
+export const displayLayouts = pgTable("display_layouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayId: varchar("display_id").notNull(),
+  layoutId: varchar("layout_id").notNull(),
+  active: boolean("active").notNull().default(true),
+  organizationId: varchar("organization_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Proof of Play - content playback tracking
+export const playbackLogs = pgTable("playback_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayId: varchar("display_id").notNull(),
+  contentId: varchar("content_id").notNull(),
+  playlistId: varchar("playlist_id"),
+  startTime: timestamp("start_time").notNull().defaultNow(),
+  endTime: timestamp("end_time"),
+  duration: integer("duration"), // Actual playback duration in seconds
+  organizationId: varchar("organization_id").notNull(),
+});
+
 export const schedules = pgTable("schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
