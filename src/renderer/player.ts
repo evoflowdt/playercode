@@ -30,10 +30,12 @@ class EvoFlowPlayer {
       this.setupSettingsDialog();
       
       // If not configured, show settings
-      if (!this.config.deviceId || !this.config.apiUrl) {
+      if (!this.config.apiUrl) {
         this.showSettings();
         return;
       }
+      
+      // Device ID is generated automatically, but API URL must be configured
 
       // Connect to platform
       this.connect();
