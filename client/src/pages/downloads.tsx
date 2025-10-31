@@ -74,7 +74,7 @@ export default function Downloads() {
                 </CardHeader>
                 <CardContent>
                   <Button asChild className="w-full mb-3" variant="outline" data-testid="button-download-source">
-                    <a href="https://github.com/evoflowdt/playercode/archive/refs/heads/main.zip" download>
+                    <a href="https://codeload.github.com/evoflowdt/playercode/zip/refs/heads/main" download>
                       <Download className="h-4 w-4 mr-2" />
                       Download ZIP
                     </a>
