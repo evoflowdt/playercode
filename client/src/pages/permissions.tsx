@@ -82,14 +82,14 @@ export default function PermissionsPage() {
   });
 
   // Fetch permissions with filters
+  const queryParams = new URLSearchParams();
+  if (filterUserId) queryParams.append('userId', filterUserId);
+  if (filterResourceType) queryParams.append('resourceType', filterResourceType);
+  const queryString = queryParams.toString();
+  const apiUrl = queryString ? `/api/permissions?${queryString}` : '/api/permissions';
+  
   const { data: permissions = [], isLoading } = useQuery<ResourcePermission[]>({
-    queryKey: ["/api/permissions", filterUserId, filterResourceType],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      if (filterUserId) params.append('userId', filterUserId);
-      if (filterResourceType) params.append('resourceType', filterResourceType);
-      return fetch(`/api/permissions?${params.toString()}`).then(res => res.json());
-    },
+    queryKey: [apiUrl],
   });
 
   // Create permission mutation
