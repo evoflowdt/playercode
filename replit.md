@@ -24,7 +24,8 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Content & Automation**: Offers content templates for quick display configuration and bulk operations for displays and content items.
 -   **Scheduling Enhancements**: Implements an advanced, priority-based scheduling system with dayparting support.
 -   **Cross-Platform Experience**: Features a comprehensive mobile-responsive design across all pages and Progressive Web App (PWA) support for Apple iOS, Android, and Windows.
--   **Downloads Page**: Public page providing detailed, beginner-friendly step-by-step build instructions for the EvoFlow Desktop Player across Windows, macOS, and Linux platforms. Includes 50+ new translation keys with time estimates, exact commands, prerequisite explanations, and installation guidance for non-technical users.
+-   **Downloads Page**: Public page providing detailed, beginner-friendly step-by-step build instructions for the EvoFlow Desktop Player across Windows, macOS, and Linux platforms. Includes 50+ new translation keys with time estimates, exact commands, prerequisite explanations, and installation guidance for non-technical users. Additionally displays available pre-built releases when published by administrators.
+-   **Player Releases Management**: Complete GitHub-integrated release management system allowing administrators to upload player software versions to GitHub Releases. Includes protected admin interface at `/releases` for managing releases (upload, view, delete) and automatic display of available downloads on the public `/downloads` page. Integrates with Replit's GitHub connector for OAuth authentication and secure asset management.
 
 ### System Design Choices
 -   **Data Flow**: Frontend communicates with the Express backend via TanStack Query and authorization headers; backend interacts with PostgreSQL using Drizzle ORM. WebSockets provide real-time updates.
