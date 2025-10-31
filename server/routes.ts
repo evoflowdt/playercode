@@ -38,6 +38,8 @@ import {
   bulkUpdateDisplaysSchema,
   bulkApplyTemplateSchema,
   bulkDeleteContentSchema,
+  insertPlayerReleaseSchema,
+  updatePlayerReleaseSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -3230,6 +3232,135 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Bulk delete content error:", error);
       res.status(500).json({ error: "Failed to delete content" });
+    }
+  });
+
+  // Sprint 6: Player Releases endpoints
+  // Public endpoint - get all releases or filter by platform
+  app.get("/api/player/releases", async (req, res) => {
+    try {
+      const { platform, latest } = req.query;
+      
+      if (latest === "true" && platform) {
+        const release = await storage.getLatestPlayerRelease(platform as string);
+        if (!release) {
+          return res.status(404).json({ error: "No release found for this platform" });
+        }
+        return res.json(release);
+      }
+
+      const filters: any = {};
+      if (platform) filters.platform = platform as string;
+      if (latest === "true") filters.isLatest = true;
+      
+      // Only show stable releases to public (not prereleases)
+      filters.isPrerelease = false;
+      
+      const releases = await storage.listPlayerReleases(filters);
+      res.json(releases);
+    } catch (error) {
+      console.error("Get player releases error:", error);
+      res.status(500).json({ error: "Failed to retrieve releases" });
+    }
+  });
+
+  // Protected endpoint - get single release (admin only)
+  app.get("/api/player/releases/:id", requireAuth, async (req, res) => {
+    try {
+      const release = await storage.getPlayerRelease(req.params.id);
+      if (!release) {
+        return res.status(404).json({ error: "Release not found" });
+      }
+      res.json(release);
+    } catch (error) {
+      console.error("Get player release error:", error);
+      res.status(500).json({ error: "Failed to retrieve release" });
+    }
+  });
+
+  // Protected endpoint - create new release (admin only)
+  app.post("/api/player/releases", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      
+      const result = insertPlayerReleaseSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const releaseData = {
+        ...result.data,
+        createdBy: user.id,
+      };
+
+      const release = await storage.createPlayerRelease(releaseData);
+      
+      // If this is marked as latest, update other releases
+      if (release.isLatest) {
+        await storage.setLatestRelease(release.id, release.platform);
+      }
+
+      res.status(201).json(release);
+    } catch (error) {
+      console.error("Create player release error:", error);
+      res.status(500).json({ error: "Failed to create release" });
+    }
+  });
+
+  // Protected endpoint - update release (admin only)
+  app.patch("/api/player/releases/:id", requireAuth, async (req, res) => {
+    try {
+      const result = updatePlayerReleaseSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const release = await storage.updatePlayerRelease(req.params.id, result.data);
+      if (!release) {
+        return res.status(404).json({ error: "Release not found" });
+      }
+
+      // If this is marked as latest, update other releases
+      if (result.data.isLatest === true) {
+        await storage.setLatestRelease(release.id, release.platform);
+      }
+
+      res.json(release);
+    } catch (error) {
+      console.error("Update player release error:", error);
+      res.status(500).json({ error: "Failed to update release" });
+    }
+  });
+
+  // Protected endpoint - delete release (admin only)
+  app.delete("/api/player/releases/:id", requireAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deletePlayerRelease(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Release not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete player release error:", error);
+      res.status(500).json({ error: "Failed to delete release" });
+    }
+  });
+
+  // Protected endpoint - set release as latest (admin only)
+  app.post("/api/player/releases/:id/set-latest", requireAuth, async (req, res) => {
+    try {
+      const release = await storage.getPlayerRelease(req.params.id);
+      if (!release) {
+        return res.status(404).json({ error: "Release not found" });
+      }
+
+      await storage.setLatestRelease(release.id, release.platform);
+      const updated = await storage.getPlayerRelease(release.id);
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Set latest release error:", error);
+      res.status(500).json({ error: "Failed to set latest release" });
     }
   });
 
