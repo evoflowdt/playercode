@@ -163,6 +163,27 @@ export const userTwoFactor = pgTable("user_two_factor", {
   lastUsed: timestamp("last_used"),
 });
 
+// Insert schemas for new features
+export const insertEmergencyOverrideSchema = createInsertSchema(emergencyOverrides).omit({
+  id: true,
+  activatedAt: true,
+});
+
+export const insertPlaybackLogSchema = createInsertSchema(playbackLogs).omit({
+  id: true,
+  startTime: true,
+});
+
+export const insertAlertRuleSchema = createInsertSchema(alertRules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertContentApprovalSchema = createInsertSchema(contentApprovals).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const schedules = pgTable("schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
