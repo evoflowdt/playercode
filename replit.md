@@ -24,13 +24,14 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 -   **Content & Automation**: Offers content templates for quick display configuration and bulk operations for displays and content items.
 -   **Scheduling Enhancements**: Implements an advanced, priority-based scheduling system with dayparting support.
 -   **Cross-Platform Experience**: Features a comprehensive mobile-responsive design across all pages and Progressive Web App (PWA) support for Apple iOS, Android, and Windows.
+-   **Downloads Page**: Public page providing detailed, beginner-friendly step-by-step build instructions for the EvoFlow Desktop Player across Windows, macOS, and Linux platforms. Includes 50+ new translation keys with time estimates, exact commands, prerequisite explanations, and installation guidance for non-technical users.
 
 ### System Design Choices
 -   **Data Flow**: Frontend communicates with the Express backend via TanStack Query and authorization headers; backend interacts with PostgreSQL using Drizzle ORM. WebSockets provide real-time updates.
 -   **Storage Layer**: PostgreSQL (Neon) for persistent data, managed by Drizzle ORM, supporting a multi-tenant architecture with bcrypt-hashed passwords and UUID-based session tokens.
 -   **Object Storage**: Replit Object Storage is used for media files, accessed via presigned URLs.
 -   **Authentication**: Session-based, with tokens stored in localStorage and validated via Bearer tokens in API requests, with sessions expiring after 30 days.
--   **Routing Architecture**: Public routes (landing, login, register, player, accept-invitation) do not require authentication and have no sidebar. Protected routes (dashboard, displays, content, templates, schedules, install, etc.) require authentication and include the sidebar for consistent navigation.
+-   **Routing Architecture**: Public routes (landing, login, register, player, accept-invitation, downloads) do not require authentication and have no sidebar. Protected routes (dashboard, displays, content, templates, schedules, install, etc.) require authentication and include the sidebar for consistent navigation.
 
 ## External Dependencies
 -   **PostgreSQL**: Primary database.
