@@ -62,8 +62,8 @@ export default function PermissionsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [permissionToDelete, setPermissionToDelete] = useState<ResourcePermission | null>(null);
   
-  const [filterUserId, setFilterUserId] = useState<string>("");
-  const [filterResourceType, setFilterResourceType] = useState<string>("");
+  const [filterUserId, setFilterUserId] = useState<string>("all");
+  const [filterResourceType, setFilterResourceType] = useState<string>("all");
   
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedResourceType, setSelectedResourceType] = useState<string>("");
@@ -83,8 +83,8 @@ export default function PermissionsPage() {
 
   // Fetch permissions with filters
   const queryParams = new URLSearchParams();
-  if (filterUserId) queryParams.append('userId', filterUserId);
-  if (filterResourceType) queryParams.append('resourceType', filterResourceType);
+  if (filterUserId && filterUserId !== 'all') queryParams.append('userId', filterUserId);
+  if (filterResourceType && filterResourceType !== 'all') queryParams.append('resourceType', filterResourceType);
   const queryString = queryParams.toString();
   const apiUrl = queryString ? `/api/permissions?${queryString}` : '/api/permissions';
   
@@ -203,7 +203,7 @@ export default function PermissionsPage() {
                 <SelectValue placeholder={t("filterByUser")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t("allUsers")}</SelectItem>
+                <SelectItem value="all">{t("allUsers")}</SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.userId} value={member.userId}>
                     {member.userFirstName} {member.userLastName}
@@ -216,7 +216,7 @@ export default function PermissionsPage() {
                 <SelectValue placeholder={t("filterByResourceType")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t("allResourceTypes")}</SelectItem>
+                <SelectItem value="all">{t("allResourceTypes")}</SelectItem>
                 {RESOURCE_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type.replace('_', ' ')}
