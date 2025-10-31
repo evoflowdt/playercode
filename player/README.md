@@ -133,15 +133,30 @@ On first launch:
 3. Enter a **Display Name** for this device
 4. Click **Save & Restart**
 
+The player will generate a unique Device ID automatically.
+
 ### 3. Register Device
 
 After restart:
-1. Go to your EvoFlow web dashboard
-2. Navigate to **Displays** → **Add New Display**
-3. Enter the Device ID shown in the player
-4. Click **Pair Device**
+1. The player will show: "Device ID: XXXXXXXX - Please pair in dashboard"
+2. Go to your EvoFlow web dashboard
+3. Navigate to **Displays** → **Add New Display**
+4. Enter the Device ID shown in the player status
+5. Click **Pair Device**
 
-The player will now connect and display your content!
+Once paired, the player will:
+- Receive a device token automatically
+- Connect to your content feed
+- Start displaying your scheduled content
+
+### 4. Add Icon (Optional but Recommended)
+
+Before building for production:
+1. Create a 512x512 PNG icon with your branding
+2. Save it as `assets/icon.png`
+3. electron-builder will use it for all platforms
+
+Without a custom icon, the app uses system defaults.
 
 ## Keyboard Shortcuts
 

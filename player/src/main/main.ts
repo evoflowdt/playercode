@@ -1,5 +1,6 @@
-import { app, BrowserWindow, Tray, Menu, screen, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, screen, ipcMain, nativeImage } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import Store from 'electron-store';
 import { PlayerConfig } from '../shared/types';
 import { DEFAULT_CONFIG, STORAGE_KEYS } from '../shared/config';
@@ -43,8 +44,20 @@ function createWindow() {
 }
 
 function createTray() {
-  // Note: You'll need to provide an icon file
-  // tray = new Tray(path.join(__dirname, '../../assets/tray-icon.png'));
+  // Use a simple 16x16 colored rect as icon (create programmatically if needed)
+  // For now, we'll create the tray without an icon path (Electron will use default)
+  try {
+    const iconPath = path.join(__dirname, '../../assets/icon.png');
+    if (fs.existsSync(iconPath)) {
+      tray = new Tray(iconPath);
+    } else {
+      // Create tray without icon on platforms that support it
+      tray = new Tray(nativeImage.createEmpty());
+    }
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+    return;
+  }
   
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -91,9 +104,17 @@ function createTray() {
 
 // IPC handlers
 ipcMain.handle('get-config', () => {
+  // Generate device ID if not present
+  let deviceId = store.get(STORAGE_KEYS.DEVICE_ID, null);
+  if (!deviceId) {
+    // Generate a unique device ID
+    deviceId = `EVOFLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    store.set(STORAGE_KEYS.DEVICE_ID, deviceId);
+  }
+  
   return {
     apiUrl: store.get(STORAGE_KEYS.API_URL, DEFAULT_CONFIG.apiUrl),
-    deviceId: store.get(STORAGE_KEYS.DEVICE_ID, null),
+    deviceId,
     deviceToken: store.get(STORAGE_KEYS.DEVICE_TOKEN, null),
     displayName: store.get(STORAGE_KEYS.DISPLAY_NAME, DEFAULT_CONFIG.displayName),
   };
