@@ -167,13 +167,12 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <TooltipProvider>
-              {/* Routes without sidebar: Landing, Player, Login, Register, Install */}
+              {/* Routes without sidebar: Landing, Player, Login, Register, Accept Invitation */}
               <Switch>
                 <Route path="/" component={Landing} />
                 <Route path="/player" component={Player} />
                 <Route path="/login" component={Login} />
                 <Route path="/register" component={Register} />
-                <Route path="/install" component={Install} />
                 <Route path="/accept-invitation/:token" component={AcceptInvitation} />
                 <Route>
                   <SidebarProvider style={style as React.CSSProperties}>
