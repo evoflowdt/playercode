@@ -104,9 +104,17 @@ function createTray() {
 
 // IPC handlers
 ipcMain.handle('get-config', () => {
+  // Generate device ID if not present
+  let deviceId = store.get(STORAGE_KEYS.DEVICE_ID, null);
+  if (!deviceId) {
+    // Generate a unique device ID
+    deviceId = `EVOFLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    store.set(STORAGE_KEYS.DEVICE_ID, deviceId);
+  }
+  
   return {
     apiUrl: store.get(STORAGE_KEYS.API_URL, DEFAULT_CONFIG.apiUrl),
-    deviceId: store.get(STORAGE_KEYS.DEVICE_ID, null),
+    deviceId,
     deviceToken: store.get(STORAGE_KEYS.DEVICE_TOKEN, null),
     displayName: store.get(STORAGE_KEYS.DISPLAY_NAME, DEFAULT_CONFIG.displayName),
   };
