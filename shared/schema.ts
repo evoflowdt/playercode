@@ -22,10 +22,11 @@ export const displays = pgTable("displays", {
 export const contentItems = pgTable("content_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  type: text("type").notNull(),
-  url: text("url"),
+  type: text("type").notNull(), // 'image', 'video', 'url', 'webpage', 'html', 'feed'
+  url: text("url"), // For URL/webpage content or file URLs
   fileSize: integer("file_size"),
-  duration: integer("duration"),
+  duration: integer("duration"), // Display duration in seconds
+  refreshInterval: integer("refresh_interval"), // Auto-refresh interval in seconds for webpages
   htmlContent: text("html_content"),
   dataFeedUrl: text("data_feed_url"),
   dataFeedConfig: text("data_feed_config"),

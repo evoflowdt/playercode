@@ -14,6 +14,7 @@ class EvoFlowPlayer {
     statusText: document.querySelector('.status-text')!,
     imageDisplay: document.getElementById('content-display') as HTMLImageElement,
     videoDisplay: document.getElementById('video-display') as HTMLVideoElement,
+    webpageDisplay: document.getElementById('webpage-display') as HTMLIFrameElement,
     errorMessage: document.getElementById('error-message')!,
     settingsDialog: document.getElementById('settings-dialog')!,
   };
@@ -366,6 +367,7 @@ class EvoFlowPlayer {
     // Hide all displays
     this.elements.imageDisplay.style.display = 'none';
     this.elements.videoDisplay.style.display = 'none';
+    this.elements.webpageDisplay.style.display = 'none';
 
     switch (item.type) {
       case 'image':
@@ -378,9 +380,11 @@ class EvoFlowPlayer {
         this.elements.videoDisplay.play();
         break;
       case 'url':
-        // For URL content, open in a new window or display error
-        console.log('URL content not yet supported in kiosk mode:', item.url);
-        this.showError('URL content type not supported');
+      case 'webpage':
+        // Display URL/webpage content in iframe
+        this.elements.webpageDisplay.src = item.url;
+        this.elements.webpageDisplay.style.display = 'block';
+        console.log('Loading webpage:', item.url);
         break;
     }
   }
