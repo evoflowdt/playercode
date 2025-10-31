@@ -119,7 +119,6 @@ function ProtectedRouter() {
       <Route path="/sync-groups" component={() => <ProtectedRoute component={SyncGroups} />} />
       <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
       <Route path="/documentation" component={() => <ProtectedRoute component={Documentation} />} />
-      <Route path="/downloads" component={() => <ProtectedRoute component={Downloads} />} />
       <Route path="/install" component={() => <ProtectedRoute component={Install} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/team" component={() => <ProtectedRoute component={Team} />} />
@@ -167,13 +166,14 @@ export default function App() {
         <LanguageProvider>
           <AuthProvider>
             <TooltipProvider>
-              {/* Routes without sidebar: Landing, Player, Login, Register, Accept Invitation */}
+              {/* Routes without sidebar: Landing, Player, Login, Register, Accept Invitation, Downloads */}
               <Switch>
                 <Route path="/" component={Landing} />
                 <Route path="/player" component={Player} />
                 <Route path="/login" component={Login} />
                 <Route path="/register" component={Register} />
                 <Route path="/accept-invitation/:token" component={AcceptInvitation} />
+                <Route path="/downloads" component={Downloads} />
                 <Route>
                   <SidebarProvider style={style as React.CSSProperties}>
                     <div className="flex h-screen w-full">
