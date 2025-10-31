@@ -4,10 +4,12 @@ import * as fs from 'fs';
 import Store from 'electron-store';
 import { PlayerConfig } from '../shared/types';
 import { DEFAULT_CONFIG, STORAGE_KEYS } from '../shared/config';
+import { AutoUpdaterService } from './auto-updater';
 
 const store = new Store<PlayerConfig>();
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let autoUpdater: AutoUpdaterService;
 
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -74,6 +76,15 @@ function createTray() {
       click: () => {
         if (mainWindow) {
           mainWindow.reload();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Check for Updates',
+      click: () => {
+        if (autoUpdater) {
+          autoUpdater.checkForUpdates();
         }
       },
     },
@@ -146,10 +157,41 @@ ipcMain.handle('enter-kiosk', () => {
   }
 });
 
+// Auto-update IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  if (autoUpdater) {
+    await autoUpdater.checkForUpdates();
+  }
+});
+
+ipcMain.handle('download-update', async () => {
+  if (autoUpdater) {
+    await autoUpdater.downloadUpdate();
+  }
+});
+
+ipcMain.handle('install-update', () => {
+  if (autoUpdater) {
+    autoUpdater.quitAndInstall();
+  }
+});
+
 // App lifecycle
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  
+  // Initialize auto-updater
+  autoUpdater = new AutoUpdaterService(store);
+  if (mainWindow) {
+    autoUpdater.setMainWindow(mainWindow);
+    
+    // Check for pending updates
+    autoUpdater.checkPendingUpdate();
+    
+    // Start automatic update checks
+    autoUpdater.startAutoCheck();
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -159,6 +201,11 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  // Stop auto-update checks
+  if (autoUpdater) {
+    autoUpdater.stopAutoCheck();
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }

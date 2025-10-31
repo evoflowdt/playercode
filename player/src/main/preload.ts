@@ -11,6 +11,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSettingsOpen: (callback: () => void) => {
     ipcRenderer.on('open-settings', callback);
   },
+  // Auto-update API
+  checkForUpdates: (): Promise<void> => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: (): Promise<void> => ipcRenderer.invoke('download-update'),
+  installUpdate: (): Promise<void> => ipcRenderer.invoke('install-update'),
+  onUpdateStatus: (callback: (status: any) => void) => {
+    ipcRenderer.on('update-status', (_event, status) => callback(status));
+  },
+  removeUpdateStatusListener: () => {
+    ipcRenderer.removeAllListeners('update-status');
+  },
 });
 
 declare global {
@@ -22,6 +32,12 @@ declare global {
       exitKiosk: () => Promise<void>;
       enterKiosk: () => Promise<void>;
       onSettingsOpen: (callback: () => void) => void;
+      // Auto-update API
+      checkForUpdates: () => Promise<void>;
+      downloadUpdate: () => Promise<void>;
+      installUpdate: () => Promise<void>;
+      onUpdateStatus: (callback: (status: any) => void) => void;
+      removeUpdateStatusListener: () => void;
     };
   }
 }

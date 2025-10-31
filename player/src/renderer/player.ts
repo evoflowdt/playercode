@@ -29,6 +29,9 @@ class EvoFlowPlayer {
       // Setup settings dialog
       this.setupSettingsDialog();
       
+      // Setup auto-update notifications
+      this.setupAutoUpdate();
+      
       // If not configured, show settings
       if (!this.config.apiUrl) {
         this.showSettings();
@@ -42,6 +45,133 @@ class EvoFlowPlayer {
     } catch (error) {
       this.showError('Failed to initialize player');
       console.error('Init error:', error);
+    }
+  }
+  
+  private setupAutoUpdate() {
+    // Listen for update status from main process
+    window.electronAPI.onUpdateStatus((status) => {
+      console.log('Update status:', status);
+      this.handleUpdateStatus(status);
+    });
+  }
+  
+  private handleUpdateStatus(status: any) {
+    const { status: updateStatus, message } = status;
+    
+    // Create or update notification element
+    let notification = document.getElementById('update-notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'update-notification';
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #1c4e63;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 350px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      `;
+      document.body.appendChild(notification);
+    }
+    
+    // Different UI based on status
+    if (updateStatus === 'available') {
+      notification.innerHTML = `
+        <div style="margin-bottom: 10px;">
+          <strong>Update Available</strong><br/>
+          <span style="font-size: 14px;">${message}</span>
+        </div>
+        <button id="btn-download-update" style="
+          background: #ff6b35;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin-right: 8px;
+        ">Download</button>
+        <button id="btn-dismiss-update" style="
+          background: transparent;
+          color: white;
+          border: 1px solid white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+        ">Later</button>
+      `;
+      
+      document.getElementById('btn-download-update')?.addEventListener('click', () => {
+        window.electronAPI.downloadUpdate();
+      });
+      
+      document.getElementById('btn-dismiss-update')?.addEventListener('click', () => {
+        notification!.style.display = 'none';
+      });
+    } else if (updateStatus === 'downloading') {
+      notification.innerHTML = `
+        <div>
+          <strong>Downloading Update...</strong><br/>
+          <span style="font-size: 14px;">${message}</span>
+        </div>
+      `;
+    } else if (updateStatus === 'downloaded') {
+      notification.innerHTML = `
+        <div style="margin-bottom: 10px;">
+          <strong>Update Ready!</strong><br/>
+          <span style="font-size: 14px;">${message}</span>
+        </div>
+        <button id="btn-install-update" style="
+          background: #4caf50;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin-right: 8px;
+        ">Install & Restart</button>
+        <button id="btn-later-update" style="
+          background: transparent;
+          color: white;
+          border: 1px solid white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+        ">Later</button>
+      `;
+      
+      document.getElementById('btn-install-update')?.addEventListener('click', () => {
+        window.electronAPI.installUpdate();
+      });
+      
+      document.getElementById('btn-later-update')?.addEventListener('click', () => {
+        notification!.style.display = 'none';
+      });
+    } else if (updateStatus === 'not-available') {
+      // Briefly show and then hide
+      notification.innerHTML = `
+        <div>
+          <span style="font-size: 14px;">${message}</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (notification) notification.style.display = 'none';
+      }, 3000);
+    } else if (updateStatus === 'error') {
+      notification.innerHTML = `
+        <div>
+          <strong style="color: #ff6b6b;">Update Error</strong><br/>
+          <span style="font-size: 14px;">${message}</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (notification) notification.style.display = 'none';
+      }, 5000);
     }
   }
 
