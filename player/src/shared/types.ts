@@ -16,7 +16,7 @@ export interface Display {
 export interface ContentItem {
   id: string;
   name: string;
-  type: 'image' | 'video' | 'url';
+  type: 'image' | 'video' | 'url' | 'webpage';
   url: string;
   duration: number; // in seconds
   metadata?: Record<string, any>;
