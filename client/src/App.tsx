@@ -29,6 +29,7 @@ import Dashboard from "@/pages/dashboard";
 import Displays from "@/pages/displays";
 import Content from "@/pages/content";
 import Templates from "@/pages/templates";
+import Layouts from "@/pages/layouts";
 import Schedules from "@/pages/schedules";
 import AdvancedScheduling from "@/pages/advanced-scheduling";
 import Groups from "@/pages/groups";
@@ -112,6 +113,7 @@ function ProtectedRouter() {
       <Route path="/displays" component={() => <ProtectedRoute component={Displays} />} />
       <Route path="/content" component={() => <ProtectedRoute component={Content} />} />
       <Route path="/templates" component={() => <ProtectedRoute component={Templates} />} />
+      <Route path="/layouts" component={() => <ProtectedRoute component={Layouts} />} />
       <Route path="/schedules" component={() => <ProtectedRoute component={Schedules} />} />
       <Route path="/advanced-scheduling" component={() => <ProtectedRoute component={AdvancedScheduling} />} />
       <Route path="/groups" component={() => <ProtectedRoute component={Groups} />} />

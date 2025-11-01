@@ -19,6 +19,7 @@ import {
   ScrollText,
   Code,
   LayoutTemplate,
+  LayoutGrid,
   Smartphone,
   ChevronRight,
   MonitorPlay,
@@ -105,6 +106,12 @@ const menuGroups = [
         url: "/templates",
         icon: LayoutTemplate,
         testId: "link-templates",
+      },
+      {
+        titleKey: "layouts" as const,
+        url: "/layouts",
+        icon: LayoutGrid,
+        testId: "link-layouts",
       },
       {
         titleKey: "playlists" as const,
