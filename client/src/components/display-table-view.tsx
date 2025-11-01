@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MoreVertical, MapPin, Monitor } from "lucide-react";
+import { MoreVertical, MapPin, Monitor, Play } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { it, enUS } from "date-fns/locale";
@@ -28,6 +28,7 @@ interface DisplayTableViewProps {
   onViewDetails?: (display: Display) => void;
   onEdit?: (display: Display) => void;
   onDelete?: (display: Display) => void;
+  onLaunchPlayer?: (display: Display) => void;
 }
 
 export function DisplayTableView({
@@ -37,6 +38,7 @@ export function DisplayTableView({
   onViewDetails,
   onEdit,
   onDelete,
+  onLaunchPlayer,
 }: DisplayTableViewProps) {
   const { t, language } = useLanguage();
   const dateLocale = language === 'it' ? it : enUS;
@@ -170,6 +172,15 @@ export function DisplayTableView({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onLaunchPlayer?.(display);
+                        }}
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        {t('launchPlayer')}
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();

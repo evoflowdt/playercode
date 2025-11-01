@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Monitor, MapPin, Calendar } from "lucide-react";
+import { MoreVertical, Monitor, MapPin, Calendar, Play } from "lucide-react";
 import { Display } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { it, enUS } from "date-fns/locale";
@@ -19,6 +19,7 @@ interface DisplayCardProps {
   onViewScreenshot?: (display: Display) => void;
   onEdit?: (display: Display) => void;
   onDelete?: (display: Display) => void;
+  onLaunchPlayer?: (display: Display) => void;
 }
 
 export function DisplayCard({
@@ -27,6 +28,7 @@ export function DisplayCard({
   onViewScreenshot,
   onEdit,
   onDelete,
+  onLaunchPlayer,
 }: DisplayCardProps) {
   const { t, language } = useLanguage();
   const dateLocale = language === 'it' ? it : enUS;
@@ -104,6 +106,13 @@ export function DisplayCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                onLaunchPlayer?.(display);
+              }}>
+                <Play className="mr-2 h-4 w-4" />
+                {t('launchPlayer')}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onViewDetails?.(display);

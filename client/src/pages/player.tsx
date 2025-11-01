@@ -410,13 +410,27 @@ export default function Player() {
     };
   }, [isPaired, content, currentContentIndex, syncState.isActive]);
 
-  // Check for existing display ID on mount
+  // Check for existing display ID on mount or from URL parameter
   useEffect(() => {
-    const savedDisplayId = localStorage.getItem("evoflow_display_id");
-    if (savedDisplayId) {
-      setDisplayId(savedDisplayId);
+    // Check for displayId in URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlDisplayId = urlParams.get('displayId');
+    
+    if (urlDisplayId) {
+      // URL parameter takes precedence - direct launch
+      console.log("[Player] Launching with displayId from URL:", urlDisplayId);
+      setDisplayId(urlDisplayId);
+      localStorage.setItem("evoflow_display_id", urlDisplayId);
       setIsPaired(true);
-      fetchContent(savedDisplayId);
+      fetchContent(urlDisplayId);
+    } else {
+      // Fall back to localStorage
+      const savedDisplayId = localStorage.getItem("evoflow_display_id");
+      if (savedDisplayId) {
+        setDisplayId(savedDisplayId);
+        setIsPaired(true);
+        fetchContent(savedDisplayId);
+      }
     }
   }, [fetchContent]);
 

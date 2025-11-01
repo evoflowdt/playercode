@@ -74,6 +74,11 @@ export default function Displays() {
     queryKey: ["/api/displays"],
   });
 
+  const handleLaunchPlayer = (display: Display) => {
+    const playerUrl = `/player?displayId=${display.id}`;
+    window.open(playerUrl, '_blank');
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/displays/${id}`),
     onSuccess: () => {
@@ -326,8 +331,10 @@ export default function Displays() {
                 <DisplayCard
                   display={display}
                   onViewDetails={setSelectedDisplay}
+                  onViewScreenshot={() => {}}
                   onEdit={setEditDisplay}
                   onDelete={setDeleteDisplay}
+                  onLaunchPlayer={handleLaunchPlayer}
                 />
               </div>
             ))}
@@ -340,6 +347,7 @@ export default function Displays() {
             onViewDetails={setSelectedDisplay}
             onEdit={setEditDisplay}
             onDelete={setDeleteDisplay}
+            onLaunchPlayer={handleLaunchPlayer}
           />
         )
       ) : (
