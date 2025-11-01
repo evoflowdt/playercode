@@ -23,6 +23,18 @@ interface PlayerData {
   };
   content: PlayerContent[];
   schedules: any[];
+  layout?: {
+    id: string;
+    name: string;
+    zones: Array<{
+      id: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      contentId: string | null;
+    }>;
+  };
 }
 
 export default function Player() {
@@ -35,6 +47,7 @@ export default function Player() {
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
   const [radioStreamUrl, setRadioStreamUrl] = useState<string | null>(null);
   const [displayResolution, setDisplayResolution] = useState<{ width: number; height: number } | null>(null);
+  const [layout, setLayout] = useState<PlayerData['layout'] | null>(null);
   const [syncState, setSyncState] = useState<{
     isActive: boolean;
     sessionId?: string;
@@ -149,6 +162,7 @@ export default function Player() {
       }
       
       setContent(data.content || []);
+      setLayout(data.layout || null);
       
       // Set radio stream if available
       if (data.radioStreams && data.radioStreams.length > 0) {
@@ -161,6 +175,10 @@ export default function Player() {
         }
       } else {
         setRadioStreamUrl(null);
+      }
+      
+      if (data.layout) {
+        console.log("[Player] Layout assigned:", data.layout.name, "with", data.layout.zones.length, "zones");
       }
       
       if (data.content && data.content.length > 0) {
@@ -539,8 +557,135 @@ export default function Player() {
     }
   }, [radioStreamUrl, content.length]);
 
+  // Helper to render a single content item
+  const renderSingleContent = (contentItem: PlayerContent, fitMode: "contain" | "cover" = "contain") => {
+    // Check if content has a valid URL (for media types)
+    if ((contentItem.type === "image" || contentItem.type === "video" || contentItem.type === "webpage") && !contentItem.url) {
+      return (
+        <div className="flex items-center justify-center w-full h-full bg-background">
+          <p className="text-xs text-muted-foreground">No URL</p>
+        </div>
+      );
+    }
+
+    // Check if URL is external (for iframe support)
+    const isExternalUrl = contentItem.url && (
+      contentItem.url.startsWith('http://') || 
+      contentItem.url.startsWith('https://')
+    );
+
+    if (contentItem.type === "image") {
+      if (isExternalUrl && !contentItem.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+        return (
+          <iframe
+            key={contentItem.id}
+            src={contentItem.url}
+            className="w-full h-full border-0"
+            title={contentItem.name}
+          />
+        );
+      }
+      return (
+        <img
+          key={contentItem.id}
+          src={contentItem.url}
+          alt={contentItem.name}
+          className={`w-full h-full ${fitMode === "contain" ? "object-contain" : "object-cover"}`}
+        />
+      );
+    }
+
+    if (contentItem.type === "video") {
+      return (
+        <video
+          key={contentItem.id}
+          src={contentItem.url}
+          autoPlay
+          loop
+          muted
+          className={`w-full h-full ${fitMode === "contain" ? "object-contain" : "object-cover"}`}
+        />
+      );
+    }
+
+    if (contentItem.type === "html" && contentItem.htmlContent) {
+      return (
+        <div
+          className="w-full h-full overflow-hidden"
+          dangerouslySetInnerHTML={{ __html: contentItem.htmlContent }}
+        />
+      );
+    }
+
+    if (contentItem.type === "webpage" || isExternalUrl) {
+      return (
+        <iframe
+          key={contentItem.id}
+          src={contentItem.url}
+          className="w-full h-full border-0"
+          title={contentItem.name}
+        />
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center w-full h-full bg-background">
+        <p className="text-xs text-muted-foreground">Unsupported: {contentItem.type}</p>
+      </div>
+    );
+  };
+
   // Render content
   const renderContent = () => {
+    // Multi-zone layout rendering
+    if (layout && Array.isArray(layout.zones) && layout.zones.length > 0) {
+      return (
+        <div className="relative w-screen h-screen bg-black" data-testid="player-multizone-layout">
+          {layout.zones.map((zone) => {
+            const zoneContent = content.find(c => c.id === zone.contentId);
+            return (
+              <div
+                key={zone.id}
+                className="absolute overflow-hidden"
+                style={{
+                  left: `${zone.x}%`,
+                  top: `${zone.y}%`,
+                  width: `${zone.width}%`,
+                  height: `${zone.height}%`,
+                }}
+                data-testid={`player-zone-${zone.id}`}
+              >
+                {zoneContent ? (
+                  renderSingleContent(zoneContent, "cover")
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-muted/10">
+                    <p className="text-xs text-muted-foreground">No content</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    
+    // Fallback if layout data is invalid
+    if (layout && (!Array.isArray(layout.zones) || typeof layout.zones === 'string')) {
+      console.error('[Player] Invalid layout zones data:', typeof layout.zones, layout.zones);
+      return (
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="text-center space-y-4">
+            <Monitor className="w-24 h-24 mx-auto text-destructive" />
+            <h2 className="text-2xl font-bold text-destructive">Layout Error</h2>
+            <p className="text-muted-foreground">
+              The layout data is invalid. Please contact support.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Traditional fullscreen rendering
     if (content.length === 0) {
       return (
         <div className="flex items-center justify-center h-screen bg-background">

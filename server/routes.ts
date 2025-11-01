@@ -1927,6 +1927,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         }
       }
       
+      // Get assigned layout for display
+      const layout = await storage.getActiveLayoutForDisplay(displayId);
+      
       const response = {
         display,
         content: contentItems,
@@ -1934,6 +1937,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         schedules: [schedule],
         priority: scheduledContent.priority,
         source: scheduledContent.source,
+        layout: layout || undefined,
       };
       
       console.log("[PlayerContent] Sending to player:");
@@ -1942,6 +1946,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       console.log("[PlayerContent] Radio streams count:", radioStreams.length);
       if (radioStreams.length > 0) {
         console.log("[PlayerContent] Radio streams:", radioStreams.map(s => ({ name: s.name, url: s.url, active: s.active })));
+      }
+      if (layout) {
+        console.log("[PlayerContent] Layout assigned:", layout.name, "with", layout.zones?.length || 0, "zones");
       }
       
       res.json(response);

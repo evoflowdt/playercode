@@ -2679,15 +2679,41 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(layouts)
       .where(and(eq(layouts.id, id), eq(layouts.organizationId, organizationId)));
-    return layout || undefined;
+    
+    if (!layout) return undefined;
+    
+    // Parse zones if it's a JSON string
+    if (layout.zones && typeof layout.zones === 'string') {
+      try {
+        layout.zones = JSON.parse(layout.zones);
+      } catch (error) {
+        console.error('Failed to parse layout zones:', error);
+        layout.zones = [];
+      }
+    }
+    
+    return layout;
   }
 
   async getAllLayouts(organizationId: string): Promise<Layout[]> {
-    return await db
+    const allLayouts = await db
       .select()
       .from(layouts)
       .where(eq(layouts.organizationId, organizationId))
       .orderBy(desc(layouts.createdAt));
+    
+    // Parse zones for all layouts
+    return allLayouts.map(layout => {
+      if (layout.zones && typeof layout.zones === 'string') {
+        try {
+          layout.zones = JSON.parse(layout.zones);
+        } catch (error) {
+          console.error('Failed to parse layout zones:', error);
+          layout.zones = [];
+        }
+      }
+      return layout;
+    });
   }
 
   async getLayoutsWithDetails(organizationId: string): Promise<LayoutWithDetails[]> {
@@ -2802,7 +2828,21 @@ export class DatabaseStorage implements IStorage {
       ))
       .limit(1);
     
-    return result?.layout || undefined;
+    if (!result?.layout) return undefined;
+    
+    const layout = result.layout;
+    
+    // Parse zones if it's a JSON string
+    if (layout.zones && typeof layout.zones === 'string') {
+      try {
+        layout.zones = JSON.parse(layout.zones);
+      } catch (error) {
+        console.error('Failed to parse layout zones:', error);
+        layout.zones = [];
+      }
+    }
+    
+    return layout;
   }
 
   async removeLayoutFromDisplay(displayId: string, organizationId: string): Promise<boolean> {
