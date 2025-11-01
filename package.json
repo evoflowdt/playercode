@@ -1,6 +1,6 @@
 {
   "name": "evoflow-player",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "EvoFlow Desktop Player - Digital Signage Display Application",
   "main": "dist/main/main.js",
   "author": "Digital Town Srl",
@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7",
     "ws": "^8.14.2"
   },
   "devDependencies": {
