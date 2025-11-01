@@ -205,9 +205,22 @@ export function ContentFormDialog({
                 <div className="border rounded-lg p-4 bg-muted/20">
                   <ObjectUploader
                     onGetUploadParameters={async () => {
+                      const token = localStorage.getItem('auth_token');
+                      const headers: Record<string, string> = {};
+                      if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                      }
+                      
                       const response = await fetch("/api/objects/upload", {
                         method: "POST",
+                        headers,
+                        credentials: "include",
                       });
+                      
+                      if (!response.ok) {
+                        throw new Error(`Failed to get upload URL: ${response.statusText}`);
+                      }
+                      
                       const data = await response.json();
                       return {
                         method: "PUT" as const,
