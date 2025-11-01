@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
+import { generateImageBuffer } from "./openai-helper";
 import {
   insertDisplaySchema,
   insertContentItemSchema,
@@ -1219,6 +1220,69 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete content" });
+    }
+  });
+
+  app.post("/api/content/generate-image", requireAuth, async (req, res) => {
+    try {
+      const organizationId = (req as AuthRequest).user!.defaultOrganizationId!;
+      const { prompt, name, size } = req.body;
+
+      if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      const imageSize = size || "1024x1024";
+      if (!["1024x1024", "512x512", "256x256"].includes(imageSize)) {
+        return res.status(400).json({ error: "Invalid image size" });
+      }
+
+      console.log("[AI Image] Generating image for org:", organizationId, "prompt:", prompt);
+
+      const imageBuffer = await generateImageBuffer(prompt, imageSize as "1024x1024" | "512x512" | "256x256");
+
+      const objectStorageService = new ObjectStorageService();
+      const timestamp = Date.now();
+      const sanitizedName = (name || "ai-generated").replace(/[^a-zA-Z0-9-_]/g, '-');
+      const fileName = `${sanitizedName}-${timestamp}.png`;
+      const objectPath = `public/${fileName}`;
+
+      await objectStorageClient.putObject({
+        bucket: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID!,
+        path: objectPath,
+        content: imageBuffer,
+        contentType: "image/png"
+      });
+
+      console.log("[AI Image] Image saved to object storage:", objectPath);
+
+      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(objectPath);
+
+      const contentData = {
+        name: name || `AI Generated: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`,
+        type: 'image' as const,
+        url: normalizedUrl,
+        duration: 10,
+        metadata: JSON.stringify({
+          aiGenerated: true,
+          prompt: prompt,
+          generatedAt: new Date().toISOString(),
+          size: imageSize
+        })
+      };
+
+      const validatedData = insertContentItemSchema.parse(contentData);
+      const item = await storage.createContentItem(validatedData, organizationId);
+
+      console.log("[AI Image] Content item created:", item.id);
+
+      res.status(201).json(item);
+    } catch (error) {
+      console.error('[AI Image] Generation error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid content data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to generate image" });
     }
   });
 
