@@ -2055,7 +2055,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       
       const validatedData = insertSchedulingRuleSchema.parse({
         ...req.body,
-        organizationId: req.user.organizationId,
+        organizationId: req.user!.defaultOrganizationId!,
       });
       const rule = await storage.createSchedulingRule(validatedData);
       res.status(201).json(rule);
@@ -2071,7 +2071,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const rules = await storage.getAllSchedulingRules(req.user.organizationId);
+      const rules = await storage.getAllSchedulingRules(req.user!.defaultOrganizationId!);
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch rules" });
@@ -2084,7 +2084,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const rule = await storage.getSchedulingRule(req.params.id, req.user.organizationId);
+      const rule = await storage.getSchedulingRule(req.params.id, req.user!.defaultOrganizationId!);
       if (!rule) {
         return res.status(404).json({ error: "Rule not found" });
       }
@@ -2100,7 +2100,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const rules = await storage.getSchedulingRulesBySchedule(req.params.scheduleId, req.user.organizationId);
+      const rules = await storage.getSchedulingRulesBySchedule(req.params.scheduleId, req.user!.defaultOrganizationId!);
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch rules" });
@@ -2114,7 +2114,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       }
       
       const validatedData = insertSchedulingRuleSchema.omit({ organizationId: true }).partial().parse(req.body);
-      const updated = await storage.updateSchedulingRule(req.params.id, validatedData, req.user.organizationId);
+      const updated = await storage.updateSchedulingRule(req.params.id, validatedData, req.user!.defaultOrganizationId!);
       if (!updated) {
         return res.status(404).json({ error: "Rule not found" });
       }
@@ -2131,7 +2131,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const deleted = await storage.deleteSchedulingRule(req.params.id, req.user.organizationId);
+      const deleted = await storage.deleteSchedulingRule(req.params.id, req.user!.defaultOrganizationId!);
       if (!deleted) {
         return res.status(404).json({ error: "Rule not found" });
       }
@@ -2158,7 +2158,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const conflicts = await schedulingEngine.detectConflicts(
         targetType,
         targetId,
-        req.user.organizationId,
+        req.user!.defaultOrganizationId!,
         currentDate ? new Date(currentDate) : new Date()
       );
       
@@ -2188,7 +2188,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const timeline = await schedulingEngine.getTimelinePreview(
         targetType,
         targetId,
-        req.user.organizationId,
+        req.user!.defaultOrganizationId!,
         new Date(startDate),
         new Date(endDate),
         intervalMinutes || 60
@@ -3381,7 +3381,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   app.get("/api/layouts", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthRequest).user!;
-      const layouts = await storage.getLayoutsWithDetails(user.organizationId);
+      const layouts = await storage.getLayoutsWithDetails(user!.defaultOrganizationId!);
       res.json(layouts);
     } catch (error) {
       console.error("Get layouts error:", error);
@@ -3393,7 +3393,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   app.get("/api/layouts/:id", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthRequest).user!;
-      const layout = await storage.getLayout(req.params.id, user.organizationId);
+      const layout = await storage.getLayout(req.params.id, user!.defaultOrganizationId!);
       
       if (!layout) {
         return res.status(404).json({ error: "Layout not found" });
@@ -3424,7 +3424,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(400).json({ error: fromZodError(result.error).message });
       }
 
-      const layout = await storage.createLayout(result.data, user.organizationId);
+      const layout = await storage.createLayout(result.data, user!.defaultOrganizationId!);
       res.status(201).json(layout);
     } catch (error) {
       console.error("Create layout error:", error);
@@ -3442,7 +3442,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(400).json({ error: fromZodError(result.error).message });
       }
 
-      const layout = await storage.updateLayout(req.params.id, result.data, user.organizationId);
+      const layout = await storage.updateLayout(req.params.id, result.data, user!.defaultOrganizationId!);
       
       if (!layout) {
         return res.status(404).json({ error: "Layout not found" });
@@ -3459,7 +3459,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   app.delete("/api/layouts/:id", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthRequest).user!;
-      const deleted = await storage.deleteLayout(req.params.id, user.organizationId);
+      const deleted = await storage.deleteLayout(req.params.id, user!.defaultOrganizationId!);
       
       if (!deleted) {
         return res.status(404).json({ error: "Layout not found" });
@@ -3484,13 +3484,13 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       }
 
       // Verify display exists and belongs to organization
-      const display = await storage.getDisplay(displayId, user.organizationId);
+      const display = await storage.getDisplay(displayId, user!.defaultOrganizationId!);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
 
       // Verify layout exists and belongs to organization
-      const layout = await storage.getLayout(layoutId, user.organizationId);
+      const layout = await storage.getLayout(layoutId, user!.defaultOrganizationId!);
       if (!layout) {
         return res.status(404).json({ error: "Layout not found" });
       }
@@ -3504,7 +3504,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         return res.status(400).json({ error: fromZodError(result.error).message });
       }
 
-      const displayLayout = await storage.assignLayoutToDisplay(result.data, user.organizationId);
+      const displayLayout = await storage.assignLayoutToDisplay(result.data, user!.defaultOrganizationId!);
       
       // Broadcast update via WebSocket
       broadcast({
@@ -3526,19 +3526,19 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const { displayId } = req.params;
 
       // Verify display exists and belongs to organization
-      const display = await storage.getDisplay(displayId, user.organizationId);
+      const display = await storage.getDisplay(displayId, user!.defaultOrganizationId!);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
 
-      const displayLayout = await storage.getDisplayLayout(displayId, user.organizationId);
+      const displayLayout = await storage.getDisplayLayout(displayId, user!.defaultOrganizationId!);
       
       if (!displayLayout) {
         return res.status(404).json({ error: "No layout assigned to this display" });
       }
 
       // Get the full layout details
-      const layout = await storage.getLayout(displayLayout.layoutId, user.organizationId);
+      const layout = await storage.getLayout(displayLayout.layoutId, user!.defaultOrganizationId!);
       
       if (!layout) {
         return res.status(404).json({ error: "Layout not found" });
@@ -3566,12 +3566,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const { displayId } = req.params;
 
       // Verify display exists and belongs to organization
-      const display = await storage.getDisplay(displayId, user.organizationId);
+      const display = await storage.getDisplay(displayId, user!.defaultOrganizationId!);
       if (!display) {
         return res.status(404).json({ error: "Display not found" });
       }
 
-      const deleted = await storage.removeLayoutFromDisplay(displayId, user.organizationId);
+      const deleted = await storage.removeLayoutFromDisplay(displayId, user!.defaultOrganizationId!);
       
       if (!deleted) {
         return res.status(404).json({ error: "No layout assigned to this display" });

@@ -196,6 +196,7 @@ export const zoneSchema = z.object({
 export const insertLayoutSchema = createInsertSchema(layouts).omit({
   id: true,
   createdAt: true,
+  organizationId: true,
 }).extend({
   zones: z.string().refine((val) => {
     try {
