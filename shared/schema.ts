@@ -184,6 +184,34 @@ export const insertContentApprovalSchema = createInsertSchema(contentApprovals).
   createdAt: true,
 });
 
+export const zoneSchema = z.object({
+  id: z.string(),
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+  width: z.number().min(1).max(100),
+  height: z.number().min(1).max(100),
+  contentId: z.string().nullable().optional(),
+});
+
+export const insertLayoutSchema = createInsertSchema(layouts).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  zones: z.string().refine((val) => {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) && parsed.every(zone => zoneSchema.safeParse(zone).success);
+    } catch {
+      return false;
+    }
+  }, { message: "zones must be a valid JSON array of zone objects" }),
+});
+
+export const insertDisplayLayoutSchema = createInsertSchema(displayLayouts).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const schedules = pgTable("schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -665,6 +693,19 @@ export type ContentPriority = typeof contentPriority.$inferSelect;
 
 export type InsertTransition = z.infer<typeof insertTransitionSchema>;
 export type Transition = typeof transitions.$inferSelect;
+
+export type InsertLayout = z.infer<typeof insertLayoutSchema>;
+export type Layout = typeof layouts.$inferSelect;
+
+export type InsertDisplayLayout = z.infer<typeof insertDisplayLayoutSchema>;
+export type DisplayLayout = typeof displayLayouts.$inferSelect;
+
+export type Zone = z.infer<typeof zoneSchema>;
+
+export interface LayoutWithDetails extends Omit<Layout, 'zones'> {
+  displayCount?: number;
+  zones: Zone[];
+}
 
 export type InsertSyncGroup = z.infer<typeof insertSyncGroupSchema>;
 export type SyncGroup = typeof syncGroups.$inferSelect;
