@@ -74,6 +74,11 @@ import {
   type PlayerRelease,
   type InsertPlayerRelease,
   type UpdatePlayerRelease,
+  type Layout,
+  type InsertLayout,
+  type DisplayLayout,
+  type InsertDisplayLayout,
+  type LayoutWithDetails,
   displays,
   contentItems,
   displayGroups,
@@ -107,6 +112,8 @@ import {
   contentTemplates,
   templateApplications,
   playerReleases,
+  layouts,
+  displayLayouts,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and, gt, lt, gte, lte, desc, inArray } from "drizzle-orm";
@@ -316,6 +323,19 @@ export interface IStorage {
   bulkUpdateDisplays(displayIds: string[], updates: { name?: string; status?: "online" | "offline" | "error" }, organizationId: string): Promise<number>;
   bulkApplyTemplate(displayIds: string[], templateId: string, userId: string, organizationId: string): Promise<number>;
   bulkDeleteContent(contentIds: string[], organizationId: string): Promise<number>;
+
+  // Multi-Zone Layouts methods
+  getLayout(id: string, organizationId: string): Promise<Layout | undefined>;
+  getAllLayouts(organizationId: string): Promise<Layout[]>;
+  getLayoutsWithDetails(organizationId: string): Promise<LayoutWithDetails[]>;
+  createLayout(layout: InsertLayout, organizationId: string): Promise<Layout>;
+  updateLayout(id: string, updates: Partial<Layout>, organizationId: string): Promise<Layout | undefined>;
+  deleteLayout(id: string, organizationId: string): Promise<boolean>;
+  assignLayoutToDisplay(insertDisplayLayout: InsertDisplayLayout, organizationId: string): Promise<DisplayLayout>;
+  getDisplayLayout(displayId: string, organizationId: string): Promise<DisplayLayout | undefined>;
+  getActiveLayoutForDisplay(displayId: string): Promise<Layout | undefined>;
+  removeLayoutFromDisplay(displayId: string, organizationId: string): Promise<boolean>;
+  getDisplaysByLayout(layoutId: string, organizationId: string): Promise<Display[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2651,6 +2671,162 @@ export class DatabaseStorage implements IStorage {
       .update(playerReleases)
       .set({ isLatest: true })
       .where(eq(playerReleases.id, id));
+  }
+
+  // Multi-Zone Layouts methods
+  async getLayout(id: string, organizationId: string): Promise<Layout | undefined> {
+    const [layout] = await db
+      .select()
+      .from(layouts)
+      .where(and(eq(layouts.id, id), eq(layouts.organizationId, organizationId)));
+    return layout || undefined;
+  }
+
+  async getAllLayouts(organizationId: string): Promise<Layout[]> {
+    return await db
+      .select()
+      .from(layouts)
+      .where(eq(layouts.organizationId, organizationId))
+      .orderBy(desc(layouts.createdAt));
+  }
+
+  async getLayoutsWithDetails(organizationId: string): Promise<LayoutWithDetails[]> {
+    const allLayouts = await db
+      .select()
+      .from(layouts)
+      .where(eq(layouts.organizationId, organizationId))
+      .orderBy(desc(layouts.createdAt));
+
+    const result: LayoutWithDetails[] = [];
+
+    for (const layout of allLayouts) {
+      // Count displays using this layout
+      const displayCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(displayLayouts)
+        .where(and(
+          eq(displayLayouts.layoutId, layout.id),
+          eq(displayLayouts.active, true),
+          eq(displayLayouts.organizationId, organizationId)
+        ));
+
+      // Parse zones from JSON string
+      let zones = [];
+      try {
+        zones = JSON.parse(layout.zones);
+      } catch (e) {
+        zones = [];
+      }
+
+      result.push({
+        ...layout,
+        displayCount: Number(displayCount[0]?.count || 0),
+        zones,
+      });
+    }
+
+    return result;
+  }
+
+  async createLayout(insertLayout: InsertLayout, organizationId: string): Promise<Layout> {
+    const [layout] = await db
+      .insert(layouts)
+      .values({ ...insertLayout, organizationId })
+      .returning();
+    return layout;
+  }
+
+  async updateLayout(id: string, updates: Partial<Layout>, organizationId: string): Promise<Layout | undefined> {
+    const [updated] = await db
+      .update(layouts)
+      .set(updates)
+      .where(and(eq(layouts.id, id), eq(layouts.organizationId, organizationId)))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteLayout(id: string, organizationId: string): Promise<boolean> {
+    // First, remove all display assignments for this layout
+    await db
+      .delete(displayLayouts)
+      .where(and(
+        eq(displayLayouts.layoutId, id),
+        eq(displayLayouts.organizationId, organizationId)
+      ));
+
+    // Then delete the layout
+    const result = await db
+      .delete(layouts)
+      .where(and(eq(layouts.id, id), eq(layouts.organizationId, organizationId)));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async assignLayoutToDisplay(insertDisplayLayout: InsertDisplayLayout, organizationId: string): Promise<DisplayLayout> {
+    // First, deactivate any existing active layouts for this display
+    await db
+      .update(displayLayouts)
+      .set({ active: false })
+      .where(and(
+        eq(displayLayouts.displayId, insertDisplayLayout.displayId),
+        eq(displayLayouts.organizationId, organizationId)
+      ));
+
+    // Then create the new layout assignment
+    const [displayLayout] = await db
+      .insert(displayLayouts)
+      .values({ ...insertDisplayLayout, organizationId, active: true })
+      .returning();
+    return displayLayout;
+  }
+
+  async getDisplayLayout(displayId: string, organizationId: string): Promise<DisplayLayout | undefined> {
+    const [displayLayout] = await db
+      .select()
+      .from(displayLayouts)
+      .where(and(
+        eq(displayLayouts.displayId, displayId),
+        eq(displayLayouts.active, true),
+        eq(displayLayouts.organizationId, organizationId)
+      ));
+    return displayLayout || undefined;
+  }
+
+  async getActiveLayoutForDisplay(displayId: string): Promise<Layout | undefined> {
+    const [result] = await db
+      .select({ layout: layouts })
+      .from(displayLayouts)
+      .innerJoin(layouts, eq(displayLayouts.layoutId, layouts.id))
+      .where(and(
+        eq(displayLayouts.displayId, displayId),
+        eq(displayLayouts.active, true)
+      ))
+      .limit(1);
+    
+    return result?.layout || undefined;
+  }
+
+  async removeLayoutFromDisplay(displayId: string, organizationId: string): Promise<boolean> {
+    const result = await db
+      .delete(displayLayouts)
+      .where(and(
+        eq(displayLayouts.displayId, displayId),
+        eq(displayLayouts.organizationId, organizationId)
+      ));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getDisplaysByLayout(layoutId: string, organizationId: string): Promise<Display[]> {
+    const results = await db
+      .select({ display: displays })
+      .from(displayLayouts)
+      .innerJoin(displays, eq(displayLayouts.displayId, displays.id))
+      .where(and(
+        eq(displayLayouts.layoutId, layoutId),
+        eq(displayLayouts.active, true),
+        eq(displayLayouts.organizationId, organizationId)
+      ));
+
+    return results.map(r => r.display);
   }
 
 }
