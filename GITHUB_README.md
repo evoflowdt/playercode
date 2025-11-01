@@ -189,12 +189,12 @@ EvoFlow can be deployed to any Node.js hosting platform:
 
 ## 📖 Documentation
 
-For more detailed documentation, see:
+For detailed technical documentation:
 
-- [API Documentation](docs/API.md) - REST API endpoints
-- [Database Schema](docs/DATABASE.md) - Database structure
-- [Authentication](docs/AUTH.md) - Authentication flow
-- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment
+- Review the **Database Schema** in `shared/schema.ts` - Complete Drizzle ORM definitions with all tables, relations, and types
+- Explore the **API Routes** in `server/routes.ts` - All REST API endpoints with request/response patterns
+- Check **Authentication** implementation in `server/routes.ts` (sessions, bcrypt hashing, RBAC middleware)
+- See **Component Library** in `client/src/components/` - Reusable UI components built with Shadcn UI
 
 ## 🤝 Contributing
 
