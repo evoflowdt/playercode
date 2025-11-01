@@ -40,6 +40,8 @@ import {
   bulkDeleteContentSchema,
   insertPlayerReleaseSchema,
   updatePlayerReleaseSchema,
+  insertLayoutSchema,
+  insertDisplayLayoutSchema,
   type User,
 } from "@shared/schema";
 import { z } from "zod";
@@ -3361,6 +3363,223 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     } catch (error) {
       console.error("Set latest release error:", error);
       res.status(500).json({ error: "Failed to set latest release" });
+    }
+  });
+
+  // ============================================================
+  // Multi-Zone Layouts Routes
+  // ============================================================
+
+  // Get all layouts
+  app.get("/api/layouts", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const layouts = await storage.getLayoutsWithDetails(user.organizationId);
+      res.json(layouts);
+    } catch (error) {
+      console.error("Get layouts error:", error);
+      res.status(500).json({ error: "Failed to retrieve layouts" });
+    }
+  });
+
+  // Get single layout
+  app.get("/api/layouts/:id", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const layout = await storage.getLayout(req.params.id, user.organizationId);
+      
+      if (!layout) {
+        return res.status(404).json({ error: "Layout not found" });
+      }
+
+      // Parse zones from JSON
+      let zones = [];
+      try {
+        zones = JSON.parse(layout.zones);
+      } catch (e) {
+        zones = [];
+      }
+
+      res.json({ ...layout, zones });
+    } catch (error) {
+      console.error("Get layout error:", error);
+      res.status(500).json({ error: "Failed to retrieve layout" });
+    }
+  });
+
+  // Create new layout
+  app.post("/api/layouts", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      
+      const result = insertLayoutSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const layout = await storage.createLayout(result.data, user.organizationId);
+      res.status(201).json(layout);
+    } catch (error) {
+      console.error("Create layout error:", error);
+      res.status(500).json({ error: "Failed to create layout" });
+    }
+  });
+
+  // Update layout
+  app.put("/api/layouts/:id", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      
+      const result = insertLayoutSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const layout = await storage.updateLayout(req.params.id, result.data, user.organizationId);
+      
+      if (!layout) {
+        return res.status(404).json({ error: "Layout not found" });
+      }
+
+      res.json(layout);
+    } catch (error) {
+      console.error("Update layout error:", error);
+      res.status(500).json({ error: "Failed to update layout" });
+    }
+  });
+
+  // Delete layout
+  app.delete("/api/layouts/:id", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const deleted = await storage.deleteLayout(req.params.id, user.organizationId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Layout not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete layout error:", error);
+      res.status(500).json({ error: "Failed to delete layout" });
+    }
+  });
+
+  // Assign layout to display
+  app.post("/api/displays/:displayId/layout", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const { displayId } = req.params;
+      const { layoutId } = req.body;
+
+      if (!layoutId) {
+        return res.status(400).json({ error: "layoutId is required" });
+      }
+
+      // Verify display exists and belongs to organization
+      const display = await storage.getDisplay(displayId, user.organizationId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found" });
+      }
+
+      // Verify layout exists and belongs to organization
+      const layout = await storage.getLayout(layoutId, user.organizationId);
+      if (!layout) {
+        return res.status(404).json({ error: "Layout not found" });
+      }
+
+      const result = insertDisplayLayoutSchema.safeParse({
+        displayId,
+        layoutId,
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+
+      const displayLayout = await storage.assignLayoutToDisplay(result.data, user.organizationId);
+      
+      // Broadcast update via WebSocket
+      broadcast({
+        type: 'display_updated',
+        data: display
+      });
+
+      res.status(201).json(displayLayout);
+    } catch (error) {
+      console.error("Assign layout error:", error);
+      res.status(500).json({ error: "Failed to assign layout to display" });
+    }
+  });
+
+  // Get active layout for display
+  app.get("/api/displays/:displayId/layout", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const { displayId } = req.params;
+
+      // Verify display exists and belongs to organization
+      const display = await storage.getDisplay(displayId, user.organizationId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found" });
+      }
+
+      const displayLayout = await storage.getDisplayLayout(displayId, user.organizationId);
+      
+      if (!displayLayout) {
+        return res.status(404).json({ error: "No layout assigned to this display" });
+      }
+
+      // Get the full layout details
+      const layout = await storage.getLayout(displayLayout.layoutId, user.organizationId);
+      
+      if (!layout) {
+        return res.status(404).json({ error: "Layout not found" });
+      }
+
+      // Parse zones from JSON
+      let zones = [];
+      try {
+        zones = JSON.parse(layout.zones);
+      } catch (e) {
+        zones = [];
+      }
+
+      res.json({ ...layout, zones });
+    } catch (error) {
+      console.error("Get display layout error:", error);
+      res.status(500).json({ error: "Failed to retrieve display layout" });
+    }
+  });
+
+  // Remove layout from display
+  app.delete("/api/displays/:displayId/layout", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthRequest).user!;
+      const { displayId } = req.params;
+
+      // Verify display exists and belongs to organization
+      const display = await storage.getDisplay(displayId, user.organizationId);
+      if (!display) {
+        return res.status(404).json({ error: "Display not found" });
+      }
+
+      const deleted = await storage.removeLayoutFromDisplay(displayId, user.organizationId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "No layout assigned to this display" });
+      }
+
+      // Broadcast update via WebSocket
+      broadcast({
+        type: 'display_updated',
+        data: display
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Remove layout error:", error);
+      res.status(500).json({ error: "Failed to remove layout from display" });
     }
   });
 
