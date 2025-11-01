@@ -217,6 +217,19 @@ export const translations = {
     type: 'Type',
     uploaded: 'Uploaded',
     
+    generateAiImage: 'Generate AI Image',
+    aiImageGeneration: 'AI Image Generation',
+    aiImagePrompt: 'Describe the image you want to generate',
+    aiImagePromptPlaceholder: 'A modern office building with blue sky...',
+    aiImageName: 'Image Name',
+    aiImageNamePlaceholder: 'Office Building',
+    aiImageSize: 'Image Size',
+    generating: 'Generating...',
+    generateImage: 'Generate Image',
+    aiImageGeneratedSuccess: 'AI image generated successfully',
+    aiImageGeneratedError: 'Failed to generate AI image',
+    aiImageGenerationNote: 'Uses Replit AI Integrations - charges billed to your credits',
+    
     // Schedules
     schedulesTitle: 'Scheduling',
     schedulesSubtitle: 'Create and manage content schedules',
