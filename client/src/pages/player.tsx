@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Monitor, Loader2, WifiOff, Wifi } from "lucide-react";
+import { Monitor, Loader2, WifiOff, Wifi, Play, Pause, RefreshCw, Maximize } from "lucide-react";
 
 interface PlayerContent {
   id: string;
@@ -40,6 +40,8 @@ export default function Player() {
     sessionId?: string;
     status: "playing" | "paused" | "stopped";
   }>({ isActive: false, status: "stopped" });
+  const [showControls, setShowControls] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const { toast } = useToast();
   const wsRef = useRef<WebSocket | null>(null);
   const wsReconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,6 +50,25 @@ export default function Player() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const syncSessionRef = useRef<string | null>(null);
+  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-hide controls after 5 seconds
+  const resetHideControlsTimer = useCallback(() => {
+    setShowControls(true);
+    
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 5000);
+  }, []);
+
+  // Handle mouse move to show controls
+  const handleMouseMove = useCallback(() => {
+    resetHideControlsTimer();
+  }, [resetHideControlsTimer]);
 
   // Reset player state (when display is deleted)
   const resetPlayer = useCallback(() => {
@@ -79,6 +100,10 @@ export default function Player() {
     if (contentRotationRef.current) {
       clearTimeout(contentRotationRef.current);
       contentRotationRef.current = null;
+    }
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+      hideControlsTimeoutRef.current = null;
     }
     
     toast({
@@ -441,6 +466,48 @@ export default function Player() {
     }
   }, [isPaired]);
 
+  // Initialize auto-hide timer when player is paired
+  useEffect(() => {
+    if (isPaired) {
+      resetHideControlsTimer();
+    }
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, [isPaired, resetHideControlsTimer]);
+
+  // Player control functions
+  const togglePlayPause = () => {
+    setIsPaused(!isPaused);
+    if (videoRef.current) {
+      if (isPaused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
+  const handleRefresh = () => {
+    if (displayId) {
+      fetchContent(displayId);
+      toast({
+        title: "Content refreshed",
+        description: "Reloading content from server",
+      });
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(console.error);
+    } else {
+      document.exitFullscreen?.().catch(console.error);
+    }
+  };
+
   // Handle radio stream playback
   useEffect(() => {
     console.log("[Player] Radio stream effect triggered");
@@ -687,11 +754,18 @@ export default function Player() {
 
   // Player screen with connection status overlay
   return (
-    <div className="relative h-screen overflow-hidden bg-black">
+    <div 
+      className={`relative h-screen overflow-hidden bg-black ${showControls ? "cursor-default" : "cursor-none"}`}
+      onMouseMove={handleMouseMove}
+    >
       {renderContent()}
       
-      {/* Connection status indicator */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Connection status indicator - auto-hides after 5 seconds */}
+      <div 
+        className={`absolute top-4 right-4 z-50 transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-white text-sm backdrop-blur-sm ${
           isConnected ? "bg-green-500/80" : "bg-red-500/80"
         }`}>
@@ -709,14 +783,64 @@ export default function Player() {
         </div>
       </div>
 
-      {/* Content counter */}
+      {/* Content pagination - auto-hides after 5 seconds */}
       {content.length > 1 && (
-        <div className="absolute bottom-4 left-4 z-50">
+        <div 
+          className={`absolute bottom-4 left-4 z-50 transition-opacity duration-300 ${
+            showControls ? "opacity-100" : "opacity-0"
+          }`}
+        >
           <div className="bg-black/60 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm">
             {currentContentIndex + 1} / {content.length}
           </div>
         </div>
       )}
+
+      {/* Player controls - center transparent buttons */}
+      <div 
+        className={`absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="flex items-center gap-4 pointer-events-auto">
+          {/* Play/Pause button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={togglePlayPause}
+            className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+            data-testid="button-play-pause"
+          >
+            {isPaused ? (
+              <Play className="w-8 h-8" />
+            ) : (
+              <Pause className="w-8 h-8" />
+            )}
+          </Button>
+
+          {/* Refresh button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleRefresh}
+            className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+            data-testid="button-refresh"
+          >
+            <RefreshCw className="w-8 h-8" />
+          </Button>
+
+          {/* Fullscreen button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={toggleFullscreen}
+            className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white"
+            data-testid="button-fullscreen"
+          >
+            <Maximize className="w-8 h-8" />
+          </Button>
+        </div>
+      </div>
 
       {/* Radio stream audio (hidden) */}
       <audio
