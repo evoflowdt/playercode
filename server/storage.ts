@@ -2759,6 +2759,17 @@ export class DatabaseStorage implements IStorage {
       .insert(layouts)
       .values({ ...insertLayout, organizationId })
       .returning();
+    
+    // Parse zones if it's a JSON string
+    if (layout.zones && typeof layout.zones === 'string') {
+      try {
+        layout.zones = JSON.parse(layout.zones);
+      } catch (error) {
+        console.error('Failed to parse layout zones:', error);
+        layout.zones = [];
+      }
+    }
+    
     return layout;
   }
 
@@ -2768,7 +2779,20 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(and(eq(layouts.id, id), eq(layouts.organizationId, organizationId)))
       .returning();
-    return updated || undefined;
+    
+    if (!updated) return undefined;
+    
+    // Parse zones if it's a JSON string
+    if (updated.zones && typeof updated.zones === 'string') {
+      try {
+        updated.zones = JSON.parse(updated.zones);
+      } catch (error) {
+        console.error('Failed to parse layout zones:', error);
+        updated.zones = [];
+      }
+    }
+    
+    return updated;
   }
 
   async deleteLayout(id: string, organizationId: string): Promise<boolean> {
