@@ -17,7 +17,23 @@ class EvoFlowPlayer {
     webpageDisplay: document.getElementById('webpage-display') as HTMLIFrameElement,
     errorMessage: document.getElementById('error-message')!,
     settingsDialog: document.getElementById('settings-dialog')!,
+    statusBadge: document.getElementById('status-badge')!,
+    pagination: document.getElementById('pagination')!,
+    playerControls: document.getElementById('player-controls')!,
+    btnPlayPause: document.getElementById('btn-play-pause')!,
+    btnRefresh: document.getElementById('btn-refresh')!,
+    btnFullscreen: document.getElementById('btn-fullscreen')!,
+    iconPlay: document.getElementById('icon-play')!,
+    iconPause: document.getElementById('icon-pause')!,
+    iconFullscreen: document.getElementById('icon-fullscreen')!,
+    iconFullscreenExit: document.getElementById('icon-fullscreen-exit')!,
   };
+
+  private isPaused = false;
+  private isFullscreen = false;
+  private autoHideTimeout: NodeJS.Timeout | null = null;
+  private contentStartTime: number = 0;
+  private elapsedTime: number = 0;
 
   constructor() {
     this.init();
@@ -33,6 +49,9 @@ class EvoFlowPlayer {
       // Setup auto-update notifications
       this.setupAutoUpdate();
       
+      // Setup player controls
+      this.setupPlayerControls();
+      
       // If not configured, show settings
       if (!this.config.apiUrl) {
         this.showSettings();
@@ -46,6 +65,156 @@ class EvoFlowPlayer {
     } catch (error) {
       this.showError('Failed to initialize player');
       console.error('Init error:', error);
+    }
+  }
+
+  private setupPlayerControls() {
+    // Play/Pause button
+    this.elements.btnPlayPause.addEventListener('click', () => {
+      this.togglePlayPause();
+    });
+
+    // Refresh button
+    this.elements.btnRefresh.addEventListener('click', () => {
+      this.refreshPlayer();
+    });
+
+    // Fullscreen button
+    this.elements.btnFullscreen.addEventListener('click', () => {
+      this.toggleFullscreen();
+    });
+
+    // Listen for fullscreen changes (e.g., Escape key)
+    document.addEventListener('fullscreenchange', () => {
+      this.isFullscreen = !!document.fullscreenElement;
+      if (this.isFullscreen) {
+        this.elements.iconFullscreen.style.display = 'none';
+        this.elements.iconFullscreenExit.style.display = 'block';
+      } else {
+        this.elements.iconFullscreen.style.display = 'block';
+        this.elements.iconFullscreenExit.style.display = 'none';
+      }
+    });
+
+    // Start auto-hide timer when content starts playing
+    this.startAutoHideTimer();
+  }
+
+  private togglePlayPause() {
+    this.isPaused = !this.isPaused;
+
+    if (this.isPaused) {
+      // Calculate elapsed time
+      this.elapsedTime += Date.now() - this.contentStartTime;
+      
+      // Pause playback
+      if (this.contentTimeout) {
+        clearTimeout(this.contentTimeout);
+        this.contentTimeout = null;
+      }
+      if (this.elements.videoDisplay.style.display !== 'none') {
+        this.elements.videoDisplay.pause();
+      }
+      // Show play icon
+      this.elements.iconPlay.style.display = 'block';
+      this.elements.iconPause.style.display = 'none';
+    } else {
+      // Resume playback
+      this.contentStartTime = Date.now();
+      
+      if (this.elements.videoDisplay.style.display !== 'none') {
+        this.elements.videoDisplay.play();
+      }
+      // Resume content rotation with remaining time
+      if (this.currentPlaylist && this.currentPlaylist.items.length > 0) {
+        const item = this.currentPlaylist.items[this.currentIndex];
+        const totalTime = item.duration * 1000;
+        const remainingTime = totalTime - this.elapsedTime;
+        
+        if (remainingTime > 0) {
+          this.contentTimeout = setTimeout(() => {
+            this.currentIndex = (this.currentIndex + 1) % this.currentPlaylist!.items.length;
+            this.elapsedTime = 0;
+            this.playNext();
+          }, remainingTime);
+        } else {
+          // Time already elapsed, move to next immediately
+          this.currentIndex = (this.currentIndex + 1) % this.currentPlaylist!.items.length;
+          this.elapsedTime = 0;
+          this.playNext();
+        }
+      }
+      // Show pause icon
+      this.elements.iconPlay.style.display = 'none';
+      this.elements.iconPause.style.display = 'block';
+    }
+  }
+
+  private refreshPlayer() {
+    // Request fresh content from platform
+    this.send({ type: 'request_content', payload: {} });
+    
+    // Reset to first item
+    this.currentIndex = 0;
+    if (this.currentPlaylist && this.currentPlaylist.items.length > 0) {
+      this.playNext();
+    }
+  }
+
+  private async toggleFullscreen() {
+    try {
+      if (!this.isFullscreen) {
+        await document.documentElement.requestFullscreen();
+        this.isFullscreen = true;
+        this.elements.iconFullscreen.style.display = 'none';
+        this.elements.iconFullscreenExit.style.display = 'block';
+      } else {
+        await document.exitFullscreen();
+        this.isFullscreen = false;
+        this.elements.iconFullscreen.style.display = 'block';
+        this.elements.iconFullscreenExit.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('Fullscreen toggle failed:', error);
+    }
+  }
+
+  private startAutoHideTimer() {
+    // Show UI elements initially (including controls)
+    this.elements.statusBadge.classList.remove('auto-hide');
+    this.elements.pagination.classList.remove('auto-hide');
+    this.elements.playerControls.classList.add('visible');
+
+    // Clear existing timeout
+    if (this.autoHideTimeout) {
+      clearTimeout(this.autoHideTimeout);
+    }
+
+    // Hide after 5 seconds
+    this.autoHideTimeout = setTimeout(() => {
+      this.elements.statusBadge.classList.add('auto-hide');
+      this.elements.pagination.classList.add('auto-hide');
+      this.elements.playerControls.classList.remove('visible');
+    }, 5000);
+  }
+
+  private updateStatusBadge(connected: boolean) {
+    if (connected) {
+      this.elements.statusBadge.textContent = 'Connected';
+      this.elements.statusBadge.classList.remove('disconnected');
+    } else {
+      this.elements.statusBadge.textContent = 'Disconnected';
+      this.elements.statusBadge.classList.add('disconnected');
+    }
+  }
+
+  private updatePagination() {
+    if (this.currentPlaylist && this.currentPlaylist.items.length > 0) {
+      const current = this.currentIndex + 1;
+      const total = this.currentPlaylist.items.length;
+      this.elements.pagination.textContent = `${current} / ${total}`;
+    } else {
+      this.elements.pagination.textContent = '0 / 0';
     }
   }
   
@@ -247,6 +416,8 @@ class EvoFlowPlayer {
       this.ws.onopen = () => {
         console.log('Connected to EvoFlow platform');
         this.setStatus('Connected');
+        this.updateStatusBadge(true);
+        this.startAutoHideTimer();
         
         // Authenticate if we have a token, otherwise just send device ID for pairing
         if (this.config.deviceToken) {
@@ -293,6 +464,7 @@ class EvoFlowPlayer {
       this.ws.onclose = () => {
         console.log('Disconnected from platform');
         this.setStatus('Disconnected - Reconnecting...');
+        this.updateStatusBadge(false);
         this.scheduleReconnect();
       };
     } catch (error) {
@@ -349,6 +521,16 @@ class EvoFlowPlayer {
 
     const item = this.currentPlaylist.items[this.currentIndex];
     this.displayContent(item);
+    this.updatePagination();
+
+    // Reset elapsed time for new content
+    this.elapsedTime = 0;
+    this.contentStartTime = Date.now();
+
+    // Don't schedule next if paused
+    if (this.isPaused) {
+      return;
+    }
 
     // Schedule next item
     if (this.contentTimeout) {

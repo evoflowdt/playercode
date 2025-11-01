@@ -177,6 +177,121 @@
     #error-message.visible {
       display: block;
     }
+
+    /* Status Badge */
+    #status-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(34, 197, 94, 0.9);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+      transition: opacity 0.3s ease;
+    }
+
+    #status-badge.disconnected {
+      background: rgba(239, 68, 68, 0.9);
+    }
+
+    #status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Pagination */
+    #pagination {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 100;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Player Controls */
+    #player-controls {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      display: flex;
+      gap: 16px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    #player-controls.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .control-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: scale(1.1);
+    }
+
+    .control-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    /* Auto-hide class */
+    .auto-hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Show on container hover */
+    #player-container:hover #status-badge.auto-hide,
+    #player-container:hover #pagination.auto-hide {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #player-container:hover #player-controls {
+      opacity: 1;
+      pointer-events: all;
+    }
   </style>
 </head>
 <body>
@@ -190,6 +305,37 @@
     <img id="content-display" style="display: none;" />
     <video id="video-display" style="display: none;" autoplay loop muted></video>
     <iframe id="webpage-display" style="display: none;" allow="autoplay; fullscreen"></iframe>
+
+    <!-- Status Badge -->
+    <div id="status-badge">Connected</div>
+
+    <!-- Pagination -->
+    <div id="pagination">1 / 1</div>
+
+    <!-- Player Controls -->
+    <div id="player-controls">
+      <button class="control-btn" id="btn-play-pause" title="Play/Pause">
+        <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display: none;">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+        </svg>
+      </button>
+      <button class="control-btn" id="btn-refresh" title="Refresh">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+      </button>
+      <button class="control-btn" id="btn-fullscreen" title="Fullscreen">
+        <svg id="icon-fullscreen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+        <svg id="icon-fullscreen-exit" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display: none;">
+          <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+        </svg>
+      </button>
+    </div>
 
     <div id="error-message"></div>
   </div>
