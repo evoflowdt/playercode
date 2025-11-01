@@ -55,6 +55,7 @@ export default function Displays() {
   const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
   const [bulkUpdateName, setBulkUpdateName] = useState("");
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
+  const [selectedLayoutId, setSelectedLayoutId] = useState<string>("");
   const { toast } = useToast();
   
   const getStatusText = (status: string) => {
@@ -72,6 +73,16 @@ export default function Displays() {
 
   const { data: displays, isLoading } = useQuery<Display[]>({
     queryKey: ["/api/displays"],
+  });
+
+  const { data: layouts = [] } = useQuery<any[]>({
+    queryKey: ["/api/layouts"],
+    enabled: !!selectedDisplay,
+  });
+
+  const { data: currentLayout } = useQuery<any>({
+    queryKey: ["/api/displays", selectedDisplay?.id, "layout"],
+    enabled: !!selectedDisplay,
   });
 
   const handleLaunchPlayer = (display: Display) => {
@@ -139,6 +150,47 @@ export default function Displays() {
       toast({
         title: t('error'),
         description: t('failedBulkUpdate'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignLayoutMutation = useMutation({
+    mutationFn: ({ displayId, layoutId }: { displayId: string; layoutId: string }) =>
+      apiRequest("POST", `/api/displays/${displayId}/layout`, { layoutId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/displays"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/displays", selectedDisplay?.id, "layout"] });
+      toast({
+        title: t('success'),
+        description: t('layoutAssigned'),
+      });
+      setSelectedLayoutId("");
+    },
+    onError: () => {
+      toast({
+        title: t('error'),
+        description: t('failedAssignLayout'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeLayoutMutation = useMutation({
+    mutationFn: (displayId: string) =>
+      apiRequest("DELETE", `/api/displays/${displayId}/layout`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/displays"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/displays", selectedDisplay?.id, "layout"] });
+      toast({
+        title: t('success'),
+        description: t('layoutRemoved'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('error'),
+        description: t('failedRemoveLayout'),
         variant: "destructive",
       });
     },
@@ -415,6 +467,70 @@ export default function Displays() {
                   <p className="text-sm text-muted-foreground">{t('hashCode')}</p>
                   <p className="font-mono text-sm">{selectedDisplay.hashCode}</p>
                 </div>
+              </div>
+              
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium">{t('currentLayout')}</h4>
+                  {currentLayout && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectedDisplay && removeLayoutMutation.mutate(selectedDisplay.id)}
+                      disabled={removeLayoutMutation.isPending}
+                      data-testid="button-remove-layout"
+                    >
+                      {t('removeLayoutFromDisplay')}
+                    </Button>
+                  )}
+                </div>
+                {currentLayout ? (
+                  <Card className="p-3" data-testid="card-current-layout">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="font-medium" data-testid="text-layout-name">{currentLayout.name}</p>
+                        {currentLayout.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{currentLayout.description}</p>
+                        )}
+                      </div>
+                      <Badge variant="secondary" data-testid="badge-zone-count">
+                        {currentLayout.zones?.length || 0} {t('zones')}
+                      </Badge>
+                    </div>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">{t('noLayoutAssigned')}</p>
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedLayoutId}
+                        onValueChange={setSelectedLayoutId}
+                        disabled={assignLayoutMutation.isPending}
+                      >
+                        <SelectTrigger className="flex-1" data-testid="select-layout">
+                          <SelectValue placeholder={t('chooseLayout')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {layouts.map((layout: any) => (
+                            <SelectItem key={layout.id} value={layout.id} data-testid={`option-layout-${layout.id}`}>
+                              {layout.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => selectedDisplay && selectedLayoutId && assignLayoutMutation.mutate({
+                          displayId: selectedDisplay.id,
+                          layoutId: selectedLayoutId
+                        })}
+                        disabled={!selectedLayoutId || assignLayoutMutation.isPending}
+                        data-testid="button-assign-layout"
+                      >
+                        {t('assignLayoutToDisplay')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

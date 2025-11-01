@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/language-provider";
 import { getTranslation } from "@/lib/i18n";
 import { Plus, LayoutGrid, Pencil, Trash2, Maximize2, Grip } from "lucide-react";
 import type { Layout, LayoutWithDetails, Zone } from "@shared/schema";
