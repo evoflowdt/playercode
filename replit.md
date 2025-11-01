@@ -1,7 +1,7 @@
 # EvoFlow - Digital Signage Management Platform
 
 ## Overview
-EvoFlow is a cloud-based digital signage management platform designed for remote control and monitoring of various digital display types (LG webOS, Samsung Tizen, Android, Raspberry Pi, etc.). Its primary purpose is to streamline digital signage operations for businesses through a comprehensive dashboard for content management, scheduling, device grouping, and real-time monitoring. The platform is built for SaaS/white-label deployment, prioritizing multi-tenancy and robust authentication, with ambitions to become a leading solution in the digital signage market.
+EvoFlow is a cloud-based digital signage management platform designed for remote control and monitoring of various digital display types (LG webOS, Samsung Tizen, Android, Raspberry Pi, Windows/macOS/Linux desktop, etc.). Its primary purpose is to streamline digital signage operations for businesses through a comprehensive dashboard for content management, scheduling, device grouping, and real-time monitoring. The platform is built for SaaS/white-label deployment, prioritizing multi-tenancy and robust authentication, with ambitions to become a leading solution in the digital signage market.
 
 ## User Preferences
 I prefer clear and direct communication. When suggesting changes, please explain the reasoning concisely. For code modifications, prioritize maintainability and scalability. I appreciate an iterative development approach where features are built and reviewed incrementally. Please ask for confirmation before implementing significant architectural changes or refactoring large portions of the codebase. I prefer detailed explanations for complex technical concepts but keep them succinct for routine tasks.

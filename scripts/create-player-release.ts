@@ -2,30 +2,53 @@ import { createGitHubRelease } from '../server/github';
 
 const OWNER = 'evoflowdt';
 const REPO = 'playercode';
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';
 
-const CHANGELOG = `## 🎨 UI Enhancements
+const CHANGELOG = `## 🎨 UI Enhancements - Auto-Hide Controls
 
 ### New Features
-- **Connection Status Badge**: Visual indicator in the top-right corner showing connection status (green when connected)
-- **Content Pagination**: Page counter in the bottom-left showing current position (e.g., "1 / 5")
-- **Interactive Player Controls**: Transparent overlay controls with auto-hide functionality
-  - ⏸️ **Play/Pause**: Stop and resume content playback with accurate timing
+
+#### 🟢 Connection Status Badge
+- Visual indicator in the top-right corner
+- Green when connected, red when disconnected
+- Pulsing animation for visual feedback
+- **Auto-hides after 5 seconds**
+- **Reappears on mouse hover**
+
+#### 📄 Content Pagination
+- Page counter showing current position (e.g., "1 / 5")
+- Bottom-left positioning for non-intrusive display
+- **Auto-hides after 5 seconds**
+- **Reappears on mouse hover**
+
+#### 🎮 Interactive Player Controls
+- Transparent overlay controls with blur effect
+- Central positioning for easy access
+- Three control buttons:
+  - ⏸️ **Play/Pause**: Stop and resume content playback
   - 🔄 **Refresh**: Reload content from the platform
   - ⛶ **Fullscreen**: Toggle fullscreen mode
-- **Auto-Hide UI**: All controls automatically hide after 5 seconds and reappear on mouse hover
-- **Webpage Content Support**: Full support for displaying web URLs via iframe with auto-refresh capability
+- **Auto-hide after 5 seconds**
+- **Reappear on mouse hover**
+- Smooth hover effects and transitions
+
+#### 🌐 Webpage Content Support
+- Full support for displaying web URLs via iframe
+- Auto-refresh capability for dynamic content
+- Seamless integration with content rotation
 
 ### Improvements
-- Enhanced pause/resume accuracy tracking elapsed time for precise content resumption
+- Enhanced pause/resume with accurate elapsed time tracking
 - Fullscreen state synchronization with system events
-- Smooth hover effects on all interactive elements
-- Professional semi-transparent overlays for better content visibility
+- Professional semi-transparent overlays
+- Non-intrusive UI that doesn't distract from content
+- Better user experience for kiosk mode
 
 ### Technical Changes
 - Added \`webpage\` content type to TypeScript definitions
-- Compiled renderer with updated UI logic and event handlers
-- Fixed script loading path in HTML for proper module resolution
+- Implemented auto-hide timer system (5-second delay)
+- CSS hover states for UI element visibility
+- Updated renderer with UI event handlers
 
 ---
 
