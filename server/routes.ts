@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient, parseObjectPath } from "./objectStorage";
@@ -1242,21 +1242,24 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const imageBuffer = await generateImageBuffer(prompt, imageSize as "1024x1024" | "512x512" | "256x256");
 
       const objectStorageService = new ObjectStorageService();
-      const timestamp = Date.now();
-      const sanitizedName = (name || "ai-generated").replace(/[^a-zA-Z0-9-_]/g, '-');
-      const fileName = `${sanitizedName}-${timestamp}.png`;
-      const objectPath = `public/${fileName}`;
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const objectId = randomUUID();
+      const fullPath = `${privateDir}/uploads/${objectId}`;
 
-      await objectStorageClient.putObject({
-        bucket: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID!,
-        path: objectPath,
-        content: imageBuffer,
-        contentType: "image/png"
+      const { bucketName, objectName } = parseObjectPath(fullPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      await file.save(imageBuffer, { 
+        contentType: "image/png",
+        metadata: {
+          contentType: "image/png"
+        }
       });
 
-      console.log("[AI Image] Image saved to object storage:", objectPath);
+      console.log("[AI Image] Image saved to object storage:", fullPath);
 
-      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(objectPath);
+      const normalizedUrl = `/objects/uploads/${objectId}`;
 
       const contentData = {
         name: name || `AI Generated: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`,
