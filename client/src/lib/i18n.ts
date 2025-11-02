@@ -217,7 +217,6 @@ export const translations = {
     type: 'Type',
     uploaded: 'Uploaded',
     
-    generateAiImage: 'Generate AI Image',
     aiImageGeneration: 'AI Image Generation',
     aiImagePrompt: 'Describe the image you want to generate',
     aiImagePromptPlaceholder: 'A modern office building with blue sky...',
