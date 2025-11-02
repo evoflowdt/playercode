@@ -19,6 +19,7 @@ The platform features a Material Design 3-inspired interface, rebranded as EvoFl
 ### Feature Specifications
 -   **Core Platform**: Includes a modern, bilingual (EN/IT) landing page, multi-tenant authentication with RBAC, a real-time dashboard, comprehensive display management (monitoring, editing, geocoding), content library (upload, search, filter), scheduling (time-based, recurring, conditional), display grouping, content playlists, and multi-monitor synchronization.
 -   **Advanced Features (Recently Implemented)**:
+    -   **AI Image Generation**: OpenAI-powered image generation integrated into Content Library via Replit AI Integrations (`gpt-image-1` model). Users can generate custom digital signage images from text prompts with configurable sizes (1024x1024, 512x512, 256x256). Generated images are automatically saved to private object storage (`/objects/uploads/`) and appear instantly in the content library. Full EN/IT translation support. Backend: `server/openai-helper.ts` for generation, `POST /api/content/generate-image` endpoint. Frontend: `AIImageGenerationDialog` component with form validation and loading states.
     -   **Auto-Update System**: Custom HTTPS-based player update system with version checking, progress tracking, HTTP validation, file verification, and automatic cleanup
     -   **URL/Web Content Support**: Full iframe rendering for webpage/URL content with auto-refresh capability (`refreshInterval` field)
     -   **Remote Screenshot**: Player capture via HTML5 canvas API with WebSocket delivery to platform
