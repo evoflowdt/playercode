@@ -305,14 +305,14 @@ export default function Downloads() {
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:dev
+                      npm run dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:build:win
+                      npm run dist:win
                     </div>
                   </li>
                 </ol>
@@ -418,14 +418,14 @@ export default function Downloads() {
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:dev
+                      npm run dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:build:mac
+                      npm run dist:mac
                     </div>
                   </li>
                 </ol>
@@ -531,14 +531,14 @@ export default function Downloads() {
                     <strong className="text-foreground">{t('stepTestDev')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepTestDevDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:dev
+                      npm run dev
                     </div>
                   </li>
                   <li>
                     <strong className="text-foreground">{t('stepBuildProd')}</strong>
                     <p className="mt-1 text-sm text-muted-foreground">{t('stepBuildProdDetail')}</p>
                     <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 overflow-x-auto">
-                      npm run electron:build:linux
+                      npm run dist:linux
                     </div>
                   </li>
                 </ol>
