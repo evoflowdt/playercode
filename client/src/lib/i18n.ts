@@ -1345,6 +1345,17 @@ export const translations = {
     id: 'ID',
     type: 'Tipo',
     uploaded: 'Caricato',
+    aiImageGeneration: 'Generazione Immagine AI',
+    aiImagePrompt: 'Descrivi l\'immagine che vuoi generare',
+    aiImagePromptPlaceholder: 'Un edificio per uffici moderno con cielo blu...',
+    aiImageName: 'Nome Immagine',
+    aiImageNamePlaceholder: 'Edificio Uffici',
+    aiImageSize: 'Dimensione Immagine',
+    generating: 'Generazione...',
+    generateImage: 'Genera Immagine',
+    aiImageGeneratedSuccess: 'Immagine AI generata con successo',
+    aiImageGeneratedError: 'Impossibile generare l\'immagine AI',
+    aiImageGenerationNote: 'Utilizza Replit AI Integrations - costi addebitati ai tuoi crediti',
     
     // Schedules
     schedulesTitle: 'Pianificazione',
