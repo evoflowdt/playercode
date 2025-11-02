@@ -26,6 +26,10 @@ export async function generateImageBuffer(
     size,
   });
   
+  if (!response.data || response.data.length === 0) {
+    throw new Error("No image data received from OpenAI");
+  }
+  
   const base64 = response.data[0]?.b64_json ?? "";
   if (!base64) {
     throw new Error("No image data received from OpenAI");
