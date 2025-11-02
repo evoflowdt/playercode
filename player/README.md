@@ -40,19 +40,29 @@ Before building the player, ensure you have:
 
 ```bash
 # If using Git
-git clone https://github.com/YOUR_USERNAME/evoflow-player.git
-cd evoflow-player
+git clone https://github.com/evoflowdt/playercode.git
+cd playercode
 
-# Or download and extract the ZIP from GitHub
+# Or download and extract the ZIP from GitHub:
+# https://codeload.github.com/evoflowdt/playercode/zip/refs/heads/main
 ```
 
-### Step 2: Install Dependencies
+### Step 2: Install Dependencies ⚠️ REQUIRED
+
+> **⚠️ IMPORTANT**: The source code does NOT include dependencies (node_modules).
+> You MUST run `npm install` before building or you'll get "electron not found" errors!
 
 ```bash
 npm install
 ```
 
-This will download all required packages (Electron, TypeScript, etc.).
+This command downloads all required packages including:
+- **Electron** (the desktop app framework)
+- **TypeScript** (for compilation)
+- **electron-builder** (for creating installers)
+- All other dependencies
+
+**Estimated download**: ~200MB (one-time only)
 
 ### Step 3: Build the Application
 

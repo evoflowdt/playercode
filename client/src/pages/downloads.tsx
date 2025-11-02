@@ -86,11 +86,21 @@ export default function Downloads() {
               </Card>
             </div>
             
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>What's Next?</AlertTitle>
-              <AlertDescription>
-                After downloading, follow the build instructions below for your operating system.
+            <Alert variant="destructive" className="border-orange-500/50 bg-orange-500/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="font-bold">Important: Dependencies NOT Included</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>The source code ZIP/Git repository contains <strong>only the source code</strong> - it does NOT include:</p>
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                  <li><strong>node_modules</strong> (Electron, dependencies)</li>
+                  <li>Built/compiled files</li>
+                </ul>
+                <p className="mt-3 font-semibold">
+                  You MUST run <code className="bg-background/50 px-2 py-1 rounded">npm install</code> after downloading before you can build or run the player!
+                </p>
+                <p className="mt-2 text-sm">
+                  Follow the step-by-step instructions below for your operating system.
+                </p>
               </AlertDescription>
             </Alert>
           </div>
@@ -272,10 +282,21 @@ export default function Downloads() {
                       cd C:\path\to\evoflow
                     </div>
                   </li>
-                  <li>
-                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
-                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
+                  <li className="border-l-4 border-orange-500 pl-4 bg-orange-500/5 py-2 rounded-r">
+                    <strong className="text-foreground text-lg flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      {t('stepInstallDeps')} - REQUIRED
+                    </strong>
+                    <p className="mt-2 text-sm text-muted-foreground font-semibold">
+                      {t('stepInstallDepsDetail')} This installs Electron and all required dependencies (not included in the ZIP).
+                    </p>
+                    <Alert className="mt-3 bg-orange-500/10 border-orange-500/50">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Without running these commands, you'll get "electron not found" errors!</strong>
+                      </AlertDescription>
+                    </Alert>
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-3 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
@@ -374,10 +395,21 @@ export default function Downloads() {
                       cd /path/to/evoflow
                     </div>
                   </li>
-                  <li>
-                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
-                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
+                  <li className="border-l-4 border-orange-500 pl-4 bg-orange-500/5 py-2 rounded-r">
+                    <strong className="text-foreground text-lg flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      {t('stepInstallDeps')} - REQUIRED
+                    </strong>
+                    <p className="mt-2 text-sm text-muted-foreground font-semibold">
+                      {t('stepInstallDepsDetail')} This installs Electron and all required dependencies (not included in the ZIP).
+                    </p>
+                    <Alert className="mt-3 bg-orange-500/10 border-orange-500/50">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Without running these commands, you'll get "electron not found" errors!</strong>
+                      </AlertDescription>
+                    </Alert>
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-3 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
@@ -476,10 +508,21 @@ export default function Downloads() {
                       cd /path/to/evoflow
                     </div>
                   </li>
-                  <li>
-                    <strong className="text-foreground">{t('stepInstallDeps')}</strong>
-                    <p className="mt-1 text-sm text-muted-foreground">{t('stepInstallDepsDetail')}</p>
-                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-2 space-y-1 overflow-x-auto">
+                  <li className="border-l-4 border-orange-500 pl-4 bg-orange-500/5 py-2 rounded-r">
+                    <strong className="text-foreground text-lg flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-orange-500" />
+                      {t('stepInstallDeps')} - REQUIRED
+                    </strong>
+                    <p className="mt-2 text-sm text-muted-foreground font-semibold">
+                      {t('stepInstallDepsDetail')} This installs Electron and all required dependencies (not included in the ZIP).
+                    </p>
+                    <Alert className="mt-3 bg-orange-500/10 border-orange-500/50">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Without running these commands, you'll get "electron not found" errors!</strong>
+                      </AlertDescription>
+                    </Alert>
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs sm:text-sm mt-3 space-y-1 overflow-x-auto">
                       <div>npm install</div>
                       <div>npm install --save-dev wait-on</div>
                     </div>
