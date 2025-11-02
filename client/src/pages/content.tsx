@@ -5,10 +5,11 @@ import { ContentItemCard } from "@/components/content-item-card";
 import { ContentTableView } from "@/components/content-table-view";
 import { EmptyState } from "@/components/empty-state";
 import { ContentFormDialog } from "@/components/content-form-dialog";
+import { AIImageGenerationDialog } from "@/components/ai-image-generation-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { FolderOpen, Search, Plus, LayoutGrid, List } from "lucide-react";
+import { FolderOpen, Search, Plus, LayoutGrid, List, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/lib/language-provider";
@@ -20,6 +21,7 @@ export default function Content() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
   const { toast } = useToast();
 
   const { data: contentItems, isLoading } = useQuery<ContentItem[]>({
@@ -58,13 +60,23 @@ export default function Content() {
             {t('contentSubtitle')}
           </p>
         </div>
-        <Button
-          onClick={() => setShowAddDialog(true)}
-          data-testid="button-add-content"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t('addContent')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setShowAIDialog(true)}
+            variant="outline"
+            data-testid="button-generate-ai"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            {t('generateImage')}
+          </Button>
+          <Button
+            onClick={() => setShowAddDialog(true)}
+            data-testid="button-add-content"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('addContent')}
+          </Button>
+        </div>
       </div>
 
       <Card className="p-4">
@@ -146,6 +158,11 @@ export default function Content() {
       <ContentFormDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+      />
+      
+      <AIImageGenerationDialog
+        open={showAIDialog}
+        onOpenChange={setShowAIDialog}
       />
     </div>
   );
